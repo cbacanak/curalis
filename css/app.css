@@ -175,11 +175,13 @@ b, strong { font-weight: var(--fw-medium); }
 .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 calc(-1 * var(--page-x)); padding: 2px var(--page-x); }
 .chips::-webkit-scrollbar { display: none; }
 .chip {
-  display: inline-flex; align-items: center; height: 36px; padding: 0 16px; border-radius: 999px; font-size: var(--fs-small);
-  background: transparent; border: 1px solid var(--divider); color: var(--text-secondary); white-space: nowrap; flex: 0 0 auto;
+  display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 16px; border-radius: 999px; font-size: var(--fs-small);
+  background: var(--bg-subtle); border: 1px solid var(--divider); color: var(--text-secondary); white-space: nowrap; flex: 0 0 auto;
   transition: background var(--dur-fast), color var(--dur-fast);
 }
-.chip.on { background: var(--primary-bg); border-color: var(--primary-bg); color: var(--primary-text); }
+.chip.on { background: var(--primary-bg); border-color: var(--primary-bg); color: var(--primary-text); font-weight: var(--fw-medium); }
+.chip .ic { width: 14px; height: 14px; display: none; }
+.chip.on .ic { display: block; }
 .chip.sm { height: 32px; padding: 0 12px; font-size: var(--fs-caption); }
 .tag-suggest { display: flex; gap: 8px; flex-wrap: wrap; }
 
@@ -429,7 +431,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 /* ---------------- Ajanda ---------------- */
 .cal-head { display: flex; align-items: center; gap: 4px; margin: 20px 0 8px; }
 .cal-title { flex: 1; font-size: var(--fs-title); font-weight: var(--fw-medium); }
-.cal-title .cal-month { text-transform: capitalize; }
+.cal-month { text-transform: capitalize; }
 .cal-title span + span { font-size: var(--fs-caption); color: var(--text-secondary); font-weight: var(--fw-regular); margin-left: 8px; }
 .cal-weekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; font-size: var(--fs-label); color: var(--text-tertiary); letter-spacing: var(--ls-label); padding: 8px 0 4px; }
 .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); row-gap: 4px; }
