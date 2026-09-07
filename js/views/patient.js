@@ -9,7 +9,7 @@ import {
   patientForm, procedureForm, appointmentForm, photoUploadForm, photoEditForm, regenerateControls,
 } from '../forms.js';
 import { setTopbar, go, replacePath } from '../nav.js';
-import { t, lower, cmp as cmpText, procLabel, anesthesiaLabel, apptLabel, kindLabel } from '../i18n.js';
+import { t, lower, cmp as cmpText, procLabel, anesthesiaLabel, apptLabel, kindLabel, isOp } from '../i18n.js';
 
 const TABS = [['genel', 'p.tab.general'], ['islemler', 'p.tab.procs'], ['fotograflar', 'p.tab.photos'], ['randevular', 'p.tab.appts']];
 
@@ -88,7 +88,9 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
   /* ---------- Türetilmiş ---------- */
   const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
   const isOverdue = (a) => a.status === 'planned' && parseDate(a.date) < startOfToday();
-  const controlsOf = (procId) => data.appointments.filter((a) => a.procedureId === procId && a.auto);
+  const controlsOf = (procId) => data.appointments.filter((a) => a.procedureId === procId && a.auto && !isOp(a));
+  const opOf = (procId) => data.appointments.find((a) => a.procedureId === procId && isOp(a)) || null;
+  const isPlannedProc = (pr) => parseDate(pr.date) > startOfToday();
   function nextControl() {
     const planned = data.appointments.filter((a) => a.status === 'planned');
     const upcoming = planned.filter((a) => parseDate(a.date) >= startOfToday());
@@ -135,7 +137,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
           <button class="btn-icon" type="button" data-act="edit" aria-label="${esc(t('common.edit'))}">${icon('edit')}</button>
           <button class="btn-icon" type="button" data-act="more" aria-label="${esc(t('common.more'))}">${icon('more')}</button>
         </div>
-        <div class="hero-label">${lastProc ? `${esc(procLabel(lastProc.type))} · ${esc(fmtDate(lastProc.date))}` : esc(t('p.noProc'))}</div>
+        <div class="hero-label">${lastProc ? `${isPlannedProc(lastProc) ? `${esc(t('op.planned'))} · ` : ''}${esc(procLabel(lastProc.type))} · ${esc(fmtDate(lastProc.date))}` : esc(t('p.noProc'))}</div>
         <h1 class="hero-name">${esc(name)}</h1>
         <div class="hero-meta">${[a !== null ? esc(t('age', { n: a })) : null, genderLabel ? esc(genderLabel) : null, p.bloodType ? esc(p.bloodType) : null, p.phone ? `<a href="${phoneHref(p.phone)}" class="num">${esc(p.phone)}</a>` : null].filter(Boolean).join(' · ') || `<span class="t-tertiary">${esc(t('p.noInfo'))}</span>`}</div>
         <div class="hero-actions">
@@ -157,7 +159,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
         </button>
         <button class="stat end ${nc && isOverdue(nc) ? 'warn' : ''}" type="button" data-tab="randevular">
           <div class="stat-value">${nc ? esc(fmtDayMonth(nc.date)) : '—'}</div>
-          <div class="stat-label">${nc ? `${esc(lower(apptLabel(nc)))} · ${esc(daysLabel(nc))}` : esc(t('p.stat.noControl'))}</div>
+          <div class="stat-label">${nc ? `${esc(isOp(nc) ? apptLabel(nc) : lower(apptLabel(nc)))} · ${esc(daysLabel(nc))}` : esc(t('p.stat.noControl'))}</div>
         </button>
       </div>
 
@@ -240,10 +242,11 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const controls = controlsOf(pr.id);
     const done = controls.filter((c) => c.status === 'done').length;
     const photos = data.photos.filter((x) => x.procedureId === pr.id).length;
-    const line1 = [fmtDate(pr.date), pr.anesthesia && pr.anesthesia !== 'Yok' ? t('anest.line', { a: anesthesiaLabel(pr.anesthesia) }) : null].filter(Boolean).join(' · ');
+    const planned = isPlannedProc(pr);
+    const line1 = [planned ? t('op.planned') : null, fmtDate(pr.date), planned ? t('op.inDays', { n: daysBetween(new Date(), parseDate(pr.date)) }) : null, pr.anesthesia && pr.anesthesia !== 'Yok' ? t('anest.line', { a: anesthesiaLabel(pr.anesthesia) }) : null].filter(Boolean).join(' · ');
     const line2 = [controls.length ? t('p.controls', { done, n: controls.length }) : null, photos ? t('p.photosN', { n: photos }) : null].filter(Boolean).join(' · ');
     return `
-      <button class="row" type="button" data-proc="${pr.id}">
+      <button class="row ${planned ? 'op' : ''}" type="button" data-proc="${pr.id}">
         <div class="row-main">
           <div class="row-title">${esc(procLabel(pr.type))}${pr.title ? ` <span class="t-secondary">· ${esc(pr.title)}</span>` : ''}</div>
           <div class="row-sub">${esc(line1)}</div>
@@ -265,6 +268,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const pr = data.procById[procId];
     if (!pr) return;
     const controls = controlsOf(pr.id);
+    const op = opOf(pr.id);
     const others = data.appointments.filter((a) => a.procedureId === pr.id && !a.auto);
     const photos = data.photos.filter((x) => x.procedureId === pr.id);
     const done = controls.filter((c) => c.status === 'done').length;
@@ -278,8 +282,8 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
                <button class="btn btn-primary" type="button" data-act="photo">${esc(t('p.addPhoto'))}</button>`,
       content: `
         <div class="info">
-          ${info(t('p.proc.date'), esc(fmtDateLong(pr.date)))}
-          ${info(t('p.proc.since'), esc(sinceProcedure(pr.date)))}
+          ${info(t('p.proc.date'), `${esc(fmtDateLong(pr.date))}${pr.time ? ` · ${esc(pr.time)}` : ''}${op ? ` <span class="t-secondary">· ${statusText(op.status, { overdue: isOverdue(op), today: daysBetween(new Date(), parseDate(op.date)) === 0 })}</span>` : ''}`)}
+          ${info(t('p.proc.since'), esc(isPlannedProc(pr) ? relDay(pr.date) : sinceProcedure(pr.date)))}
           ${info(t('p.proc.anesthesia'), esc(anesthesiaLabel(pr.anesthesia)))}
           ${info(t('p.proc.technique'), esc(pr.title))}
           ${info(t('p.proc.photo'), photos.length ? esc(t('p.proc.photoLine', { n: photos.length, before: photos.filter((x) => x.phase === 'before').length, after: photos.filter((x) => x.phase === 'after').length })) : '')}
@@ -299,7 +303,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     s.el.querySelector('[data-act=edit]').onclick = async () => {
       s.close();
       const r = await procedureForm({ patientId: id, existing: pr });
-      if (r) { toast(t('p.proc.updated')); refresh(); }
+      if (r) { toast(r.shiftedControls ? t('form.proc.shifted', { n: r.shiftedControls }) : t('p.proc.updated')); refresh(); }
     };
     s.el.querySelector('[data-act=photo]').onclick = () => { s.close(); addPhoto({ defaultProcedureId: pr.id, defaultPhase: daysBetween(parseDate(pr.date), new Date()) > 0 ? 'after' : 'before' }); };
     const regen = s.body.querySelector('[data-act=regen]');
@@ -327,9 +331,11 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const today = daysBetween(new Date(), d) === 0;
     const overdue = isOverdue(a);
     const pr = a.procedureId ? data.procById[a.procedureId] : null;
-    const sub = [fmtDayMonth(a.date), fmtTime(a.date), kindLabel(a.kind), pr ? procLabel(pr.type) : null, pr && a.auto ? sinceProcedure(pr.date, d) : null, a.notes || null].filter(Boolean).join(' · ');
+    const sub = isOp(a)
+      ? [fmtDayMonth(a.date), fmtTime(a.date), t('op.row'), a.notes || null].filter(Boolean).join(' · ')
+      : [fmtDayMonth(a.date), fmtTime(a.date), kindLabel(a.kind), pr ? procLabel(pr.type) : null, pr && a.auto ? sinceProcedure(pr.date, d) : null, a.notes || null].filter(Boolean).join(' · ');
     return `
-      <button class="row ${a.status === 'done' || a.status === 'cancelled' ? 'muted' : ''}" type="button" data-appt="${a.id}">
+      <button class="row ${a.status === 'done' || a.status === 'cancelled' ? 'muted' : ''} ${isOp(a) ? 'op' : ''}" type="button" data-appt="${a.id}">
         <div class="row-main">
           <div class="row-title">${esc(apptLabel(a))}</div>
           <div class="row-sub">${esc(sub)}</div>
@@ -349,9 +355,10 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     if (a.status !== 'done') items.push({ label: t('appt.markDone'), icon: 'check', value: 'done' });
     if (a.status !== 'missed') items.push({ label: t('appt.markMissed'), icon: 'alert', value: 'missed' });
     if (a.status !== 'planned') items.push({ label: t('appt.markPlanned'), icon: 'clock', value: 'planned' });
-    items.push({ label: t('appt.editDate'), icon: 'edit', value: 'edit' });
+    if (isOp(a)) items.push({ label: t('op.editProc'), icon: 'edit', value: 'editProc' });
+    else items.push({ label: t('appt.editDate'), icon: 'edit', value: 'edit' });
     if (pr) items.push({ label: t('appt.openProc', { p: procLabel(pr.type) }), icon: 'activity', value: 'proc' });
-    items.push({ label: t('appt.delete'), icon: 'trash', value: 'delete', danger: true });
+    if (!isOp(a)) items.push({ label: t('appt.delete'), icon: 'trash', value: 'delete', danger: true });
     const v = await actionMenu(title, items);
     if (!v) return;
     if (['done', 'missed', 'planned'].includes(v)) {
@@ -361,6 +368,9 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     } else if (v === 'edit') {
       const r = await appointmentForm({ patientId: id, procedures: data.procedures, existing: a });
       if (r) { toast(t('appt.updated')); refresh(); }
+    } else if (v === 'editProc') {
+      const r = await procedureForm({ patientId: id, existing: pr });
+      if (r) { toast(r.shiftedControls ? t('form.proc.shifted', { n: r.shiftedControls }) : t('p.proc.updated')); refresh(); }
     } else if (v === 'proc') {
       openProcedure(pr.id);
     } else if (v === 'delete') {

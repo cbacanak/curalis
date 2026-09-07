@@ -5,6 +5,7 @@ import { requestPersist, renderNotice } from './storage.js';
 import { initLock } from './lock.js';
 import { toast, emptyState } from './ui.js';
 import { t, applyStaticText } from './i18n.js';
+import { ensureProcedureEvents } from './forms.js';
 
 const routes = [
   { re: /^\/?$/, nav: 'patients', load: () => import('./views/patients.js'), params: () => ({}) },
@@ -61,6 +62,7 @@ async function start() {
   window.addEventListener('hashchange', route);
   route();
   migratePhotoBlobs().catch(() => { /* en iyi çaba; bir sonraki açılışta yeniden denenir */ });
+  ensureProcedureEvents().then((n) => { if (n) route(); }).catch(() => { /* en iyi çaba */ });
   // Verilerin tarayıcı tarafından yer açmak için silinmemesini iste; riskli ortamda uyar
   requestPersist();
   renderNotice(document.getElementById('notice'));

@@ -1,6 +1,6 @@
 /* Formlar: hasta, işlem, randevu, fotoğraf */
 import { Patients, Procedures, Appointments, Photos } from './db.js';
-import { buildControls, todayISO, toLocalISO, CONTROL_SCHEDULE } from './schedule.js';
+import { buildControls, buildOperation, skipSunday, todayISO, toLocalISO, CONTROL_SCHEDULE, OP_KEY, DEFAULT_OP_TIME } from './schedule.js';
 import { processImage, parseTags, readExifDate } from './photos.js';
 import { sheet, field, selectField, textareaField, segmentField, chipField, bindChoiceFields, segmented, bindSegmented, formData, esc, icon, toast, fmtDate } from './ui.js';
 import { t, cmp, procLabel, anesthesiaLabel, kindLabel, PROC_KEYS } from './i18n.js';
@@ -86,8 +86,10 @@ export function procedureForm({ patientId, existing = null }) {
         ${field({ label: t('form.proc.title'), name: 'title', value: p.title, placeholder: t('form.proc.title.ph') })}
         <div class="form-row">
           ${field({ label: t('form.proc.date'), name: 'date', type: 'date', value: p.date || todayISO(), required: true })}
-          ${selectField({ label: t('form.proc.anesthesia'), name: 'anesthesia', value: p.anesthesia || 'Lokal', options: anesthesiaOptions(), optional: false })}
+          ${field({ label: t('form.proc.time'), name: 'time', type: 'time', value: p.time || DEFAULT_OP_TIME, optional: false })}
         </div>
+        <p class="field-hint" style="margin-top:-6px">${esc(t('form.proc.dateHint'))}</p>
+        ${selectField({ label: t('form.proc.anesthesia'), name: 'anesthesia', value: p.anesthesia || 'Lokal', options: anesthesiaOptions(), optional: false })}
         ${textareaField({ label: t('form.proc.notes'), name: 'notes', value: p.notes, placeholder: t('form.proc.notes.ph'), rows: 4 })}
         ${isNew ? `
         ${chipField({ label: t('form.proc.controls'), name: 'controls', value: CONTROL_SCHEDULE.map((c) => c.key).join(','), options: CONTROL_SCHEDULE.map((c) => [c.key, t(`sched.short.${c.key}`)]), multiple: true })}
@@ -101,7 +103,7 @@ export function procedureForm({ patientId, existing = null }) {
     if (!d.type) throw new Error(t('form.proc.typeRequired'));
     if (!d.date) throw new Error(t('form.proc.dateRequired'));
     const proc = await Procedures.save({
-      ...p, patientId, type: d.type, title: d.title, date: d.date, anesthesia: d.anesthesia, notes: d.notes,
+      ...p, patientId, type: d.type, title: d.title, date: d.date, time: d.time || DEFAULT_OP_TIME, anesthesia: d.anesthesia, notes: d.notes,
     });
     let created = [];
     const keys = isNew ? String(d.controls || '').split(',').filter(Boolean) : [];
@@ -109,16 +111,51 @@ export function procedureForm({ patientId, existing = null }) {
       const [hh, mm] = (d.controlTime || '10:00').split(':').map(Number);
       created = await Appointments.saveMany(buildControls(proc, { hour: hh, minute: mm, keys }));
     }
-    return { procedure: proc, createdControls: created };
+    const shifted = await syncProcedureEvents(proc, { oldDate: isNew ? null : p.date });
+    return { procedure: proc, createdControls: created, shiftedControls: shifted };
   });
   return s.result;
 }
 
-/** Var olan bir işlem için kontrolleri (yeniden) üretir. Eski otomatik kontrolleri siler. */
+/** Var olan bir işlem için kontrolleri (yeniden) üretir. Eski otomatik kontrolleri siler; işlem günü kaydına dokunmaz. */
 export async function regenerateControls(procedure, { hour = 10, minute = 0 } = {}) {
   const existing = await Appointments.byIndex('procedureId', procedure.id);
-  for (const a of existing.filter((x) => x.auto)) await Appointments.remove(a.id);
+  for (const a of existing.filter((x) => x.auto && x.scheduleKey !== OP_KEY)) await Appointments.remove(a.id);
   return Appointments.saveMany(buildControls(procedure, { hour, minute }));
+}
+
+/**
+ * İşlemin Ajanda kaydını (ameliyat / işlem günü) oluşturur ya da tarih/saatle eşitler.
+ * Tarih değiştiyse hâlâ planlı olan otomatik kontroller yeni tarihe göre kaydırılır (saatleri korunur);
+ * yapıldı / gelmedi / iptal olanlara dokunulmaz. Döner: kaydırılan kontrol sayısı.
+ */
+export async function syncProcedureEvents(procedure, { oldDate = null } = {}) {
+  const linked = await Appointments.byIndex('procedureId', procedure.id);
+  const op = linked.find((a) => a.scheduleKey === OP_KEY) || null;
+  await Appointments.save(buildOperation(procedure, op));
+  if (!oldDate || oldDate === procedure.date) return 0;
+  const base = new Date(procedure.date + 'T00:00:00');
+  const moved = [];
+  for (const a of linked) {
+    if (!a.auto || a.scheduleKey === OP_KEY || a.status !== 'planned') continue;
+    const c = CONTROL_SCHEDULE.find((x) => x.key === a.scheduleKey);
+    if (!c) continue;
+    const d = skipSunday(c.add(base));
+    const [hh, mm] = a.date.slice(11, 16).split(':').map(Number);
+    d.setHours(hh || 10, mm || 0, 0, 0);
+    moved.push({ ...a, date: toLocalISO(d) });
+  }
+  if (moved.length) await Appointments.saveMany(moved);
+  return moved.length;
+}
+
+/** Eski kayıtlar: Ajanda kaydı olmayan işlemlere bir kez kayıt üretir (geçmiş tarih → yapıldı). */
+export async function ensureProcedureEvents() {
+  const [procs, appts] = await Promise.all([Procedures.all(), Appointments.all()]);
+  const has = new Set(appts.filter((a) => a.scheduleKey === OP_KEY).map((a) => a.procedureId));
+  const missing = procs.filter((p) => !has.has(p.id)).map((p) => buildOperation(p));
+  if (missing.length) await Appointments.saveMany(missing);
+  return missing.length;
 }
 
 /* ---------------- Randevu ---------------- */

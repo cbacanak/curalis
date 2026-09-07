@@ -3,7 +3,7 @@ import { Patients, Procedures, Appointments, fullName } from '../db.js';
 import { esc, icon, initials, fmtDate, fmtDayMonth, parseDate, daysBetween, emptyState, toast, age } from '../ui.js';
 import { patientForm } from '../forms.js';
 import { setTopbar, go } from '../nav.js';
-import { t, cmp, lower, procLabel, apptLabel } from '../i18n.js';
+import { t, cmp, lower, procLabel, apptLabel, isOp } from '../i18n.js';
 
 let lastQuery = '';
 const UPCOMING_DAYS = 30;
@@ -55,7 +55,7 @@ export async function render(root) {
       <button class="upcoming-card" type="button" data-open="${p.id}">
         <div>
           <div class="name">${esc(fullName(p))}</div>
-          <div class="sub">${[pr ? procLabel(pr.type) : null, lower(apptLabel(a))].filter(Boolean).map(esc).join(' · ')}</div>
+          <div class="sub">${(isOp(a) ? [apptLabel(a), lower(t('op.row'))] : [pr ? procLabel(pr.type) : null, lower(apptLabel(a))]).filter(Boolean).map(esc).join(' · ')}</div>
         </div>
         <div>
           <div class="date">${esc(fmtDayMonth(a.date))}</div>
@@ -67,7 +67,8 @@ export async function render(root) {
   function patientRow(p) {
     const lp = lastProc[p.id];
     const a = age(p.birthDate);
-    const sub = [a !== null ? String(a) : null, lp ? `${procLabel(lp.type)} · ${fmtDayMonth(lp.date)}` : t('patients.noProc')].filter(Boolean).join(' · ');
+    const planned = lp && parseDate(lp.date) > today;
+    const sub = [a !== null ? String(a) : null, lp ? `${planned ? `${t('op.planned')} · ` : ''}${procLabel(lp.type)} · ${fmtDayMonth(lp.date)}` : t('patients.noProc')].filter(Boolean).join(' · ');
     return `
       <a class="row" href="#/patient/${p.id}">
         <div class="avatar">${esc(initials(fullName(p)))}</div>

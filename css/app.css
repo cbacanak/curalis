@@ -447,6 +447,10 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .cal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text); }
 .cal-dot.done { background: var(--text-tertiary); }
 .cal-dot.warn { background: var(--warning); }
+.cal-dot.op { width: 7px; height: 7px; background: transparent; box-shadow: inset 0 0 0 1.5px var(--text); }
+.cal-dot.op.done { box-shadow: inset 0 0 0 1.5px var(--text-tertiary); }
+.cal-dot.op.warn { box-shadow: inset 0 0 0 1.5px var(--warning); }
+.row.op .row-title { font-weight: var(--fw-medium); }
 .cal-cell.out .cal-dot { opacity: .4; }
 .cal-more { font-size: var(--fs-label); font-style: normal; color: var(--text-secondary); line-height: 1; }
 @media (min-width: 640px) { .cal-cell { height: 56px; } }
