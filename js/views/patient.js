@@ -6,10 +6,12 @@ import {
 } from '../ui.js';
 import { blobURL, releaseURLs } from '../photos.js';
 import {
-  patientForm, procedureForm, appointmentForm, photoUploadForm, photoEditForm, regenerateControls,
+  patientForm, procedureForm, appointmentForm, photoUploadForm, photoEditForm, regenerateControls, defaultPeriodFor,
 } from '../forms.js';
 import { setTopbar, go, replacePath } from '../nav.js';
-import { t, lower, cmp as cmpText, procLabel, anesthesiaLabel, apptLabel, kindLabel, isOp } from '../i18n.js';
+import { t, lower, procLabel, apptLabel, kindLabel, isOp } from '../i18n.js';
+import { PERIODS, TRASH_DAYS, periodLabel, angleLabel, consentLabel, anesthesiaLabel, fieldLabel, optionLabel } from '../model.js';
+import { hydrateBlob, audit } from '../db.js';
 
 const TABS = [['genel', 'p.tab.general'], ['islemler', 'p.tab.procs'], ['fotograflar', 'p.tab.photos'], ['randevular', 'p.tab.appts']];
 
@@ -56,16 +58,16 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
   async function deletePatient() {
     const ok = await confirmDialog({
       title: t('p.deleteQ'),
-      message: t('p.deleteMsg', { name: fullName(data.patient), procs: data.procedures.length, photos: data.photos.length, appts: data.appointments.length }),
+      message: `${t('p.deleteMsg', { name: fullName(data.patient), procs: data.procedures.length, photos: data.photos.length, appts: data.appointments.length })} ${t('trash.hint', { days: TRASH_DAYS })}`,
       okText: t('common.delete'), danger: true,
     });
     if (!ok) return;
-    await Patients.removeCascade(id);
+    await Patients.remove(id);
     toast(t('p.deleted'));
     go('/');
   }
   async function addProcedure() {
-    const r = await procedureForm({ patientId: id });
+    const r = await procedureForm({ patientId: id, procedures: data.procedures });
     if (!r) return;
     toast(r.createdControls.length ? t('p.procAddedControls', { n: r.createdControls.length }) : t('p.procAdded'));
     setTab('islemler');
@@ -106,11 +108,12 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     if (n > 1) return t('days.n', { n });
     return t('days.late', { n: -n });
   }
-  const phaseLabel = (ph) => t(ph.phase === 'before' ? 'phase.before' : 'phase.after');
-  const photoCaption = (ph, pr) => {
-    const extra = pr && ph.phase === 'after' ? sinceProcedure(pr.date, parseDate(ph.date)) : (ph.tags || [])[0] || '';
-    return [phaseLabel(ph), fmtDayMonth(ph.date), extra].filter(Boolean).join(' · ');
-  };
+  const isPre = (ph) => ph.period === 'pre';
+  const periodOf = (ph) => periodLabel(ph.period || 'other');
+  const angleOf = (ph) => (ph.angle && ph.angle !== 'custom' ? angleLabel(ph.angle) : '');
+  /** "Öncesi · 11 Ağu · Cephe" */
+  const photoCaption = (ph) => [periodOf(ph), fmtDayMonth(ph.date), angleOf(ph)].filter(Boolean).join(' · ');
+  const periodRank = (ph) => { const i = PERIODS.indexOf(ph.period); return i < 0 ? PERIODS.length : i; };
 
   /* ---------- Çizim ---------- */
   function paint() {
@@ -137,9 +140,9 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
           <button class="btn-icon" type="button" data-act="edit" aria-label="${esc(t('common.edit'))}">${icon('edit')}</button>
           <button class="btn-icon" type="button" data-act="more" aria-label="${esc(t('common.more'))}">${icon('more')}</button>
         </div>
-        <div class="hero-label">${lastProc ? `${isPlannedProc(lastProc) ? `${esc(t('op.planned'))} · ` : ''}${esc(procLabel(lastProc.type))} · ${esc(fmtDate(lastProc.date))}` : esc(t('p.noProc'))}</div>
+        <div class="hero-label">${lastProc ? `${isPlannedProc(lastProc) ? `${esc(t('op.planned'))} · ` : ''}${esc(procLabel(lastProc.typeName))} · ${esc(fmtDate(lastProc.date))}` : esc(t('p.noProc'))}</div>
         <h1 class="hero-name">${esc(name)}</h1>
-        <div class="hero-meta">${[a !== null ? esc(t('age', { n: a })) : null, genderLabel ? esc(genderLabel) : null, p.bloodType ? esc(p.bloodType) : null, p.phone ? `<a href="${phoneHref(p.phone)}" class="num">${esc(p.phone)}</a>` : null].filter(Boolean).join(' · ') || `<span class="t-tertiary">${esc(t('p.noInfo'))}</span>`}</div>
+        <div class="hero-meta">${[a !== null ? esc(t('age', { n: a })) : null, genderLabel ? esc(genderLabel) : null, p.phone ? `<a href="${phoneHref(p.phone)}" class="num">${esc(p.phone)}</a>` : null].filter(Boolean).join(' · ') || `<span class="t-tertiary">${esc(t('p.noInfo'))}</span>`}</div>
         <div class="hero-actions">
           <button class="btn btn-primary" type="button" data-act="add-proc">${esc(t('p.addProc'))}</button>
           ${p.phone ? `<a class="btn-outline-icon" href="${phoneHref(p.phone)}" aria-label="${esc(t('p.call'))}" title="${esc(t('p.call'))}">${icon('phone')}</a>` : ''}
@@ -147,6 +150,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
           <button class="btn-outline-icon" type="button" data-act="add-appt" aria-label="${esc(t('p.addAppt'))}" title="${esc(t('p.addAppt'))}">${icon('calendar')}</button>
         </div>
       </section>
+      ${clinicalStrip(p)}
 
       <div class="stats">
         <button class="stat" type="button" data-tab="islemler">
@@ -189,6 +193,12 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     ({ genel: paintGeneral, islemler: paintProcedures, fotograflar: paintPhotos, randevular: paintAppointments })[state.tab](body);
   }
 
+  /** Klinik uyarı şeridi: alerji / antikoagülan / sigara varsa hero altında tek satır (MOBIL.md §3) */
+  function clinicalStrip(p) {
+    const items = [p.allergies ? `${t('p.allergy')} · ${p.allergies}` : null, p.anticoagulant ? t('p.warn.anticoagulant') : null, p.smoking ? t('p.warn.smoking') : null].filter(Boolean);
+    return items.length ? `<div class="clinical-strip">${esc(items.join('  ·  '))}</div>` : '';
+  }
+
   /* ---------- Genel ---------- */
   function paintGeneral(body) {
     const p = data.patient;
@@ -200,14 +210,25 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const recent = [...data.photos].sort((x, y) => (y.date || '').localeCompare(x.date || '')).slice(0, 2);
 
     body.innerHTML = `
-      ${p.allergies ? `<div class="alert">${esc(t('p.allergy'))} · ${esc(p.allergies)}</div>` : ''}
       ${overdue.length ? `<div class="alert danger">${esc(t('p.overdueAlert', { n: overdue.length, list: overdue.map((x) => `${lower(apptLabel(x))} (${fmtDayMonth(x.date)})`).join(', ') }))}</div>` : ''}
-      <div class="info" style="margin-top:6px">
+      <div class="section-label" style="margin-top:6px">${esc(t('p.sec.clinical'))}</div>
+      <div class="info">
+        ${row(t('form.allergies'), esc(p.allergies))}
+        ${row(t('form.medications'), [p.medications ? esc(p.medications) : null, p.anticoagulant ? `<span class="t-warning">${esc(t('p.warn.anticoagulant'))}</span>` : null].filter(Boolean).join(' · '))}
+        ${row(t('form.smoking'), p.smoking ? t('p.smoking.yes') : t('p.smoking.no'))}
+        ${row(t('form.priorSurgeries'), esc(p.priorSurgeries))}
+      </div>
+      <div class="section-label section">${esc(t('p.sec.consent'))}</div>
+      <div class="info">
+        ${row(t('p.consent'), `${esc(consentLabel(p.consentStatus))}${p.consentDate ? ` <span class="t-secondary">· ${esc(fmtDate(p.consentDate))}</span>` : ''}`)}
+        ${row(t('p.consentDoc'), p.consentDocument ? `<button class="section-link" type="button" data-act="consent-doc">${esc(t('p.consentDoc.view'))}</button>` : '')}
+      </div>
+      <div class="section-label section">${esc(t('p.sec.info'))}</div>
+      <div class="info">
         ${row(t('form.birthDate'), p.birthDate ? `${esc(fmtDate(p.birthDate))}${a !== null ? ` <span class="t-secondary">· ${a}</span>` : ''}` : '')}
         ${row(t('form.bloodType'), esc(p.bloodType))}
         ${row(t('form.email'), p.email ? `<a href="mailto:${esc(p.email)}">${esc(p.email)}</a>` : '')}
         ${row(t('form.referral'), esc(p.referral))}
-        ${row(t('form.allergies'), esc(p.allergies))}
         ${row(t('p.registered'), esc(fmtDate(p.createdAt)))}
         ${p.notes ? row(t('form.notes'), esc(p.notes), { block: true }) : ''}
       </div>
@@ -233,22 +254,42 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
 
     body.querySelectorAll('[data-tab-link]').forEach((b) => { b.onclick = () => { setTab(b.dataset.tabLink); syncTabs(); paintTab(); }; });
     body.querySelectorAll('[data-act=add-photo]').forEach((b) => { b.onclick = () => addPhoto(); });
-    body.querySelectorAll('[data-photo]').forEach((t) => { t.onclick = () => openViewer(data.photos.find((x) => x.id === t.dataset.photo), recent); });
+    body.querySelectorAll('[data-photo]').forEach((el) => { el.onclick = () => openViewer(data.photos.find((x) => x.id === el.dataset.photo), recent); });
+    const doc = body.querySelector('[data-act=consent-doc]');
+    if (doc) doc.onclick = () => openDocument(p.consentDocument);
     bindApptRows(body);
+  }
+
+  /** Onam belgesi görüntüleyici (tek görsel) */
+  function openDocument(docRec) {
+    const blob = hydrateBlob(docRec.blob, docRec.mime);
+    const v = el(`
+      <div class="viewer" role="dialog" aria-modal="true" aria-label="${esc(t('p.consentDoc'))}">
+        <div class="viewer-head">
+          <button class="btn-icon" type="button" data-act="close" aria-label="${esc(t('common.close'))}">${icon('x')}</button>
+          <div class="viewer-title">${esc(t('p.consentDoc'))}</div>
+        </div>
+        <div class="viewer-stage"><img src="${blobURL('consent-doc', blob)}" alt=""></div>
+      </div>`);
+    const close = () => { document.removeEventListener('keydown', onKey); v.remove(); };
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    v.querySelector('[data-act=close]').onclick = close;
+    document.addEventListener('keydown', onKey);
+    document.getElementById('layer').appendChild(v);
   }
 
   /* ---------- İşlemler ---------- */
   function procedureRow(pr) {
     const controls = controlsOf(pr.id);
-    const done = controls.filter((c) => c.status === 'done').length;
+    const done = controls.filter((c) => c.status === 'attended').length;
     const photos = data.photos.filter((x) => x.procedureId === pr.id).length;
     const planned = isPlannedProc(pr);
-    const line1 = [planned ? t('op.planned') : null, fmtDate(pr.date), planned ? t('op.inDays', { n: daysBetween(new Date(), parseDate(pr.date)) }) : null, pr.anesthesia && pr.anesthesia !== 'Yok' ? t('anest.line', { a: anesthesiaLabel(pr.anesthesia) }) : null].filter(Boolean).join(' · ');
+    const line1 = [planned ? t('op.planned') : null, fmtDate(pr.date), planned ? t('op.inDays', { n: daysBetween(new Date(), parseDate(pr.date)) }) : null, pr.anesthesia && pr.anesthesia !== 'none' ? t('anest.line', { a: anesthesiaLabel(pr.anesthesia) }) : null, pr.complication?.present ? t('p.proc.complication') : null].filter(Boolean).join(' · ');
     const line2 = [controls.length ? t('p.controls', { done, n: controls.length }) : null, photos ? t('p.photosN', { n: photos }) : null].filter(Boolean).join(' · ');
     return `
       <button class="row ${planned ? 'op' : ''}" type="button" data-proc="${pr.id}">
         <div class="row-main">
-          <div class="row-title">${esc(procLabel(pr.type))}${pr.title ? ` <span class="t-secondary">· ${esc(pr.title)}</span>` : ''}</div>
+          <div class="row-title">${esc(procLabel(pr.typeName))}${pr.title ? ` <span class="t-secondary">· ${esc(pr.title)}</span>` : ''}</div>
           <div class="row-sub">${esc(line1)}</div>
           ${line2 ? `<div class="row-sub">${esc(line2)}</div>` : ''}
         </div>
@@ -271,10 +312,12 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const op = opOf(pr.id);
     const others = data.appointments.filter((a) => a.procedureId === pr.id && !a.auto);
     const photos = data.photos.filter((x) => x.procedureId === pr.id);
-    const done = controls.filter((c) => c.status === 'done').length;
+    const done = controls.filter((c) => c.status === 'attended').length;
+    const rev = pr.revisionOf ? data.procById[pr.revisionOf] : null;
+    const details = Object.entries(pr.details || {}).filter(([, v]) => v !== '' && v !== null && v !== undefined);
     const info = (label, value) => `<div class="info-row"><div class="info-label">${esc(label)}</div><div class="info-value ${value ? '' : 'is-empty'}">${value || '—'}</div></div>`;
     const s = sheet({
-      title: procLabel(pr.type),
+      title: procLabel(pr.typeName),
       size: 'md',
       closeText: t('common.close'),
       footer: `<button class="btn btn-ghost" type="button" data-act="more">${esc(t('common.more'))}</button><span class="spacer"></span>
@@ -286,7 +329,10 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
           ${info(t('p.proc.since'), esc(isPlannedProc(pr) ? relDay(pr.date) : sinceProcedure(pr.date)))}
           ${info(t('p.proc.anesthesia'), esc(anesthesiaLabel(pr.anesthesia)))}
           ${info(t('p.proc.technique'), esc(pr.title))}
-          ${info(t('p.proc.photo'), photos.length ? esc(t('p.proc.photoLine', { n: photos.length, before: photos.filter((x) => x.phase === 'before').length, after: photos.filter((x) => x.phase === 'after').length })) : '')}
+          ${info(t('p.proc.photo'), photos.length ? esc(t('p.proc.photoLine', { n: photos.length, before: photos.filter(isPre).length, after: photos.filter((x) => !isPre(x)).length })) : '')}
+          ${rev ? info(t('p.proc.revisionOf'), esc(`${procLabel(rev.typeName)} · ${fmtDate(rev.date)}`)) : ''}
+          ${pr.complication?.present ? `<div class="info-row block"><div class="info-label">${esc(t('p.proc.complication'))}</div><div class="info-value t-warning">${esc([pr.complication.date ? fmtDate(pr.complication.date) : null, pr.complication.note].filter(Boolean).join(' · ') || t('form.yes'))}</div></div>` : ''}
+          ${details.map(([k, v]) => info(fieldLabel(k), esc(typeof v === 'boolean' ? t(v ? 'form.yes' : 'form.no') : optionLabel(String(v))))).join('')}
           ${pr.notes ? `<div class="info-row block"><div class="info-label">${esc(t('p.proc.note'))}</div><div class="info-value">${esc(pr.notes)}</div></div>` : ''}
         </div>
         <section class="section">
@@ -302,15 +348,15 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     bindApptRows(s.body, () => s.close());
     s.el.querySelector('[data-act=edit]').onclick = async () => {
       s.close();
-      const r = await procedureForm({ patientId: id, existing: pr });
+      const r = await procedureForm({ patientId: id, existing: pr, procedures: data.procedures });
       if (r) { toast(r.shiftedControls ? t('form.proc.shifted', { n: r.shiftedControls }) : t('p.proc.updated')); refresh(); }
     };
-    s.el.querySelector('[data-act=photo]').onclick = () => { s.close(); addPhoto({ defaultProcedureId: pr.id, defaultPhase: daysBetween(parseDate(pr.date), new Date()) > 0 ? 'after' : 'before' }); };
+    s.el.querySelector('[data-act=photo]').onclick = () => { s.close(); addPhoto({ defaultProcedureId: pr.id, defaultPeriod: defaultPeriodFor(pr) }); };
     const regen = s.body.querySelector('[data-act=regen]');
     if (regen) regen.onclick = async () => { s.close(); await regenerateControls(pr); toast(t('p.proc.controlsMade')); refresh(); };
     s.el.querySelector('[data-act=more]').onclick = async () => {
       s.close();
-      const v = await actionMenu(procLabel(pr.type), [
+      const v = await actionMenu(procLabel(pr.typeName), [
         { label: t('p.proc.regen'), icon: 'calendar', value: 'regen' },
         { label: t('p.proc.delete'), icon: 'trash', value: 'delete', danger: true },
       ]);
@@ -319,8 +365,8 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
         if (ok) { await regenerateControls(pr); toast(t('p.proc.regenerated')); refresh(); }
       }
       if (v === 'delete') {
-        const ok = await confirmDialog({ title: t('p.proc.deleteQ'), message: t('p.proc.deleteMsg', { type: procLabel(pr.type), n: controls.length }), okText: t('common.delete'), danger: true });
-        if (ok) { await Procedures.removeCascade(pr.id); toast(t('p.proc.deleted')); refresh(); }
+        const ok = await confirmDialog({ title: t('p.proc.deleteQ'), message: `${t('p.proc.deleteMsg', { type: procLabel(pr.typeName), n: controls.length })} ${t('trash.hint', { days: TRASH_DAYS })}`, okText: t('common.delete'), danger: true });
+        if (ok) { await Procedures.remove(pr.id); toast(t('p.proc.deleted')); refresh(); }
       }
     };
   }
@@ -333,9 +379,9 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const pr = a.procedureId ? data.procById[a.procedureId] : null;
     const sub = isOp(a)
       ? [fmtDayMonth(a.date), fmtTime(a.date), t('op.row'), a.notes || null].filter(Boolean).join(' · ')
-      : [fmtDayMonth(a.date), fmtTime(a.date), kindLabel(a.kind), pr ? procLabel(pr.type) : null, pr && a.auto ? sinceProcedure(pr.date, d) : null, a.notes || null].filter(Boolean).join(' · ');
+      : [fmtDayMonth(a.date), fmtTime(a.date), kindLabel(a.type), pr ? procLabel(pr.typeName) : null, pr && a.auto ? sinceProcedure(pr.date, d) : null, a.notes || null].filter(Boolean).join(' · ');
     return `
-      <button class="row ${a.status === 'done' || a.status === 'cancelled' ? 'muted' : ''} ${isOp(a) ? 'op' : ''}" type="button" data-appt="${a.id}">
+      <button class="row ${a.status === 'attended' || a.status === 'cancelled' ? 'muted' : ''} ${isOp(a) ? 'op' : ''}" type="button" data-appt="${a.id}">
         <div class="row-main">
           <div class="row-title">${esc(apptLabel(a))}</div>
           <div class="row-sub">${esc(sub)}</div>
@@ -352,24 +398,24 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const pr = a.procedureId ? data.procById[a.procedureId] : null;
     const title = `${apptLabel(a)} · ${fmtDate(a.date)} ${fmtTime(a.date)}`;
     const items = [];
-    if (a.status !== 'done') items.push({ label: t('appt.markDone'), icon: 'check', value: 'done' });
+    if (a.status !== 'attended') items.push({ label: t('appt.markDone'), icon: 'check', value: 'attended' });
     if (a.status !== 'missed') items.push({ label: t('appt.markMissed'), icon: 'alert', value: 'missed' });
     if (a.status !== 'planned') items.push({ label: t('appt.markPlanned'), icon: 'clock', value: 'planned' });
     if (isOp(a)) items.push({ label: t('op.editProc'), icon: 'edit', value: 'editProc' });
     else items.push({ label: t('appt.editDate'), icon: 'edit', value: 'edit' });
-    if (pr) items.push({ label: t('appt.openProc', { p: procLabel(pr.type) }), icon: 'activity', value: 'proc' });
+    if (pr) items.push({ label: t('appt.openProc', { p: procLabel(pr.typeName) }), icon: 'activity', value: 'proc' });
     if (!isOp(a)) items.push({ label: t('appt.delete'), icon: 'trash', value: 'delete', danger: true });
     const v = await actionMenu(title, items);
     if (!v) return;
-    if (['done', 'missed', 'planned'].includes(v)) {
+    if (['attended', 'missed', 'planned'].includes(v)) {
       await Appointments.save({ ...a, status: v });
-      toast(t({ done: 'appt.doneToast', missed: 'appt.missedToast', planned: 'appt.plannedToast' }[v]));
+      toast(t({ attended: 'appt.doneToast', missed: 'appt.missedToast', planned: 'appt.plannedToast' }[v]));
       refresh();
     } else if (v === 'edit') {
       const r = await appointmentForm({ patientId: id, procedures: data.procedures, existing: a });
       if (r) { toast(t('appt.updated')); refresh(); }
     } else if (v === 'editProc') {
-      const r = await procedureForm({ patientId: id, existing: pr });
+      const r = await procedureForm({ patientId: id, existing: pr, procedures: data.procedures });
       if (r) { toast(r.shiftedControls ? t('form.proc.shifted', { n: r.shiftedControls }) : t('p.proc.updated')); refresh(); }
     } else if (v === 'proc') {
       openProcedure(pr.id);
@@ -395,10 +441,11 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
   function filteredPhotos() {
     const f = state.photoFilter;
     if (f === 'all') return data.photos;
-    if (f === 'before' || f === 'after') return data.photos.filter((x) => x.phase === f);
-    return data.photos.filter((x) => (x.tags || []).includes(f));
+    if (f.startsWith('period:')) return data.photos.filter((x) => (x.period || 'other') === f.slice(7));
+    if (f.startsWith('angle:')) return data.photos.filter((x) => (x.angle || 'custom') === f.slice(6));
+    return data.photos;
   }
-  const sortGroup = (list) => [...list].sort((a, b) => (a.phase === b.phase ? (a.date || '').localeCompare(b.date || '') : a.phase === 'before' ? -1 : 1));
+  const sortGroup = (list) => [...list].sort((a, b) => periodRank(a) - periodRank(b) || (a.date || '').localeCompare(b.date || ''));
 
   function photoTile(ph, pr) {
     const sel = state.selected.before?.id === ph.id || state.selected.after?.id === ph.id;
@@ -414,7 +461,8 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
 
   function paintPhotos(body) {
     const photos = filteredPhotos();
-    const tags = [...new Set(data.photos.flatMap((x) => x.tags || []))].sort(cmpText);
+    const periods = PERIODS.filter((k) => data.photos.some((x) => (x.period || 'other') === k));
+    const angles = [...new Set(data.photos.map((x) => x.angle || 'custom'))];
     const byProc = new Map();
     photos.forEach((ph) => {
       const key = ph.procedureId && data.procById[ph.procedureId] ? ph.procedureId : '_';
@@ -424,24 +472,24 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const groups = [];
     data.procedures.forEach((pr) => { if (byProc.has(pr.id)) groups.push({ pr, list: byProc.get(pr.id) }); });
     if (byProc.has('_')) groups.push({ pr: null, list: byProc.get('_') });
-    const hasPair = data.photos.some((x) => x.phase === 'before') && data.photos.some((x) => x.phase === 'after');
+    const hasPair = data.photos.some(isPre) && data.photos.some((x) => !isPre(x));
 
     if (!data.photos.length) {
       body.innerHTML = emptyState({ title: t('p.noPhotos'), text: t('p.noPhotosText'), action: `<button class="btn btn-primary" type="button" data-act="add">${esc(t('p.addPhoto'))}</button>` });
-      body.querySelector('[data-act=add]').onclick = () => addPhoto({ defaultPhase: 'before' });
+      body.querySelector('[data-act=add]').onclick = () => addPhoto({ defaultPeriod: 'pre' });
       return;
     }
 
     body.innerHTML = `
       <div class="chips" style="margin-top:16px">
-        ${[['all', t('common.all')], ['before', t('phase.before')], ['after', t('phase.after')], ...tags.map((x) => [x, x])].map(([v, l]) =>
+        ${[['all', t('common.all')], ...periods.map((k) => [`period:${k}`, periodLabel(k)]), ...angles.map((k) => [`angle:${k}`, angleLabel(k)])].map(([v, l]) =>
           `<button class="chip ${state.photoFilter === v ? 'on' : ''}" type="button" data-filter="${esc(v)}">${esc(l)}</button>`).join('')}
       </div>
       ${state.compare ? `<div class="compare-hint" id="compare-hint"></div>` : ''}
       ${photos.length ? groups.map(({ pr, list }) => `
         <div class="photo-group">
           <div class="photo-group-head">
-            <div class="photo-group-title">${pr ? esc(procLabel(pr.type)) : esc(t('p.photo.unlinked'))}</div>
+            <div class="photo-group-title">${pr ? esc(procLabel(pr.typeName)) : esc(t('p.photo.unlinked'))}</div>
             <div class="photo-group-sub">${pr ? `${esc(fmtDate(pr.date))} · ` : ''}${esc(t('p.photosN', { n: list.length }))}</div>
           </div>
           <div class="photo-grid">${sortGroup(list).map((ph) => photoTile(ph, pr)).join('')}</div>
@@ -455,7 +503,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
              <button class="btn-outline-icon" type="button" data-act="add" aria-label="${esc(t('p.addPhoto'))}">${icon('plus')}</button>`}
       </div>`;
 
-    body.querySelectorAll('[data-act=add]').forEach((b) => { b.onclick = () => addPhoto({ defaultPhase: data.photos.some((x) => x.phase === 'before') ? 'after' : 'before' }); });
+    body.querySelectorAll('[data-act=add]').forEach((b) => { b.onclick = () => addPhoto(); });
     body.querySelectorAll('[data-filter]').forEach((b) => { b.onclick = () => { state.photoFilter = b.dataset.filter; paintTab(); }; });
     const cmp = body.querySelector('[data-act=compare]');
     if (cmp) cmp.onclick = () => { state.compare = true; presetCompare(); paintTab(); };
@@ -474,19 +522,21 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
   }
 
   function presetCompare() {
-    const pr = data.procedures.find((p) => data.photos.some((x) => x.procedureId === p.id && x.phase === 'before') && data.photos.some((x) => x.procedureId === p.id && x.phase === 'after'));
+    // Aynı işlemde, aynı açıdan öncesi ile en yeni dönem otomatik eşleşir
+    const pr = data.procedures.find((p) => data.photos.some((x) => x.procedureId === p.id && isPre(x)) && data.photos.some((x) => x.procedureId === p.id && !isPre(x)));
     const pool = pr ? data.photos.filter((x) => x.procedureId === pr.id) : data.photos;
-    const befores = pool.filter((x) => x.phase === 'before').sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-    const afters = pool.filter((x) => x.phase === 'after').sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    const befores = pool.filter(isPre).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    const afters = pool.filter((x) => !isPre(x)).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     let b = befores[0], a = afters[0];
     for (const x of befores) {
-      const match = afters.find((y) => (y.tags || []).some((tg) => (x.tags || []).includes(tg)));
+      const match = afters.find((y) => y.angle && y.angle !== 'custom' && y.angle === x.angle);
       if (match) { b = x; a = match; break; }
     }
     state.selected = { before: b || null, after: a || null };
   }
   function toggleSelect(ph) {
-    state.selected[ph.phase] = state.selected[ph.phase]?.id === ph.id ? null : ph;
+    const slot = isPre(ph) ? 'before' : 'after';
+    state.selected[slot] = state.selected[slot]?.id === ph.id ? null : ph;
     root.querySelectorAll('[data-photo]').forEach((t) => {
       const on = state.selected.before?.id === t.dataset.photo || state.selected.after?.id === t.dataset.photo;
       t.classList.toggle('selected', on);
@@ -497,7 +547,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
   function updateCompareBar(body) {
     const { before, after } = state.selected;
     const hint = body.querySelector('#compare-hint');
-    if (hint) hint.textContent = `${before ? `${t('phase.before')} · ${fmtDayMonth(before.date)}` : t('p.photo.pickBefore')} · ${after ? `${t('phase.after')} · ${fmtDayMonth(after.date)}` : t('p.photo.pickAfter')}`;
+    if (hint) hint.textContent = `${before ? `${periodOf(before)} · ${fmtDayMonth(before.date)}` : t('p.photo.pickBefore')} · ${after ? `${periodOf(after)} · ${fmtDayMonth(after.date)}` : t('p.photo.pickAfter')}`;
     const go = body.querySelector('[data-act=compare-go]');
     if (go) go.disabled = !(before && after);
   }
@@ -528,8 +578,8 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       const pr = ph.procedureId ? data.procById[ph.procedureId] : null;
       img.src = blobURL(ph.id, ph.blob);
       v.querySelector('.viewer-title').textContent = `${idx + 1} / ${list.length}`;
-      v.querySelector('.viewer-meta').textContent = `${phaseLabel(ph)} · ${fmtDateLong(ph.date)}`;
-      v.querySelector('.viewer-sub').textContent = [pr ? procLabel(pr.type) : null, pr ? sinceProcedure(pr.date, parseDate(ph.date)) : null, ...(ph.tags || [])].filter(Boolean).join(' · ') || t('p.photo.noTags');
+      v.querySelector('.viewer-meta').textContent = `${periodOf(ph)} · ${fmtDateLong(ph.date)}`;
+      v.querySelector('.viewer-sub').textContent = [pr ? procLabel(pr.typeName) : null, angleOf(ph), pr ? sinceProcedure(pr.date, parseDate(ph.date)) : null, ph.notes || null].filter(Boolean).join(' · ') || t('p.photo.noNotes');
     };
     const close = () => { document.removeEventListener('keydown', onKey); v.remove(); };
     const prev = () => { idx = (idx - 1 + list.length) % list.length; show(); };
@@ -545,7 +595,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     };
     v.querySelector('[data-act=delete]').onclick = async () => {
       const ph = list[idx];
-      const ok = await confirmDialog({ title: t('p.photo.deleteQ'), message: t('p.photo.irreversible'), okText: t('common.delete'), danger: true });
+      const ok = await confirmDialog({ title: t('p.photo.deleteQ'), message: t('trash.hint', { days: TRASH_DAYS }), okText: t('common.delete'), danger: true });
       if (!ok) return;
       await Photos.remove(ph.id);
       // Silme sonrası görüntüleyici kapanır ve galeriye dönülür; sonraki fotoğrafa geçmek "silinmedi" izlenimi veriyordu
@@ -572,8 +622,8 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     let before = sel.before, after = sel.after;
     let mode = 'side'; // side | slide | overlay
     const prOf = (ph) => (ph.procedureId && data.procById[ph.procedureId]) || null;
-    const cap = (ph) => `${phaseLabel(ph)} · ${fmtDayMonth(ph.date)}`;
-    const corner = (ph) => { const pr = prOf(ph); return ph.phase === 'after' && pr ? sinceProcedure(pr.date, parseDate(ph.date)) : (ph.tags || [])[0] || ''; };
+    const cap = (ph) => `${periodOf(ph)} · ${fmtDayMonth(ph.date)}`;
+    const corner = (ph) => angleOf(ph);
 
     const v = el(`
       <div class="viewer cmp" role="dialog" aria-modal="true" aria-label="${esc(t('p.photo.compare'))}">
@@ -652,7 +702,8 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     });
     v.querySelector('[data-act=change]').onclick = async () => {
       const pr = prOf(after) || prOf(before);
-      const pool = data.photos.filter((x) => x.phase === 'after' && (!pr || x.procedureId === pr.id));
+      // Aynı işlemin öncesi dışındaki fotoğrafları; aynı açıdakiler önce
+      const pool = data.photos.filter((x) => !isPre(x) && (!pr || x.procedureId === pr.id)).sort((x, y) => (y.angle === before.angle) - (x.angle === before.angle) || (y.date || '').localeCompare(x.date || ''));
       const picked = await pickPhotoSheet(t('p.cmp.pickAfter'), pool, after.id);
       if (picked) { after = picked; state.selected.after = picked; paintStage(); }
     };
@@ -669,7 +720,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       content: pool.length ? `<div class="pick-grid">${pool.map((ph) => `
         <button class="pick ${ph.id === currentId ? 'on' : ''}" type="button" data-pick="${ph.id}">
           <img src="${blobURL(ph.id + ':t', ph.thumb || ph.blob)}" alt="">
-          <span>${esc(fmtDayMonth(ph.date))}${(ph.tags || [])[0] ? ` · ${esc(ph.tags[0])}` : ''}</span>
+          <span>${esc(periodOf(ph))} · ${esc(fmtDayMonth(ph.date))}${angleOf(ph) ? ` · ${esc(angleOf(ph))}` : ''}</span>
         </button>`).join('')}</div>` : emptyState({ title: t('p.cmp.noAfter') }),
     });
     s.body.querySelectorAll('[data-pick]').forEach((b) => { b.onclick = () => s.close(pool.find((x) => x.id === b.dataset.pick)); });
@@ -696,6 +747,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       if (corner(after)) x.fillText(corner(after), pad + wa + gap + wb, pad + H + label / 2);
       const blob = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.9));
       const file = new File([blob], t('p.cmp.file'), { type: 'image/jpeg' });
+      audit('share', 'photo', after.id, `${cap(before)} / ${cap(after)}`);
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try { await navigator.share({ files: [file], title: t('p.cmp.title') }); return; } catch (e) { if (e?.name === 'AbortError') return; }
       }

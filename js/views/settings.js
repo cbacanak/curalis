@@ -1,5 +1,7 @@
 /* Ayarlar — bölüm etiketi + hairline satırlar; yıkıcı eylem yalnızca kırmızı metin */
-import { counts, clearAllData } from '../db.js';
+import { counts, clearAllData, Templates, trashCount, Audit } from '../db.js';
+import { templatesSheet, trashSheet, auditSheet } from './manage.js';
+import { TRASH_DAYS } from '../model.js';
 import { esc, icon, toast, confirmDialog, actionMenu } from '../ui.js';
 import { setTopbar } from '../nav.js';
 import { storageInfo, requestPersist, fmtBytes, downloadBackup, pickBackupFile, restoreBackup } from '../storage.js';
@@ -8,11 +10,11 @@ import { getTheme, applyTheme, THEMES } from '../theme.js';
 import { segmented, bindSegmented } from '../ui.js';
 import { t, getLang, setLang, LANGS, applyStaticText } from '../i18n.js';
 
-export const APP_VERSION = '0.5.0';
+export const APP_VERSION = '0.6.0';
 
 export async function render(root) {
   setTopbar({ title: t('s.title') });
-  const [c, st, pinOn, lockDelay] = await Promise.all([counts(), storageInfo(), hasPin(), getLockDelay()]);
+  const [c, st, pinOn, lockDelay, tplCount, trashN, auditN] = await Promise.all([counts(), storageInfo(), hasPin(), getLockDelay(), Templates.all().then((l) => l.length), trashCount(), Audit.count()]);
   const delayLabel = lockDelayLabel(lockDelay);
   const modeTitle = st.inApp ? t('s.mode.inApp') : st.standalone ? t('s.mode.standalone') : t('s.mode.tab');
   const modeSub = st.inApp ? t('s.mode.inAppSub') : st.ios && !st.standalone ? t('s.mode.iosSub') : '';
@@ -54,6 +56,11 @@ export async function render(root) {
     </section>
 
     <section class="section">
+      <div class="section-label">${esc(t('s.templates'))}</div>
+      ${rowBtn('templates', esc(t('s.templates')), esc(t('s.templates.sub', { n: tplCount })))}
+    </section>
+
+    <section class="section">
       <div class="section-label">${esc(t('s.backup'))}</div>
       ${rowBtn('backup', esc(t('s.backup.take')), '')}
       ${rowBtn('restore', esc(t('s.backup.restore')), '')}
@@ -69,6 +76,8 @@ export async function render(root) {
 
     <section class="section">
       <div class="section-label">${esc(t('s.data'))}</div>
+      ${rowBtn('trash', esc(t('s.trash')), esc(t('s.trash.sub', { n: trashN, days: TRASH_DAYS })), { value: trashN ? String(trashN) : '' })}
+      ${rowBtn('audit', esc(t('s.audit')), '', { value: String(auditN) })}
       ${rowBtn('clear', esc(t('s.clear')), '', { danger: true })}
     </section>
 
@@ -103,6 +112,9 @@ export async function render(root) {
       render(root);
     }
   };
+  root.querySelector('[data-act=templates]').onclick = async () => { await templatesSheet(); render(root); };
+  root.querySelector('[data-act=trash]').onclick = async () => { await trashSheet(); render(root); };
+  root.querySelector('[data-act=audit]').onclick = () => auditSheet();
   root.querySelector('[data-act=backup]').onclick = async () => {
     const b = root.querySelector('[data-act=backup]');
     b.disabled = true;

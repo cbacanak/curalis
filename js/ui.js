@@ -454,7 +454,7 @@ export function bindSegmented(segEl, onChange) {
 /** Durum düz metin olarak; renk yalnızca gerektiğinde (gecikmiş / gelmedi) */
 export function statusText(status, { overdue = false, today = false } = {}) {
   if (overdue) return `<span class="status danger">${esc(t('status.late'))}</span>`;
-  const map = { planned: [today ? t('common.today') : t('status.planned'), ''], done: [t('status.done'), 'muted'], missed: [t('status.missed'), 'warning'], cancelled: [t('status.cancelled'), 'muted'] };
+  const map = { planned: [today ? t('common.today') : t('status.planned'), ''], attended: [t('status.attended'), 'muted'], missed: [t('status.missed'), 'warning'], cancelled: [t('status.cancelled'), 'muted'] };
   const [l, c] = map[status] || [status, ''];
   return `<span class="status ${c}">${esc(l)}</span>`;
 }

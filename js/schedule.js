@@ -48,9 +48,9 @@ export function buildControls(procedure, { hour = 10, minute = 0, avoidSunday = 
       patientId: procedure.patientId,
       procedureId: procedure.id,
       date: toLocalISO(d),
-      kind: 'kontrol',
+      type: 'control',
       label: c.label,
-      scheduleKey: c.key,
+      periodLabel: c.key,
       status: 'planned',
       auto: true,
       notes: '',
@@ -58,19 +58,19 @@ export function buildControls(procedure, { hour = 10, minute = 0, avoidSunday = 
   });
 }
 
-/** İşlemin kendisi için Ajanda kaydı (ameliyat / işlem günü). scheduleKey 'op'; auto: true (işlemle birlikte silinir). */
+/** İşlemin kendisi için Ajanda kaydı (ameliyat / işlem günü). periodLabel 'op'; auto: true (işlemle birlikte silinir). */
 export const OP_KEY = 'op';
 export const DEFAULT_OP_TIME = '09:00';
 export function buildOperation(procedure, existing = null) {
   const time = procedure.time || DEFAULT_OP_TIME;
   const past = procedure.date < todayISO();
-  // Geçmiş tarih: yapıldı sayılır; ileri tarih: planlı. Kullanıcının verdiği 'gelmedi' / 'iptal' korunur.
+  // Geçmiş tarih: geldi sayılır; ileri tarih: planlı. Kullanıcının verdiği 'gelmedi' / 'iptal' korunur.
   const keep = existing && (existing.status === 'missed' || existing.status === 'cancelled');
   return {
     ...(existing || {}),
     patientId: procedure.patientId, procedureId: procedure.id,
-    date: `${procedure.date}T${time}`, kind: 'operasyon', label: procedure.type, scheduleKey: OP_KEY,
-    status: keep ? existing.status : (past ? 'done' : 'planned'), auto: true, notes: existing?.notes || '',
+    date: `${procedure.date}T${time}`, type: 'operation', label: procedure.typeName, periodLabel: OP_KEY,
+    status: keep ? existing.status : (past ? 'attended' : 'planned'), auto: true, notes: existing?.notes || '',
   };
 }
 
