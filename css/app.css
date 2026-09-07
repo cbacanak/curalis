@@ -280,6 +280,10 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .menu-item:last-child { border-bottom: 0; }
 .menu-item.danger { color: var(--danger); }
 .menu-item .ic { color: var(--text-secondary); width: 20px; height: 20px; }
+.menu-item .menu-main { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.menu-item .menu-sub { font-size: var(--fs-caption); color: var(--text-tertiary); }
+.menu-item[disabled] { color: var(--text-tertiary); cursor: default; }
+.menu-item[disabled] .ic { color: var(--text-tertiary); }
 .menu-item.danger .ic { color: var(--danger); }
 .menu-item .check-mark { margin-left: auto; color: var(--text); }
 

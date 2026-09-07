@@ -142,6 +142,8 @@ const TR = {
   'p.photo.noNotes': 'Not yok', 'p.photo.updated': 'Fotoğraf güncellendi', 'p.photo.deleteQ': 'Fotoğraf silinsin mi?', 'p.photo.irreversible': 'Bu işlem geri alınamaz.',
   'p.photo.deleted': 'Fotoğraf silindi', 'p.cmp.share': 'Paylaş', 'p.cmp.side': 'Yan yana', 'p.cmp.slide': 'Kaydır', 'p.cmp.overlay': 'Üst üste',
   'p.cmp.change': 'Değiştir', 'p.cmp.opacity': 'Opaklık', 'p.cmp.pickAfter': 'Sonrası fotoğrafını seç', 'p.cmp.noAfter': 'Seçilebilecek sonrası fotoğrafı yok',
+  'share.purposeTitle': 'Paylaşım amacı', 'share.education': 'Eğitim / meslektaş', 'share.marketing': 'Tanıtım (sosyal medya, web)', 'share.noConsent': 'Onam bu kullanımı kapsamıyor',
+  'share.warnTitle': 'Fotoğraf onamı yok', 'share.warnMsg': 'Hastanın onam kapsamı: {c}. Bu paylaşım kapsam dışında; denetim kaydına yazılır. Yine de paylaşılsın mı?', 'share.warnOk': 'Yine de paylaş',
   'p.cmp.file': 'karsilastirma.jpg', 'p.cmp.title': 'Karşılaştırma', 'p.cmp.downloaded': 'Görsel indirildi', 'p.cmp.shareFail': 'Paylaşım hazırlanamadı',
   // Ayarlar
   's.title': 'Ayarlar', 's.sub': 'Veriler yalnızca bu cihazda saklanır', 's.appearance': 'Görünüm', 's.language': 'Dil', 's.security': 'Güvenlik',
@@ -306,6 +308,8 @@ const EN = {
   'p.photo.noNotes': 'No notes', 'p.photo.updated': 'Photo updated', 'p.photo.deleteQ': 'Delete this photo?', 'p.photo.irreversible': 'This cannot be undone.',
   'p.photo.deleted': 'Photo deleted', 'p.cmp.share': 'Share', 'p.cmp.side': 'Side by side', 'p.cmp.slide': 'Slider', 'p.cmp.overlay': 'Overlay',
   'p.cmp.change': 'Change', 'p.cmp.opacity': 'Opacity', 'p.cmp.pickAfter': 'Choose the after photo', 'p.cmp.noAfter': 'No after photo to choose from',
+  'share.purposeTitle': 'Purpose of sharing', 'share.education': 'Education / colleagues', 'share.marketing': 'Marketing (social media, web)', 'share.noConsent': 'Consent does not cover this use',
+  'share.warnTitle': 'No photo consent', 'share.warnMsg': 'Patient consent scope: {c}. This share is outside that scope and will be written to the audit log. Share anyway?', 'share.warnOk': 'Share anyway',
   'p.cmp.file': 'comparison.jpg', 'p.cmp.title': 'Comparison', 'p.cmp.downloaded': 'Image downloaded', 'p.cmp.shareFail': 'Could not prepare the share',
   's.title': 'Settings', 's.sub': 'Data is stored only on this device', 's.appearance': 'Appearance', 's.language': 'Language', 's.security': 'Security',
   's.theme.light': 'Light', 's.theme.dark': 'Dark', 's.theme.system': 'System',

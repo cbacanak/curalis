@@ -310,8 +310,8 @@ export function actionMenu(title, items) {
     title,
     size: 'sm',
     content: `<div class="menu">${items.map((it, i) => `
-      <button class="menu-item ${it.danger ? 'danger' : ''}" data-i="${i}" type="button">
-        ${it.icon ? icon(it.icon) : ''}<span>${esc(it.label)}</span>${it.checked ? `<span class="check-mark">${icon('check')}</span>` : ''}
+      <button class="menu-item ${it.danger ? 'danger' : ''}" data-i="${i}" type="button" ${it.disabled ? 'disabled' : ''}>
+        ${it.icon ? icon(it.icon) : ''}<span class="menu-main"><span>${esc(it.label)}</span>${it.sub ? `<span class="menu-sub">${esc(it.sub)}</span>` : ''}</span>${it.checked ? `<span class="check-mark">${icon('check')}</span>` : ''}
       </button>`).join('')}</div>`,
   });
   s.body.querySelectorAll('.menu-item').forEach((b) => {

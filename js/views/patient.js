@@ -728,8 +728,29 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
   }
 
   /** İki fotoğrafı etiketleriyle tek görsele birleştirip paylaşır (hasta adı yazmaz) */
+  /**
+   * Onam kontrolü (MOBIL.md §5): amaç seçilir; 'tanıtım' onamı yoksa seçenek kapalı;
+   * 'eğitim' onamı yoksa uyarı ile devam edilebilir (denetim kaydına yazılır). Döner: { purpose, override } ya da null.
+   */
+  async function sharePurpose() {
+    const c = data.patient.consentStatus || 'none';
+    const eduOk = c === 'treatment_education' || c === 'treatment_education_marketing';
+    const mktOk = c === 'treatment_education_marketing';
+    const purpose = await actionMenu(t('share.purposeTitle'), [
+      { label: t('share.education'), icon: 'users', value: 'education', sub: eduOk ? '' : t('share.noConsent') },
+      { label: t('share.marketing'), icon: 'share', value: 'marketing', disabled: !mktOk, sub: mktOk ? '' : t('share.noConsent') },
+    ]);
+    if (!purpose) return null;
+    const covered = purpose === 'education' ? eduOk : mktOk;
+    if (covered) return { purpose, override: false };
+    const ok = await confirmDialog({ title: t('share.warnTitle'), message: t('share.warnMsg', { c: consentLabel(c) }), okText: t('share.warnOk'), danger: true });
+    return ok ? { purpose, override: true } : null;
+  }
+
   async function shareCompare(before, after, { cap, corner }) {
     const load = (ph) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = blobURL(ph.id, ph.blob); });
+    const p = await sharePurpose();
+    if (!p) return;
     try {
       const [a, b] = await Promise.all([load(before), load(after)]);
       const H = 1200, gap = 12, pad = 24, label = 64;
@@ -747,7 +768,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       if (corner(after)) x.fillText(corner(after), pad + wa + gap + wb, pad + H + label / 2);
       const blob = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.9));
       const file = new File([blob], t('p.cmp.file'), { type: 'image/jpeg' });
-      audit('share', 'photo', after.id, `${cap(before)} / ${cap(after)}`);
+      audit('share', 'photo', after.id, `${p.purpose} · consent:${data.patient.consentStatus || 'none'}${p.override ? ' · override' : ''} · ${cap(before)} / ${cap(after)}`);
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try { await navigator.share({ files: [file], title: t('p.cmp.title') }); return; } catch (e) { if (e?.name === 'AbortError') return; }
       }
