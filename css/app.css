@@ -252,6 +252,9 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 }
 .open .sheet { transform: translateY(0); }
 .closing .sheet { transform: translateY(32px); }
+.sheet.dragging { transition: none; }
+.sheet-backdrop:has(.sheet.dragging) { transition: none; }
+.sheet-head { touch-action: none; }
 .sheet-head { display: flex; align-items: center; gap: 12px; padding: 18px var(--page-x) 4px; position: relative; }
 .sheet-grip { position: absolute; top: 8px; left: 50%; width: 36px; height: 4px; border-radius: 4px; background: var(--divider); transform: translateX(-50%); }
 .sheet-title { flex: 1; font-size: 20px; font-weight: var(--fw-medium); letter-spacing: -.01em; padding-top: 8px; }
