@@ -538,11 +538,10 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       const ok = await confirmDialog({ title: 'Fotoğraf silinsin mi?', message: 'Bu işlem geri alınamaz.', okText: 'Sil', danger: true });
       if (!ok) return;
       await Photos.remove(ph.id);
-      list.splice(idx, 1);
+      // Silme sonrası görüntüleyici kapanır ve galeriye dönülür; sonraki fotoğrafa geçmek "silinmedi" izlenimi veriyordu
+      close();
+      await refresh();
       toast('Fotoğraf silindi');
-      if (!list.length) { close(); refresh(); return; }
-      idx = Math.min(idx, list.length - 1);
-      await load(); paint(); show();
     };
     let sx = null;
     v.querySelector('.viewer-stage').addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });

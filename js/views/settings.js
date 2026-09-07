@@ -7,7 +7,7 @@ import { hasPin, getLockDelay, setLockDelay, clearPin, setupPinFlow, requirePin,
 import { getTheme, applyTheme, THEMES } from '../theme.js';
 import { segmented, bindSegmented } from '../ui.js';
 
-export const APP_VERSION = '0.3.3';
+export const APP_VERSION = '0.3.4';
 
 export async function render(root) {
   setTopbar({ title: 'Ayarlar' });
