@@ -101,6 +101,7 @@ const TR = {
   'patients.title': 'Hastalar', 'patients.count': '{n} kayıt', 'patients.upcoming': '{n} yaklaşan randevu', 'patients.new': 'Yeni hasta',
   'patients.search.ph': 'Ad, soyad veya telefon', 'patients.search': 'Hasta ara', 'patients.added': 'Hasta eklendi', 'patients.noProc': 'Henüz işlem yok',
   'patients.empty': 'Henüz hasta yok', 'patients.emptyText': 'İlk hasta kartını oluşturarak başla.', 'patients.noResult': 'Sonuç yok',
+  'patients.overdue': '{n} geciken', 'patients.overdueLabel': 'Geciken kontroller · {n}', 'patients.overdueMore': '+{n} geciken daha · Ajanda\'da tümü', 'overdue.reschedule': 'Yeniden planla', 'overdue.rescheduled': 'Randevu yeniden planlandı',
   'patients.noMatch': '"{q}" ile eşleşen hasta bulunamadı.', 'patients.upcomingLabel': 'Yaklaşan', 'patients.results': '{n} sonuç', 'patients.all': 'Tüm hastalar',
   // Ajanda
   'cal.title': 'Ajanda', 'cal.todayCount': 'bugün {n} randevu', 'cal.list': 'Liste', 'cal.month': 'Takvim', 'cal.overdue': 'Gecikmiş · {n}',
@@ -141,6 +142,8 @@ const TR = {
   'p.photo.noNotes': 'Not yok', 'p.photo.updated': 'Fotoğraf güncellendi', 'p.photo.deleteQ': 'Fotoğraf silinsin mi?', 'p.photo.irreversible': 'Bu işlem geri alınamaz.',
   'p.photo.deleted': 'Fotoğraf silindi', 'p.cmp.share': 'Paylaş', 'p.cmp.side': 'Yan yana', 'p.cmp.slide': 'Kaydır', 'p.cmp.overlay': 'Üst üste',
   'p.cmp.change': 'Değiştir', 'p.cmp.opacity': 'Opaklık', 'p.cmp.pickAfter': 'Sonrası fotoğrafını seç', 'p.cmp.noAfter': 'Seçilebilecek sonrası fotoğrafı yok',
+  'share.purposeTitle': 'Paylaşım amacı', 'share.education': 'Eğitim / meslektaş', 'share.marketing': 'Tanıtım (sosyal medya, web)', 'share.noConsent': 'Onam bu kullanımı kapsamıyor',
+  'share.warnTitle': 'Fotoğraf onamı yok', 'share.warnMsg': 'Hastanın onam kapsamı: {c}. Bu paylaşım kapsam dışında; denetim kaydına yazılır. Yine de paylaşılsın mı?', 'share.warnOk': 'Yine de paylaş',
   'p.cmp.file': 'karsilastirma.jpg', 'p.cmp.title': 'Karşılaştırma', 'p.cmp.downloaded': 'Görsel indirildi', 'p.cmp.shareFail': 'Paylaşım hazırlanamadı',
   // Ayarlar
   's.title': 'Ayarlar', 's.sub': 'Veriler yalnızca bu cihazda saklanır', 's.appearance': 'Görünüm', 's.language': 'Dil', 's.security': 'Güvenlik',
@@ -188,6 +191,11 @@ const TR = {
   'b.contents': (p) => `<b>${p.patients} hasta</b>, ${p.photos} fotoğraf, ${p.appointments} randevu.`,
   'b.modes': '<b>Birleştir</b> mevcut kayıtları korur, aynı kayıtları günceller. <b>Değiştir</b> önce mevcut tüm verileri siler.',
   'b.replace': 'Değiştir', 'b.merge': 'Birleştir', 'b.restored': '{n} hasta geri yüklendi',
+  'b.pw.setTitle': 'Yedek parolası', 'b.pw.enterTitle': 'Yedek parolası', 'b.pw.label': 'Parola', 'b.pw.confirm': 'Parola (tekrar)',
+  'b.pw.setHint': 'Yedek bu parolayla şifrelenir. Parola kaydedilmez ve kurtarılamaz; unutursan yedek açılamaz.',
+  'b.pw.enterHint': 'Bu yedek şifreli. Alırken belirlediğin parolayı gir.',
+  'b.pw.encrypt': 'Şifrele ve yedek al', 'b.pw.open': 'Yedeği aç', 'b.pw.short': 'Parola en az {n} karakter olmalı.', 'b.pw.mismatch': 'Parolalar eşleşmedi.',
+  'b.pw.required': 'Parola gerekli.', 'b.pw.wrong': 'Parola yanlış ya da dosya bozuk.', 'b.needsCrypto': 'Şifreli yedek için güvenli bağlantı (https) gerekir.',
 };
 
 const EN = {
@@ -261,6 +269,7 @@ const EN = {
   'patients.title': 'Patients', 'patients.count': (p) => pl(p.n, 'record', 'records'), 'patients.upcoming': (p) => pl(p.n, 'upcoming appointment', 'upcoming appointments'), 'patients.new': 'New patient',
   'patients.search.ph': 'Name or phone', 'patients.search': 'Search patients', 'patients.added': 'Patient added', 'patients.noProc': 'No procedures yet',
   'patients.empty': 'No patients yet', 'patients.emptyText': 'Start by creating the first patient record.', 'patients.noResult': 'No results',
+  'patients.overdue': (p) => `${p.n} overdue`, 'patients.overdueLabel': 'Overdue follow-ups · {n}', 'patients.overdueMore': (p) => `+${p.n} more overdue · all in Agenda`, 'overdue.reschedule': 'Reschedule', 'overdue.rescheduled': 'Appointment rescheduled',
   'patients.noMatch': 'No patient matches "{q}".', 'patients.upcomingLabel': 'Upcoming', 'patients.results': (p) => pl(p.n, 'result', 'results'), 'patients.all': 'All patients',
   'cal.title': 'Agenda', 'cal.todayCount': (p) => `${pl(p.n, 'appointment', 'appointments')} today`, 'cal.list': 'List', 'cal.month': 'Calendar', 'cal.overdue': 'Overdue · {n}',
   'cal.upcoming': 'Upcoming follow-up', 'cal.upcomingOp': 'Upcoming surgery / procedure', 'cal.emptyList': 'No appointments in the next {n} days', 'cal.emptyListText': 'Follow-ups appear here when you add a procedure.',
@@ -299,6 +308,8 @@ const EN = {
   'p.photo.noNotes': 'No notes', 'p.photo.updated': 'Photo updated', 'p.photo.deleteQ': 'Delete this photo?', 'p.photo.irreversible': 'This cannot be undone.',
   'p.photo.deleted': 'Photo deleted', 'p.cmp.share': 'Share', 'p.cmp.side': 'Side by side', 'p.cmp.slide': 'Slider', 'p.cmp.overlay': 'Overlay',
   'p.cmp.change': 'Change', 'p.cmp.opacity': 'Opacity', 'p.cmp.pickAfter': 'Choose the after photo', 'p.cmp.noAfter': 'No after photo to choose from',
+  'share.purposeTitle': 'Purpose of sharing', 'share.education': 'Education / colleagues', 'share.marketing': 'Marketing (social media, web)', 'share.noConsent': 'Consent does not cover this use',
+  'share.warnTitle': 'No photo consent', 'share.warnMsg': 'Patient consent scope: {c}. This share is outside that scope and will be written to the audit log. Share anyway?', 'share.warnOk': 'Share anyway',
   'p.cmp.file': 'comparison.jpg', 'p.cmp.title': 'Comparison', 'p.cmp.downloaded': 'Image downloaded', 'p.cmp.shareFail': 'Could not prepare the share',
   's.title': 'Settings', 's.sub': 'Data is stored only on this device', 's.appearance': 'Appearance', 's.language': 'Language', 's.security': 'Security',
   's.theme.light': 'Light', 's.theme.dark': 'Dark', 's.theme.system': 'System',
@@ -343,6 +354,11 @@ const EN = {
   'b.contents': (p) => `<b>${pl(p.patients, 'patient', 'patients')}</b>, ${pl(p.photos, 'photo', 'photos')}, ${pl(p.appointments, 'appointment', 'appointments')}.`,
   'b.modes': '<b>Merge</b> keeps existing records and updates matching ones. <b>Replace</b> deletes all existing data first.',
   'b.replace': 'Replace', 'b.merge': 'Merge', 'b.restored': (p) => `${pl(p.n, 'patient', 'patients')} restored`,
+  'b.pw.setTitle': 'Backup password', 'b.pw.enterTitle': 'Backup password', 'b.pw.label': 'Password', 'b.pw.confirm': 'Password (again)',
+  'b.pw.setHint': 'The backup is encrypted with this password. It is not stored and cannot be recovered; if you forget it the backup cannot be opened.',
+  'b.pw.enterHint': 'This backup is encrypted. Enter the password you chose when creating it.',
+  'b.pw.encrypt': 'Encrypt and back up', 'b.pw.open': 'Open backup', 'b.pw.short': 'Password must be at least {n} characters.', 'b.pw.mismatch': 'Passwords do not match.',
+  'b.pw.required': 'Password is required.', 'b.pw.wrong': 'Wrong password or corrupted file.', 'b.needsCrypto': 'Encrypted backup requires a secure connection (https).',
 };
 
 const DICT = { tr: TR, en: EN };
