@@ -14,7 +14,8 @@ export const PROCEDURE_TYPES = [
   'Diğer',
 ];
 
-export const ANESTHESIA = ['Genel', 'Lokal', 'Sedasyon', 'Lokal + Sedasyon'];
+export const ANESTHESIA_NONE = 'Yok';
+export const ANESTHESIA = ['Genel', 'Lokal', 'Sedasyon', 'Lokal + Sedasyon', ANESTHESIA_NONE].sort((a, b) => a.localeCompare(b, 'tr'));
 export const APPT_KINDS = [
   ['kontrol', 'Kontrol'], ['muayene', 'Muayene'], ['operasyon', 'Operasyon'],
   ['pansuman', 'Pansuman'], ['diger', 'Diğer'],
@@ -90,7 +91,7 @@ export function procedureForm({ patientId, existing = null }) {
         ${field({ label: 'Açıklama / teknik', name: 'title', value: p.title, placeholder: 'Açık teknik, kıkırdak greft…' })}
         <div class="form-row">
           ${field({ label: 'İşlem tarihi', name: 'date', type: 'date', value: p.date || todayISO(), required: true })}
-          ${selectField({ label: 'Anestezi', name: 'anesthesia', value: p.anesthesia || 'Genel', options: ANESTHESIA, optional: false })}
+          ${selectField({ label: 'Anestezi', name: 'anesthesia', value: p.anesthesia || ANESTHESIA_NONE, options: ANESTHESIA, optional: false })}
         </div>
         ${textareaField({ label: 'Ameliyat notu', name: 'notes', value: p.notes, placeholder: 'Bulgular, uygulanan teknik, komplikasyon, öneriler…', rows: 4 })}
         ${isNew ? `

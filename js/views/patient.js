@@ -240,7 +240,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const controls = controlsOf(pr.id);
     const done = controls.filter((c) => c.status === 'done').length;
     const photos = data.photos.filter((x) => x.procedureId === pr.id).length;
-    const line1 = [fmtDate(pr.date), pr.anesthesia ? `${pr.anesthesia} anestezi` : null].filter(Boolean).join(' · ');
+    const line1 = [fmtDate(pr.date), pr.anesthesia && pr.anesthesia !== 'Yok' ? `${pr.anesthesia} anestezi` : null].filter(Boolean).join(' · ');
     const line2 = [controls.length ? `${done}/${controls.length} kontrol` : null, photos ? `${photos} fotoğraf` : null].filter(Boolean).join(' · ');
     return `
       <button class="row" type="button" data-proc="${pr.id}">
