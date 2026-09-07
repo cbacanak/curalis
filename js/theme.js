@@ -1,7 +1,7 @@
 /* Tema: Açık / Koyu / Sistem — TASARIM.md §2.1
  * Seçim localStorage'da tutulur ve index.html'deki satır içi betik CSS yüklenmeden önce uygular (yanıp sönme olmaz). */
 const KEY = 'hasta-takip:theme';
-export const THEMES = [['light', 'Açık'], ['dark', 'Koyu'], ['system', 'Sistem']];
+export const THEMES = ['light', 'dark', 'system']; // etiketler i18n: s.theme.*
 
 export const DEFAULT_THEME = 'system'; // seçim yapılmadıysa sistem tercihi izlenir
 

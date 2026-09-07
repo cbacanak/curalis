@@ -1,12 +1,13 @@
 /* Otomatik kontrol takvimi */
 
+// label: kayıtta saklanan kanonik Türkçe ad (görüntüde i18n apptLabel ile çevrilir); kısa adlar i18n 'sched.short.*'
 export const CONTROL_SCHEDULE = [
-  { key: 'd1', label: '1. Gün Kontrolü', short: '1. Gün', add: (d) => addDays(d, 1) },
-  { key: 'w1', label: '1. Hafta Kontrolü', short: '1. Hafta', add: (d) => addDays(d, 7) },
-  { key: 'm1', label: '1. Ay Kontrolü', short: '1. Ay', add: (d) => addMonths(d, 1) },
-  { key: 'm3', label: '3. Ay Kontrolü', short: '3. Ay', add: (d) => addMonths(d, 3) },
-  { key: 'm6', label: '6. Ay Kontrolü', short: '6. Ay', add: (d) => addMonths(d, 6) },
-  { key: 'y1', label: '1. Yıl Kontrolü', short: '1. Yıl', add: (d) => addMonths(d, 12) },
+  { key: 'd1', label: '1. Gün Kontrolü', add: (d) => addDays(d, 1) },
+  { key: 'w1', label: '1. Hafta Kontrolü', add: (d) => addDays(d, 7) },
+  { key: 'm1', label: '1. Ay Kontrolü', add: (d) => addMonths(d, 1) },
+  { key: 'm3', label: '3. Ay Kontrolü', add: (d) => addMonths(d, 3) },
+  { key: 'm6', label: '6. Ay Kontrolü', add: (d) => addMonths(d, 6) },
+  { key: 'y1', label: '1. Yıl Kontrolü', add: (d) => addMonths(d, 12) },
 ];
 
 export function addDays(date, n) {

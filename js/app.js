@@ -4,6 +4,7 @@ import { currentPath, setActiveNav } from './nav.js';
 import { requestPersist, renderNotice } from './storage.js';
 import { initLock } from './lock.js';
 import { toast, emptyState } from './ui.js';
+import { t, applyStaticText } from './i18n.js';
 
 const routes = [
   { re: /^\/?$/, nav: 'patients', load: () => import('./views/patients.js'), params: () => ({}) },
@@ -40,7 +41,7 @@ async function route() {
       if (typeof result === 'function') cleanup = result;
     } catch (err) {
       console.error(err);
-      root.innerHTML = emptyState({ title: 'Bir hata oluştu', text: err.message || String(err), action: '<a class="btn btn-primary" href="#/">Ana sayfaya dön</a>' });
+      root.innerHTML = emptyState({ title: t('common.error'), text: err.message || String(err), action: `<a class="btn btn-primary" href="#/">${t('common.home')}</a>` });
     }
     return;
   }
@@ -48,10 +49,11 @@ async function route() {
 }
 
 async function start() {
+  applyStaticText();
   try {
     await openDB();
   } catch (err) {
-    document.getElementById('view').innerHTML = emptyState({ title: 'Veritabanı açılamadı', text: err.message });
+    document.getElementById('view').innerHTML = emptyState({ title: t('common.dbFail'), text: err.message });
     return;
   }
   // PIN varsa önce kilit ekranı; açılana kadar hiçbir görünüm çizilmez
@@ -68,7 +70,7 @@ async function start() {
       reg.addEventListener('updatefound', () => {
         const w = reg.installing;
         w?.addEventListener('statechange', () => {
-          if (w.state === 'installed' && navigator.serviceWorker.controller) toast('Yeni sürüm hazır, sayfayı yenileyin');
+          if (w.state === 'installed' && navigator.serviceWorker.controller) toast(t('common.newVersion'));
         });
       });
     }).catch(() => { /* çevrimdışı destek isteğe bağlı */ });
