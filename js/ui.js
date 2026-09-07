@@ -354,12 +354,13 @@ export function segmentField({ label, name, value = '', options = [], required =
 /** Çok seçenekli kısa liste (işlem türü, kontrol dönemleri): chip grubu + gizli input (çoklu seçimde virgülle) */
 export function chipField({ label, name, value = '', options = [], multiple = false, required = false, optional = true }) {
   const selected = new Set(multiple ? String(value || '').split(',').filter(Boolean) : [String(value)]);
+  // Çoklu seçimde seçili chip onay işareti taşır ve etikette canlı sayaç görünür
   return `
     <div class="field">
-      ${label ? fieldLabel(label, { required, optional }) : ''}
+      ${label ? `<span class="field-label">${esc(label)}${multiple ? ` <span class="opt" data-count-for="${name}">· ${selected.size} seçili</span>` : (!required && optional ? ' <span class="opt">· isteğe bağlı</span>' : '')}</span>` : ''}
       <input type="hidden" name="${name}" value="${esc(value)}">
       <div class="chip-group" data-chips="${name}" data-multiple="${multiple ? '1' : ''}">
-        ${options.map((o) => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<button type="button" class="chip ${selected.has(String(v)) ? 'on' : ''}" data-value="${esc(v)}">${esc(l)}</button>`; }).join('')}
+        ${options.map((o) => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<button type="button" class="chip ${selected.has(String(v)) ? 'on' : ''}" data-value="${esc(v)}" aria-pressed="${selected.has(String(v))}">${multiple ? icon('check') : ''}${esc(l)}</button>`; }).join('')}
       </div>
     </div>`;
 }
@@ -373,15 +374,19 @@ export function bindChoiceFields(form) {
   form.querySelectorAll('[data-chips]').forEach((group) => {
     const hidden = form.querySelector(`input[type=hidden][name="${group.dataset.chips}"]`);
     const multiple = !!group.dataset.multiple;
+    const counter = form.querySelector(`[data-count-for="${group.dataset.chips}"]`);
     group.querySelectorAll('.chip').forEach((b) => {
       b.addEventListener('click', () => {
         if (multiple) {
           b.classList.toggle('on');
-          hidden.value = [...group.querySelectorAll('.chip.on')].map((x) => x.dataset.value).join(',');
+          const on = [...group.querySelectorAll('.chip.on')];
+          hidden.value = on.map((x) => x.dataset.value).join(',');
+          if (counter) counter.textContent = `· ${on.length} seçili`;
         } else {
           group.querySelectorAll('.chip').forEach((x) => x.classList.toggle('on', x === b));
           hidden.value = b.dataset.value;
         }
+        group.querySelectorAll('.chip').forEach((x) => x.setAttribute('aria-pressed', x.classList.contains('on')));
       });
     });
   });
