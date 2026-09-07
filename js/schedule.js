@@ -4,6 +4,8 @@
 export const CONTROL_SCHEDULE = [
   { key: 'd1', label: '1. Gün Kontrolü', add: (d) => addDays(d, 1) },
   { key: 'w1', label: '1. Hafta Kontrolü', add: (d) => addDays(d, 7) },
+  { key: 'd10', label: '10. Gün Kontrolü', add: (d) => addDays(d, 10) },
+  { key: 'w2', label: '2. Hafta Kontrolü', add: (d) => addDays(d, 14) },
   { key: 'm1', label: '1. Ay Kontrolü', add: (d) => addMonths(d, 1) },
   { key: 'm3', label: '3. Ay Kontrolü', add: (d) => addMonths(d, 3) },
   { key: 'm6', label: '6. Ay Kontrolü', add: (d) => addMonths(d, 6) },

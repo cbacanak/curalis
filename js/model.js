@@ -4,9 +4,9 @@
 import { t } from './i18n.js';
 
 /* Fotoğraf dönemi (period). 'pre' = ameliyat öncesi. Kontrol takvimi anahtarlarıyla aynı kümeyi paylaşır. */
-export const PERIODS = ['pre', 'd1', 'w1', 'm1', 'm3', 'm6', 'y1', 'other'];
+export const PERIODS = ['pre', 'd1', 'w1', 'd10', 'w2', 'm1', 'm3', 'm6', 'y1', 'other'];
 /* Kontrol planı dönemleri (şablon varsayılanı MOBIL.md: 1 hafta, 1 ay, 3 ay, 6 ay, 1 yıl; 1. gün seçenek olarak durur) */
-export const FOLLOWUP_PERIODS = ['d1', 'w1', 'm1', 'm3', 'm6', 'y1'];
+export const FOLLOWUP_PERIODS = ['d1', 'w1', 'd10', 'w2', 'm1', 'm3', 'm6', 'y1'];
 export const DEFAULT_FOLLOWUPS = ['w1', 'm1', 'm3', 'm6', 'y1'];
 
 /* Fotoğraf açısı (angle) */
@@ -77,7 +77,9 @@ export function optionLabel(key) { const k = `topt.${key}`; const v = t(k); retu
 export function periodFromDays(n) {
   if (n < 0) return 'pre';
   if (n < 4) return 'd1';
-  if (n < 21) return 'w1';
+  if (n < 9) return 'w1';
+  if (n < 12) return 'd10';
+  if (n < 21) return 'w2';
   if (n < 60) return 'm1';
   if (n < 135) return 'm3';
   if (n < 270) return 'm6';
