@@ -1,6 +1,7 @@
 /* Depolama sağlığı: ortam tespiti, kalıcı depolama isteği, yedek al / geri yükle */
 import { exportAll, importAll, audit, SCHEMA } from './db.js';
-import { esc, icon, sheet, toast } from './ui.js';
+import { esc, icon, sheet, toast, field } from './ui.js';
+import { encryptBackup, decryptBackup, isEncryptedBackup, readBackupHeader, cryptoAvailable } from './crypto.js';
 import { t, locale } from './i18n.js';
 
 const ua = navigator.userAgent || '';
@@ -89,19 +90,57 @@ export function renderNotice(host) {
 }
 
 /* ---------------- Yedek al / geri yükle ---------------- */
+const MIN_PASSWORD = 8;
 function backupName() {
   const d = new Date();
   const p = (n) => String(n).padStart(2, '0');
-  return `${t('b.fileName')}-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.json`;
+  return `${t('b.fileName')}-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.htbackup`;
 }
 
-/** Yedeği dosya olarak verir: iOS'ta paylaşım sayfası, diğerlerinde indirme. */
+/**
+ * Parola sayfası. confirm=true: yeni parola (iki kez). Döner: parola ya da vazgeçildiyse null.
+ * error: önceki denemenin hatası (yanlış parola) başlıkta gösterilir.
+ */
+export function passwordSheet({ confirm = false, title = null, error = '' } = {}) {
+  const s = sheet({
+    title: title || t(confirm ? 'b.pw.setTitle' : 'b.pw.enterTitle'),
+    size: 'sm',
+    footer: `<button class="btn btn-primary" type="submit" form="pw-form">${esc(t(confirm ? 'b.pw.encrypt' : 'b.pw.open'))}</button>`,
+    content: `
+      <form id="pw-form" class="form" novalidate>
+        ${error ? `<div class="form-error">${esc(error)}</div>` : ''}
+        <p class="field-hint" style="margin:0 0 4px">${esc(t(confirm ? 'b.pw.setHint' : 'b.pw.enterHint'))}</p>
+        ${field({ label: t('b.pw.label'), name: 'pw', type: 'password', required: true, attrs: 'autocomplete="new-password" minlength="8"' })}
+        ${confirm ? field({ label: t('b.pw.confirm'), name: 'pw2', type: 'password', required: true, attrs: 'autocomplete="new-password"' }) : ''}
+      </form>`,
+  });
+  const form = s.body.querySelector('form');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    form.querySelector('.form-error')?.remove();
+    const pw = form.querySelector('[name=pw]').value;
+    const pw2 = form.querySelector('[name=pw2]')?.value;
+    let err = '';
+    if (confirm && pw.length < MIN_PASSWORD) err = t('b.pw.short', { n: MIN_PASSWORD });
+    else if (confirm && pw !== pw2) err = t('b.pw.mismatch');
+    else if (!pw) err = t('b.pw.required');
+    if (err) { form.insertAdjacentHTML('afterbegin', `<div class="form-error">${esc(err)}</div>`); return; }
+    s.close(pw);
+  });
+  setTimeout(() => form.querySelector('[name=pw]')?.focus(), 250);
+  return s.result;
+}
+
+/** Yedeği parola ile şifreleyip dosya olarak verir: iOS'ta paylaşım sayfası, diğerlerinde indirme. Vazgeçilirse null. */
 export async function downloadBackup() {
+  if (!cryptoAvailable()) throw new Error(t('b.needsCrypto'));
+  const pw = await passwordSheet({ confirm: true });
+  if (!pw) return null;
   const data = await exportAll();
-  audit('backup', 'data', null, `${(data.patients || []).length} patients`);
-  const json = JSON.stringify(data);
+  const bytes = await encryptBackup(data, pw);
+  audit('backup', 'data', null, `${(data.patients || []).length} patients · encrypted`);
   const name = backupName();
-  const file = new File([json], name, { type: 'application/json' });
+  const file = new File([bytes], name, { type: 'application/octet-stream' });
   if (navigator.canShare && navigator.canShare({ files: [file] }) && isMobile()) {
     try {
       await navigator.share({ files: [file], title: t('b.shareTitle') });
@@ -122,15 +161,29 @@ export async function downloadBackup() {
 export function pickBackupFile() {
   return new Promise((res) => {
     const input = document.createElement('input');
-    input.type = 'file'; input.accept = 'application/json,.json';
+    input.type = 'file'; input.accept = '.htbackup,application/octet-stream,application/json,.json';
     input.onchange = () => res(input.files[0] || null);
     input.click();
   });
 }
 
+/** Dosyayı okur: şifreliyse parola sorar (yanlışsa tekrar), düz JSON ise doğrudan çözümler. Vazgeçilirse null. */
 export async function readBackup(file) {
+  const buf = await file.arrayBuffer();
   let data;
-  try { data = JSON.parse(await file.text()); } catch { throw new Error(t('b.unreadable')); }
+  if (isEncryptedBackup(buf)) {
+    const h = readBackupHeader(buf);
+    if (h.app && h.app !== 'curalis') throw new Error(t('b.notBackup'));
+    if (h.schema != null && h.schema !== SCHEMA) throw new Error(t('b.oldSchema'));
+    let error = '';
+    for (;;) {
+      const pw = await passwordSheet({ error });
+      if (!pw) return null;
+      try { data = await decryptBackup(buf, pw); break; } catch { error = t('b.pw.wrong'); }
+    }
+  } else {
+    try { data = JSON.parse(new TextDecoder().decode(buf)); } catch { throw new Error(t('b.unreadable')); }
+  }
   if (!data || data.app !== 'curalis') throw new Error(t('b.notBackup'));
   if (data.schema !== SCHEMA) throw new Error(t('b.oldSchema'));
   return data;
@@ -139,6 +192,7 @@ export async function readBackup(file) {
 /** Kullanıcıya birleştir / değiştir / vazgeç seçeneği sunar, seçime göre içe aktarır. */
 export async function restoreBackup(file) {
   const data = await readBackup(file);
+  if (!data) return null;
   const c = { patients: (data.patients || []).length, photos: (data.photos || []).length, appointments: (data.appointments || []).length };
   const when = data.exportedAt ? new Date(data.exportedAt).toLocaleString(locale(), { dateStyle: 'medium', timeStyle: 'short' }) : '';
   const s = sheet({

@@ -188,6 +188,11 @@ const TR = {
   'b.contents': (p) => `<b>${p.patients} hasta</b>, ${p.photos} fotoğraf, ${p.appointments} randevu.`,
   'b.modes': '<b>Birleştir</b> mevcut kayıtları korur, aynı kayıtları günceller. <b>Değiştir</b> önce mevcut tüm verileri siler.',
   'b.replace': 'Değiştir', 'b.merge': 'Birleştir', 'b.restored': '{n} hasta geri yüklendi',
+  'b.pw.setTitle': 'Yedek parolası', 'b.pw.enterTitle': 'Yedek parolası', 'b.pw.label': 'Parola', 'b.pw.confirm': 'Parola (tekrar)',
+  'b.pw.setHint': 'Yedek bu parolayla şifrelenir. Parola kaydedilmez ve kurtarılamaz; unutursan yedek açılamaz.',
+  'b.pw.enterHint': 'Bu yedek şifreli. Alırken belirlediğin parolayı gir.',
+  'b.pw.encrypt': 'Şifrele ve yedek al', 'b.pw.open': 'Yedeği aç', 'b.pw.short': 'Parola en az {n} karakter olmalı.', 'b.pw.mismatch': 'Parolalar eşleşmedi.',
+  'b.pw.required': 'Parola gerekli.', 'b.pw.wrong': 'Parola yanlış ya da dosya bozuk.', 'b.needsCrypto': 'Şifreli yedek için güvenli bağlantı (https) gerekir.',
 };
 
 const EN = {
@@ -343,6 +348,11 @@ const EN = {
   'b.contents': (p) => `<b>${pl(p.patients, 'patient', 'patients')}</b>, ${pl(p.photos, 'photo', 'photos')}, ${pl(p.appointments, 'appointment', 'appointments')}.`,
   'b.modes': '<b>Merge</b> keeps existing records and updates matching ones. <b>Replace</b> deletes all existing data first.',
   'b.replace': 'Replace', 'b.merge': 'Merge', 'b.restored': (p) => `${pl(p.n, 'patient', 'patients')} restored`,
+  'b.pw.setTitle': 'Backup password', 'b.pw.enterTitle': 'Backup password', 'b.pw.label': 'Password', 'b.pw.confirm': 'Password (again)',
+  'b.pw.setHint': 'The backup is encrypted with this password. It is not stored and cannot be recovered; if you forget it the backup cannot be opened.',
+  'b.pw.enterHint': 'This backup is encrypted. Enter the password you chose when creating it.',
+  'b.pw.encrypt': 'Encrypt and back up', 'b.pw.open': 'Open backup', 'b.pw.short': 'Password must be at least {n} characters.', 'b.pw.mismatch': 'Passwords do not match.',
+  'b.pw.required': 'Password is required.', 'b.pw.wrong': 'Wrong password or corrupted file.', 'b.needsCrypto': 'Encrypted backup requires a secure connection (https).',
 };
 
 const DICT = { tr: TR, en: EN };
