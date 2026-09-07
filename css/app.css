@@ -489,6 +489,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .cam-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; transition: opacity 200ms ease-out; }
 .cam-flash.go { opacity: .85; transition: none; }
 .cam-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--bg-inverse); }
+.cam-fallback[hidden] { display: none; }
 .cam-fallback .empty-title, .cam-fallback .empty-text { color: var(--text-on-inverse); }
 .cam-fallback .empty-text { color: var(--text-on-inverse-secondary); }
 .cam-foot { padding: 8px 12px calc(12px + var(--safe-b)); display: flex; flex-direction: column; gap: 10px; }
