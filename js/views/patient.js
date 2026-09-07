@@ -146,7 +146,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
         <div class="hero-actions">
           <button class="btn btn-primary" type="button" data-act="add-proc">${esc(t('p.addProc'))}</button>
           ${p.phone ? `<a class="btn-outline-icon" href="${phoneHref(p.phone)}" aria-label="${esc(t('p.call'))}" title="${esc(t('p.call'))}">${icon('phone')}</a>` : ''}
-          <button class="btn-outline-icon" type="button" data-act="add-photo" aria-label="${esc(t('p.addPhoto'))}" title="${esc(t('p.addPhoto'))}">${icon('camera')}</button>
+          <button class="btn-outline-icon" type="button" data-act="add-photo" aria-label="${esc(t('cam.title'))}" title="${esc(t('cam.title'))}">${icon('camera')}</button>
           <button class="btn-outline-icon" type="button" data-act="add-appt" aria-label="${esc(t('p.addAppt'))}" title="${esc(t('p.addAppt'))}">${icon('calendar')}</button>
         </div>
       </section>
@@ -177,7 +177,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     root.querySelector('[data-act=edit]').onclick = editPatient;
     root.querySelector('[data-act=more]').onclick = patientMenu;
     root.querySelector('[data-act=add-proc]').onclick = addProcedure;
-    root.querySelector('[data-act=add-photo]').onclick = () => addPhoto();
+    root.querySelector('[data-act=add-photo]').onclick = () => go(`/camera/${id}`);   // canlı kamera; galeriden ekleme menüde ve Fotoğraflar sekmesinde
     root.querySelector('[data-act=add-appt]').onclick = () => addAppointment();
     root.querySelectorAll('[data-tab]').forEach((b) => { b.onclick = () => { setTab(b.dataset.tab); syncTabs(); paintTab(); }; });
     paintTab();

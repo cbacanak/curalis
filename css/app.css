@@ -470,6 +470,45 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .tpl-field .field { margin: 0; }
 .tpl-field .rm { width: 44px; height: 44px; display: grid; place-items: center; color: var(--text-secondary); }
 .tpl-field.has-options { grid-template-columns: 1fr; }
+/* Kamera (tam ekran, lacivert; sekme çubuğunun üstünde) */
+.cam { position: fixed; inset: 0; z-index: 40; background: var(--bg-inverse); color: var(--text-on-inverse); display: flex; flex-direction: column; padding-top: var(--safe-t); }
+.cam-head { display: flex; align-items: center; gap: 4px; padding: 6px 12px; }
+.cam-head .btn-icon { color: var(--text-on-inverse); }
+.cam-head .btn-icon.on { background: rgba(245, 244, 240, .14); border-radius: 12px; }
+.cam-ctx { flex: 1; min-width: 0; text-align: center; }
+.cam-name { font-size: var(--fs-body); font-weight: var(--fw-medium); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cam-sub { font-size: var(--fs-caption); color: var(--text-on-inverse-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cam-link { color: inherit; font: inherit; text-decoration: underline; text-decoration-color: var(--border-on-inverse); text-underline-offset: 3px; }
+.cam-stage { position: relative; flex: 1; min-height: 0; margin: 4px 12px; border-radius: 14px; overflow: hidden; background: #16213A; }
+.cam-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.cam-ghost { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .35; pointer-events: none; }
+.cam-grid { position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(rgba(245, 244, 240, .35) 1px, transparent 1px), linear-gradient(90deg, rgba(245, 244, 240, .35) 1px, transparent 1px); background-size: 100% 33.34%, 33.34% 100%; background-position: 0 -1px, -1px 0; }
+.cam-level { position: absolute; left: 20%; right: 20%; top: 50%; height: 0; pointer-events: none; }
+.cam-level i { display: block; height: 2px; background: rgba(245, 244, 240, .7); transform-origin: center; transition: transform 120ms linear, background var(--dur-fast); }
+.cam-level.warn i { background: var(--warning); }
+.cam-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; transition: opacity 200ms ease-out; }
+.cam-flash.go { opacity: .85; transition: none; }
+.cam-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--bg-inverse); }
+.cam-fallback[hidden] { display: none; }
+.cam-fallback .empty-title, .cam-fallback .empty-text { color: var(--text-on-inverse); }
+.cam-fallback .empty-text { color: var(--text-on-inverse-secondary); }
+.cam-foot { padding: 8px 12px calc(12px + var(--safe-b)); display: flex; flex-direction: column; gap: 10px; }
+.cam-angles { margin: 0; }
+.cam-angles .chip { background: rgba(245, 244, 240, .1); border-color: transparent; color: var(--text-on-inverse-secondary); }
+.cam-angles .chip.done { color: var(--text-on-inverse); }
+.cam-angles .chip.done .ic { display: block; }
+.cam-angles .chip.on { background: var(--text-on-inverse); color: var(--bg-inverse); border-color: var(--text-on-inverse); }
+.cam-controls { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
+.cam-thumb { width: 48px; height: 48px; border-radius: 10px; overflow: hidden; background: #16213A; justify-self: start; }
+.cam-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.cam-shutter { width: 72px; height: 72px; border-radius: 50%; border: 3px solid var(--text-on-inverse); display: grid; place-items: center; justify-self: center; }
+.cam-shutter span { width: 58px; height: 58px; border-radius: 50%; background: var(--text-on-inverse); transition: transform 100ms; }
+.cam-shutter:active span { transform: scale(.9); }
+.cam-shutter[disabled] { opacity: .4; }
+.cam-count { justify-self: end; font-size: var(--fs-small); color: var(--text-on-inverse-secondary); font-variant-numeric: tabular-nums; }
+.cam-level-btn { align-self: center; font-size: var(--fs-caption); color: var(--text-on-inverse-secondary); text-decoration: underline; text-underline-offset: 3px; }
+@media (min-width: 880px) { .cam { left: 0; } }
+
 /* Denetim kaydı satırı */
 .audit-row { padding: 10px 0; border-bottom: 1px solid var(--hairline); }
 .audit-row .t-caption { display: block; margin-top: 2px; }
