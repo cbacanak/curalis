@@ -63,7 +63,7 @@ export function patientForm(existing = null) {
           ${field({ label: 'Telefon', name: 'phone', type: 'tel', value: p.phone, placeholder: '05xx xxx xx xx', attrs: 'inputmode="tel"' })}
           ${field({ label: 'Doğum tarihi', name: 'birthDate', type: 'date', value: p.birthDate })}
         </div>
-        ${segmentField({ label: 'Cinsiyet', name: 'gender', value: p.gender || '', options: [['F', 'Kadın'], ['M', 'Erkek'], ['', 'Belirtilmedi']] })}
+        ${segmentField({ label: 'Cinsiyet', name: 'gender', value: existing ? (p.gender || '') : 'F', options: [['F', 'Kadın'], ['M', 'Erkek'], ['', 'Belirtilmedi']] })}
         ${selectField({ label: 'Kan grubu', name: 'bloodType', value: p.bloodType || '', options: [['', 'Bilinmiyor'], '0 Rh+', '0 Rh-', 'A Rh+', 'A Rh-', 'B Rh+', 'B Rh-', 'AB Rh+', 'AB Rh-'] })}
         ${field({ label: 'E-posta', name: 'email', type: 'email', value: p.email, attrs: 'autocomplete="off"' })}
         ${field({ label: 'Alerjiler', name: 'allergies', value: p.allergies, placeholder: 'Penisilin, lateks…' })}
