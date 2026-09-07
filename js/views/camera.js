@@ -36,6 +36,7 @@ export async function render(root, { id = null } = {}) {
     ghost: true, grid: true,
     taken: {},       // angle → kaydedilen fotoğraf
     stream: null, busy: false,
+    attn: true,      // ilk çekime (ya da seçim yapılana) kadar işlem/dönem düğmeleri vurgulu
   };
   const proc = () => procedures.find((p) => p.id === state.procId) || null;
   const anglesFor = () => { const set = tplById[proc()?.templateId]?.angleSet; return set?.length ? set : ANGLES.filter((a) => a !== 'custom'); };
@@ -48,7 +49,8 @@ export async function render(root, { id = null } = {}) {
         <button class="btn-icon" type="button" data-act="close" aria-label="${esc(t('common.close'))}">${icon('x')}</button>
         <div class="cam-ctx">
           <div class="cam-name">${esc(fullName(patient))}</div>
-          <div class="cam-sub"><button type="button" class="cam-pill" data-act="proc"><span></span>${icon('down')}</button><button type="button" class="cam-pill" data-act="period"><span></span>${icon('down')}</button></div>
+          <div class="cam-sub"><button type="button" class="cam-pill attn" data-act="proc"><span></span>${icon('down')}</button><button type="button" class="cam-pill attn" data-act="period"><span></span>${icon('down')}</button></div>
+          <div class="cam-hint" id="cam-hint">${esc(t('cam.hint'))}</div>
         </div>
         <button class="btn-icon ${state.ghost ? 'on' : ''}" type="button" data-act="ghost" aria-label="${esc(t('cam.ghost'))}" title="${esc(t('cam.ghost'))}">${icon('image')}</button>
         <button class="btn-icon ${state.grid ? 'on' : ''}" type="button" data-act="grid" aria-label="${esc(t('cam.grid'))}" title="${esc(t('cam.grid'))}">${icon('grid')}</button>
@@ -83,7 +85,11 @@ export async function render(root, { id = null } = {}) {
     const pr = proc();
     el('[data-act=proc] span').textContent = pr ? `${procLabel(pr.typeName)} · ${fmtDayMonth(pr.date)}` : t('form.appt.noProc');
     el('[data-act=period] span').textContent = periodLabel(state.period);
+    root.querySelectorAll('.cam-pill').forEach((b) => b.classList.toggle('attn', state.attn));
+    el('#cam-hint').hidden = !state.attn;
   }
+  /** Vurgu kalkar: kullanıcı seçim yaptı ya da ilk fotoğraf çekildi */
+  function settle() { if (state.attn) { state.attn = false; paintCtx(); } }
   function paintAngles() {
     const box = el('#cam-angles');
     box.innerHTML = state.angles.map((a, i) => `<button class="chip ${i === state.angleIdx ? 'on' : ''} ${state.taken[a] ? 'done' : ''}" type="button" data-angle="${i}">${state.taken[a] ? icon('check') : ''}${esc(angleLabel(a))}</button>`).join('');
@@ -113,11 +119,12 @@ export async function render(root, { id = null } = {}) {
     state.procId = v === '-' ? '' : v;
     state.period = defaultPeriodFor(proc());
     state.angles = anglesFor(); state.angleIdx = 0; state.taken = {};
+    state.attn = false;
     paintCtx(); paintAngles(); paintGhost();
   };
   el('[data-act=period]').onclick = async () => {
     const v = await actionMenu(t('form.photo.period'), PERIODS.map((k) => ({ label: periodLabel(k), value: k, checked: k === state.period })));
-    if (v) { state.period = v; paintCtx(); }
+    if (v) { state.period = v; state.attn = false; paintCtx(); }
   };
   el('[data-act=ghost]').onclick = () => { state.ghost = !state.ghost; paintGhost(); };
   el('[data-act=grid]').onclick = () => { state.grid = !state.grid; el('.cam-grid').hidden = !state.grid; el('[data-act=grid]').classList.toggle('on', state.grid); };
@@ -184,6 +191,7 @@ export async function render(root, { id = null } = {}) {
       });
       photos.unshift(saved);
       state.taken[a] = saved;
+      settle();
       const th = el('[data-act=last]'); th.hidden = false; th.querySelector('img').src = blobURL(saved.id + ':t', saved.thumb);
       // Sıradaki çekilmemiş açıya geç (MOBIL.md §4 seri çekim)
       const next = state.angles.findIndex((x, i) => i > state.angleIdx && !state.taken[x]);

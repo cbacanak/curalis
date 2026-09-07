@@ -184,7 +184,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     root.querySelector('[data-act=edit]').onclick = editPatient;
     root.querySelector('[data-act=more]').onclick = patientMenu;
     root.querySelector('[data-act=add-proc]').onclick = addProcedure;
-    root.querySelector('[data-act=add-photo]').onclick = () => go(`/camera/${id}`);   // canlı kamera; galeriden ekleme menüde ve Fotoğraflar sekmesinde
+    root.querySelector('[data-act=add-photo]').onclick = () => addPhoto();   // her giriş noktası aynı: Kamera ile çek / Galeriden seç
     root.querySelector('[data-act=add-appt]').onclick = () => addAppointment();
     root.querySelectorAll('[data-tab]').forEach((b) => { b.onclick = () => { setTab(b.dataset.tab); syncTabs(); paintTab(); }; });
     paintTab();
