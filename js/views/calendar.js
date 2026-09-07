@@ -7,6 +7,7 @@ import { t, lower, locale, procLabel, apptLabel, kindLabel, isOp } from '../i18n
 
 const VIEW_KEY = 'ajanda-view';
 const LIST_DAYS = 90;     // liste görünümünün ufku
+const MISSED_DAYS = 60;   // 'gelmedi' kayıtları gecikmiş bölümünde bu kadar gün kalır
 let viewMode = (() => { try { return localStorage.getItem(VIEW_KEY) || 'list'; } catch { return 'list'; } })();
 let calMonth = null;      // görüntülenen ay (Date, ayın 1'i)
 let selectedDay = null;   // "YYYY-MM-DD"; null → ayın tamamı listelenir
@@ -96,7 +97,9 @@ export async function render(root) {
   /* ---------- Liste ---------- */
   function paintList() {
     const horizon = new Date(today); horizon.setDate(horizon.getDate() + LIST_DAYS);
-    const overdue = appointments.filter((a) => a.status === 'planned' && parseDate(a.date) < today);
+    const missedCutoff = new Date(today); missedCutoff.setDate(missedCutoff.getDate() - MISSED_DAYS);
+    // Gecikmiş: tarihi geçmiş planlı + son MISSED_DAYS günde gelmedi (yeniden planlanması gerekenler)
+    const overdue = appointments.filter((a) => { const d = parseDate(a.date); return (a.status === 'planned' && d < today) || (a.status === 'missed' && d >= missedCutoff && d < today); });
     const upcoming = appointments.filter((a) => parseDate(a.date) >= today && parseDate(a.date) <= horizon && a.status !== 'cancelled');
     const later = appointments.filter((a) => parseDate(a.date) > horizon && a.status === 'planned');
     // En yakın planlı randevu lacivert kart olarak öne çıkar; kalanlar güne göre listelenir
