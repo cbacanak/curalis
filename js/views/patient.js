@@ -662,13 +662,14 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       } else if (mode === 'slide') {
         stage.innerHTML = `
           <div class="cmp-stack" id="cmp-stack">
-            <img class="base" src="${blobURL(before.id, before.blob)}" alt="${esc(t('phase.before'))}" draggable="false">
-            <img class="top" src="${blobURL(after.id, after.blob)}" alt="${esc(t('phase.after'))}" draggable="false" style="clip-path: inset(0 50% 0 0)">
+            <img class="base" src="${blobURL(after.id, after.blob)}" alt="${esc(t('phase.after'))}" draggable="false">
+            <img class="top" src="${blobURL(before.id, before.blob)}" alt="${esc(t('phase.before'))}" draggable="false" style="clip-path: inset(0 50% 0 0)">
             <div class="cmp-handle" style="left:50%"></div>
             <span class="cmp-cap">${esc(cap(before))}</span>
             <span class="cmp-cap right">${esc(cap(after))}</span>
           </div>
           <input class="cmp-range" type="range" min="0" max="100" value="50" aria-label="${esc(t('p.cmp.slide'))}">`;
+        // Üst katman 'öncesi': soldan pct kadar görünür; sağda 'sonrası'. Etiketler soldan sağa öncesi → sonrası.
         const top = stage.querySelector('.top'), handle = stage.querySelector('.cmp-handle'), range = stage.querySelector('.cmp-range');
         const setPos = (pct) => { top.style.clipPath = `inset(0 ${100 - pct}% 0 0)`; handle.style.left = `${pct}%`; range.value = pct; };
         range.oninput = () => setPos(+range.value);

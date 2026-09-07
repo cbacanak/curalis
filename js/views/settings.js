@@ -10,7 +10,7 @@ import { getTheme, applyTheme, THEMES } from '../theme.js';
 import { segmented, bindSegmented } from '../ui.js';
 import { t, getLang, setLang, LANGS, applyStaticText } from '../i18n.js';
 
-export const APP_VERSION = '0.7.2';
+export const APP_VERSION = '0.7.3';
 
 export async function render(root) {
   setTopbar({ title: t('s.title') });
