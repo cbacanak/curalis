@@ -3,7 +3,7 @@
 const KEY = 'hasta-takip:theme';
 export const THEMES = [['light', 'Açık'], ['dark', 'Koyu'], ['system', 'Sistem']];
 
-export const DEFAULT_THEME = 'dark'; // seçim yapılmadıysa koyu
+export const DEFAULT_THEME = 'system'; // seçim yapılmadıysa sistem tercihi izlenir
 
 export function getTheme() {
   try { const t = localStorage.getItem(KEY); return t === 'light' || t === 'dark' || t === 'system' ? t : DEFAULT_THEME; } catch { return DEFAULT_THEME; }
