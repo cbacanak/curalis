@@ -5,9 +5,11 @@ import { APPT_KIND_LABEL, appointmentForm } from '../forms.js';
 import { setTopbar, go } from '../nav.js';
 
 const VIEW_KEY = 'ajanda-view';
+const LIST_DAYS = 90;     // liste görünümünün ufku
 let viewMode = (() => { try { return localStorage.getItem(VIEW_KEY) || 'list'; } catch { return 'list'; } })();
 let calMonth = null;      // görüntülenen ay (Date, ayın 1'i)
-let selectedDay = null;   // "YYYY-MM-DD"
+let selectedDay = null;   // "YYYY-MM-DD"; null → ayın tamamı listelenir
+let keepState = false;    // ekran içi yenilemede (düzenleme sonrası) ay/gün korunur
 
 const pad = (n) => String(n).padStart(2, '0');
 const keyOf = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -20,8 +22,10 @@ export async function render(root) {
   const prById = Object.fromEntries(procedures.map((p) => [p.id, p]));
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const todayKey = keyOf(today);
-  if (!calMonth) calMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  if (!selectedDay) selectedDay = todayKey;
+  const resetMonth = () => { calMonth = new Date(today.getFullYear(), today.getMonth(), 1); selectedDay = todayKey; };
+  const refresh = () => { keepState = true; render(root); };
+  if (!keepState) resetMonth();   // sekmeden gelince takvim her zaman bugünün ayında açılır
+  keepState = false;
   const planned = appointments.filter((a) => a.status === 'planned');
   const todayCount = planned.filter((a) => a.date.slice(0, 10) === todayKey).length;
 
@@ -77,6 +81,7 @@ export async function render(root) {
     b.onclick = () => {
       viewMode = b.dataset.view;
       try { localStorage.setItem(VIEW_KEY, viewMode); } catch { /* yok say */ }
+      if (viewMode === 'month') resetMonth();   // liste → takvim geçişinde mevcut aya dön
       root.querySelectorAll('[data-view]').forEach((x) => x.classList.toggle('on', x === b));
       paint();
     };
@@ -87,7 +92,7 @@ export async function render(root) {
 
   /* ---------- Liste ---------- */
   function paintList() {
-    const horizon = new Date(today); horizon.setDate(horizon.getDate() + 60);
+    const horizon = new Date(today); horizon.setDate(horizon.getDate() + LIST_DAYS);
     const overdue = appointments.filter((a) => a.status === 'planned' && parseDate(a.date) < today);
     const upcoming = appointments.filter((a) => parseDate(a.date) >= today && parseDate(a.date) <= horizon && a.status !== 'cancelled');
     const later = appointments.filter((a) => parseDate(a.date) > horizon && a.status === 'planned');
@@ -104,8 +109,8 @@ export async function render(root) {
         const n = daysBetween(today, parseDate(k));
         const title = n === 0 ? 'Bugün' : n === 1 ? 'Yarın' : `${weekdayShort(k)} · ${fmtDayMonth(k)}`;
         return `<section class="section"><div class="section-label">${esc(title)}</div><div class="list">${list.map((a) => row(a)).join('')}</div></section>`;
-      }).join('') : (overdue.length || next ? '' : emptyState({ title: 'Önümüzdeki 60 günde randevu yok', text: 'İşlem eklendiğinde kontrol takvimi buraya düşer.' }))}
-      ${later.length ? `<p class="t-caption section">60 günden sonra ${later.length} planlı randevu daha var.</p>` : ''}`;
+      }).join('') : (overdue.length || next ? '' : emptyState({ title: `Önümüzdeki ${LIST_DAYS} günde randevu yok`, text: 'İşlem eklendiğinde kontrol takvimi buraya düşer.' }))}
+      ${later.length ? `<p class="t-caption section">${LIST_DAYS} günden sonra ${later.length} planlı randevu daha var.</p>` : ''}`;
     bindRows();
   }
 
@@ -148,13 +153,14 @@ export async function render(root) {
       </div>
       <div id="cal-day" class="section"></div>`;
 
-    body.querySelector('[data-cal=prev]').onclick = () => { calMonth = new Date(y, m - 1, 1); paintMonth(); };
-    body.querySelector('[data-cal=next]').onclick = () => { calMonth = new Date(y, m + 1, 1); paintMonth(); };
-    body.querySelector('[data-cal=today]').onclick = () => { calMonth = new Date(today.getFullYear(), today.getMonth(), 1); selectedDay = todayKey; paintMonth(); };
+    // Ay değişince alttaki liste o ayın tamamını gösterir; "Bugün" bugüne döner
+    body.querySelector('[data-cal=prev]').onclick = () => { calMonth = new Date(y, m - 1, 1); selectedDay = null; paintMonth(); };
+    body.querySelector('[data-cal=next]').onclick = () => { calMonth = new Date(y, m + 1, 1); selectedDay = null; paintMonth(); };
+    body.querySelector('[data-cal=today]').onclick = () => { resetMonth(); paintMonth(); };
     body.querySelectorAll('[data-day]').forEach((c) => {
       c.onclick = () => {
-        selectedDay = c.dataset.day;
-        const d = parseDate(selectedDay);
+        selectedDay = c.dataset.day === selectedDay ? null : c.dataset.day;   // seçili güne tekrar dokununca ay listesine dön
+        const d = parseDate(selectedDay || c.dataset.day);
         if (d.getMonth() !== m || d.getFullYear() !== y) { calMonth = new Date(d.getFullYear(), d.getMonth(), 1); paintMonth(); return; }
         body.querySelectorAll('.cal-cell').forEach((x) => x.classList.toggle('sel', x.dataset.day === selectedDay));
         paintDay(byDay);
@@ -165,21 +171,39 @@ export async function render(root) {
 
   function paintDay(byDay) {
     const box = body.querySelector('#cal-day');
-    const list = (byDay.get(selectedDay) || []).sort((a, b) => a.date.localeCompare(b.date));
-    const n = daysBetween(today, parseDate(selectedDay));
-    const rel = n === 0 ? ' · Bugün' : n === 1 ? ' · Yarın' : n === -1 ? ' · Dün' : '';
+    const y = calMonth.getFullYear(), m = calMonth.getMonth();
+    const monthKey = `${y}-${pad(m + 1)}`;
+    const inMonth = todayKey.startsWith(monthKey);
+    let title, rel = '', content, defaultDay;
+    if (selectedDay) {
+      const list = (byDay.get(selectedDay) || []).sort((a, b) => a.date.localeCompare(b.date));
+      const n = daysBetween(today, parseDate(selectedDay));
+      rel = n === 0 ? ' · Bugün' : n === 1 ? ' · Yarın' : n === -1 ? ' · Dün' : '';
+      title = parseDate(selectedDay).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
+      content = list.length ? `<div class="list">${list.map((a) => row(a)).join('')}</div>` : `<div class="empty" style="padding:8px 0"><div class="empty-text">Bu günde randevu yok.</div></div>`;
+      defaultDay = selectedDay;
+    } else {
+      // Gün seçili değilken görüntülenen ayın tüm randevuları güne göre gruplanır
+      const days = [...byDay.keys()].filter((k) => k.startsWith(monthKey)).sort();
+      const groups = days.map((k) => [k, byDay.get(k).filter((a) => a.status !== 'cancelled').sort((a, b) => a.date.localeCompare(b.date))]).filter(([, l]) => l.length);
+      title = calMonth.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+      content = groups.length
+        ? groups.map(([k, l]) => `<div class="section-label">${esc(k === todayKey ? 'Bugün' : `${weekdayShort(k)} · ${fmtDayMonth(k)}`)}</div><div class="list">${l.map((a) => row(a)).join('')}</div>`).join('')
+        : `<div class="empty" style="padding:8px 0"><div class="empty-text">Bu ayda randevu yok.</div></div>`;
+      defaultDay = inMonth ? todayKey : `${monthKey}-01`;
+    }
     box.innerHTML = `
       <div class="section-head">
-        <div class="section-title">${esc(parseDate(selectedDay).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' }))}<span class="t-caption">${rel}</span></div>
+        <div class="section-title"><span class="cal-month">${esc(title)}</span><span class="t-caption">${rel}</span></div>
         <button class="section-link" type="button" data-act="add">Randevu ekle</button>
       </div>
-      ${list.length ? `<div class="list">${list.map((a) => row(a)).join('')}</div>` : `<div class="empty" style="padding:8px 0"><div class="empty-text">Bu günde randevu yok.</div></div>`}`;
+      ${content}`;
     box.querySelector('[data-act=add]').onclick = async () => {
       if (!patients.length) { toast('Önce hasta ekleyin'); return; }
       const pick = await actionMenu('Hangi hasta için?', patients.map((p) => ({ label: fullName(p), value: p.id })));
       if (!pick) return;
-      const r = await appointmentForm({ patientId: pick, procedures: procedures.filter((x) => x.patientId === pick), defaultDate: `${selectedDay}T10:00` });
-      if (r) { toast('Randevu eklendi'); render(root); }
+      const r = await appointmentForm({ patientId: pick, procedures: procedures.filter((x) => x.patientId === pick), defaultDate: `${defaultDay}T10:00` });
+      if (r) { toast('Randevu eklendi'); refresh(); }
     };
     bindRows();
   }
@@ -198,9 +222,9 @@ export async function render(root) {
         items.push({ label: 'Sil', icon: 'trash', value: 'delete', danger: true });
         const v = await actionMenu(`${p ? fullName(p) : ''} · ${a.label}`, items);
         if (v === 'open') go(`/patient/${a.patientId}/randevular`);
-        else if (['done', 'missed', 'planned'].includes(v)) { await Appointments.save({ ...a, status: v }); toast('Güncellendi'); render(root); }
-        else if (v === 'edit') { const r = await appointmentForm({ patientId: a.patientId, procedures: procedures.filter((x) => x.patientId === a.patientId), existing: a }); if (r) { toast('Randevu güncellendi'); render(root); } }
-        else if (v === 'delete') { if (await confirmDialog({ title: 'Randevu silinsin mi?', okText: 'Sil', danger: true })) { await Appointments.remove(a.id); toast('Silindi'); render(root); } }
+        else if (['done', 'missed', 'planned'].includes(v)) { await Appointments.save({ ...a, status: v }); toast('Güncellendi'); refresh(); }
+        else if (v === 'edit') { const r = await appointmentForm({ patientId: a.patientId, procedures: procedures.filter((x) => x.patientId === a.patientId), existing: a }); if (r) { toast('Randevu güncellendi'); refresh(); } }
+        else if (v === 'delete') { if (await confirmDialog({ title: 'Randevu silinsin mi?', okText: 'Sil', danger: true })) { await Appointments.remove(a.id); toast('Silindi'); refresh(); } }
       };
     });
   }
