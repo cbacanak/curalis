@@ -66,7 +66,7 @@ export async function render(root, { id = null } = {}) {
         <div class="cam-controls">
           <button class="cam-thumb" type="button" data-act="last" aria-label="${esc(t('cam.last'))}" hidden><img alt=""></button>
           <button class="cam-shutter" type="button" data-act="shoot" aria-label="${esc(t('cam.shoot'))}"><span></span></button>
-          <div class="cam-count" id="cam-count"></div>
+          <button class="cam-done" type="button" data-act="done"><span class="cam-done-label">${esc(t('cam.done'))}</span><span class="cam-count" id="cam-count"></span></button>
         </div>
         <button type="button" class="cam-level-btn" data-act="level" hidden>${esc(t('cam.level'))}</button>
       </div>
@@ -88,6 +88,7 @@ export async function render(root, { id = null } = {}) {
     const on = box.querySelector('.chip.on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
     const done = state.angles.filter((a) => state.taken[a]).length;
     el('#cam-count').textContent = `${done}/${state.angles.length}`;
+    el('[data-act=done]').classList.toggle('ready', done > 0);   // ilk çekimden sonra 'Bitti' belirgin
   }
   /** Aynı hastanın aynı açıdaki önceki fotoğrafı: önce aynı işlem, sonra 'öncesi', sonra en yeni */
   function ghostFor(a) {
@@ -193,6 +194,7 @@ export async function render(root, { id = null } = {}) {
   }
   el('[data-act=shoot]').onclick = shoot;
   el('[data-act=last]').onclick = () => { stop(); go(`/patient/${id}/fotograflar`); };
+  el('[data-act=done]').onclick = () => { stop(); go(`/patient/${id}/fotograflar`); };
 
   /* ---------- Seviye çizgisi (DeviceOrientation; iOS'ta izin ister) ---------- */
   const levelEl = el('.cam-level');
