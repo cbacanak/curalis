@@ -1,7 +1,7 @@
 {
-  "name": "Hasta Takip",
-  "short_name": "Hasta Takip",
-  "description": "Plastik cerrahi hasta takip uygulaması",
+  "name": "Curalis",
+  "short_name": "Curalis",
+  "description": "Curalis — plastik cerrahi için kişisel klinik kayıt ve fotoğraf arşivi",
   "lang": "tr",
   "start_url": "./",
   "scope": "./",

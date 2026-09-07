@@ -55,7 +55,7 @@ export async function render(root) {
       <button class="upcoming-card" type="button" data-open="${p.id}">
         <div>
           <div class="name">${esc(fullName(p))}</div>
-          <div class="sub">${(isOp(a) ? [apptLabel(a), lower(t('op.row'))] : [pr ? procLabel(pr.type) : null, lower(apptLabel(a))]).filter(Boolean).map(esc).join(' · ')}</div>
+          <div class="sub">${(isOp(a) ? [apptLabel(a), lower(t('op.row'))] : [pr ? procLabel(pr.typeName) : null, lower(apptLabel(a))]).filter(Boolean).map(esc).join(' · ')}</div>
         </div>
         <div>
           <div class="date">${esc(fmtDayMonth(a.date))}</div>
@@ -68,7 +68,7 @@ export async function render(root) {
     const lp = lastProc[p.id];
     const a = age(p.birthDate);
     const planned = lp && parseDate(lp.date) > today;
-    const sub = [a !== null ? String(a) : null, lp ? `${planned ? `${t('op.planned')} · ` : ''}${procLabel(lp.type)} · ${fmtDayMonth(lp.date)}` : t('patients.noProc')].filter(Boolean).join(' · ');
+    const sub = [a !== null ? String(a) : null, lp ? `${planned ? `${t('op.planned')} · ` : ''}${procLabel(lp.typeName)} · ${fmtDayMonth(lp.date)}` : t('patients.noProc')].filter(Boolean).join(' · ');
     return `
       <a class="row" href="#/patient/${p.id}">
         <div class="avatar">${esc(initials(fullName(p)))}</div>

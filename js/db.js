@@ -1,22 +1,31 @@
-/* Veri katmanı — IndexedDB
+/* Veri katmanı — IndexedDB (MOBIL.md §2 veri modeli)
  * Tüm kalıcı veri erişimi bu dosya üzerinden yapılır.
- * Depolar: patients, procedures, photos, appointments, settings
+ * Depolar: patients, templates, procedures, photos, appointments, audit, settings
+ * Ortak alanlar: id (UUID), createdAt, updatedAt, deletedAt (soft delete), deviceID.
+ * Silme yumuşaktır: deletedAt yazılır, kayıt listelerden düşer, TRASH_DAYS sonra kalıcı silinir.
  */
 
-import { t as tr } from './i18n.js';
-const DB_NAME = 'hasta-takip';
+import { t as tr, procLabel } from './i18n.js';
+import { DEFAULT_TEMPLATES, TRASH_DAYS } from './model.js';
+
+const DB_NAME = 'curalis';
 const DB_VERSION = 1;
+export const SCHEMA = 2;          // yedek dosyası şema sürümü (MOBIL.md §2 modeli)
+const BACKUP_APP = 'curalis';
 
 let _db = null;
+let _deviceID = null;
 
 export function uid() {
   if (crypto.randomUUID) return crypto.randomUUID();
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => { const r = (Math.random() * 16) | 0; return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16); });
 }
 
 export function nowISO() {
   return new Date().toISOString();
 }
+
+export function deviceID() { return _deviceID || 'unknown'; }
 
 export function openDB() {
   if (_db) return Promise.resolve(_db);
@@ -24,39 +33,36 @@ export function openDB() {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
       const db = req.result;
-      if (!db.objectStoreNames.contains('patients')) {
-        const s = db.createObjectStore('patients', { keyPath: 'id' });
-        s.createIndex('lastName', 'lastName');
-        s.createIndex('updatedAt', 'updatedAt');
-      }
-      if (!db.objectStoreNames.contains('procedures')) {
-        const s = db.createObjectStore('procedures', { keyPath: 'id' });
-        s.createIndex('patientId', 'patientId');
-        s.createIndex('date', 'date');
-      }
-      if (!db.objectStoreNames.contains('photos')) {
-        const s = db.createObjectStore('photos', { keyPath: 'id' });
-        s.createIndex('patientId', 'patientId');
-        s.createIndex('procedureId', 'procedureId');
-      }
-      if (!db.objectStoreNames.contains('appointments')) {
-        const s = db.createObjectStore('appointments', { keyPath: 'id' });
-        s.createIndex('patientId', 'patientId');
-        s.createIndex('date', 'date');
-        s.createIndex('procedureId', 'procedureId');
-      }
-      if (!db.objectStoreNames.contains('settings')) {
-        db.createObjectStore('settings', { keyPath: 'key' });
-      }
+      const mk = (name, indexes) => {
+        if (db.objectStoreNames.contains(name)) return;
+        const s = db.createObjectStore(name, { keyPath: 'id' });
+        indexes.forEach((i) => s.createIndex(i, i));
+      };
+      mk('patients', ['lastName', 'updatedAt', 'deletedAt']);
+      mk('templates', ['name', 'deletedAt']);
+      mk('procedures', ['patientId', 'templateId', 'date', 'deletedAt']);
+      mk('photos', ['patientId', 'procedureId', 'date', 'period', 'angle', 'deletedAt']);
+      mk('appointments', ['patientId', 'procedureId', 'date', 'status', 'deletedAt']);
+      mk('audit', ['at', 'entity']);
+      if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'key' });
     };
-    req.onsuccess = () => {
+    req.onsuccess = async () => {
       _db = req.result;
       _db.onversionchange = () => { _db.close(); _db = null; };
+      try { await init(); } catch (e) { reject(e); return; }
       resolve(_db);
     };
     req.onerror = () => reject(req.error);
     req.onblocked = () => reject(new Error(tr('db.blocked')));
   });
+}
+
+/* Açılış: cihaz kimliği ve şablon tohumu */
+async function init() {
+  let id = await Settings.get('deviceID');
+  if (!id) { id = uid(); await Settings.set('deviceID', id); }
+  _deviceID = id;
+  await seedTemplates();
 }
 
 function promisify(req) {
@@ -83,51 +89,100 @@ async function run(storeNames, mode, fn) {
   return result;
 }
 
+const live = (list) => list.filter((x) => !x.deletedAt);
+
 function baseStore(name) {
   return {
-    all: () => run(name, 'readonly', (s) => promisify(s.getAll())),
+    all: () => run(name, 'readonly', (s) => promisify(s.getAll())).then(live),
+    allWithDeleted: () => run(name, 'readonly', (s) => promisify(s.getAll())),
+    trashed: () => run(name, 'readonly', (s) => promisify(s.getAll())).then((l) => l.filter((x) => x.deletedAt)),
     get: (id) => run(name, 'readonly', (s) => promisify(s.get(id))),
     put: (obj) => run(name, 'readwrite', (s) => promisify(s.put(obj))).then(() => obj),
-    remove: (id) => run(name, 'readwrite', (s) => promisify(s.delete(id))),
-    byIndex: (idx, val) => run(name, 'readonly', (s) => promisify(s.index(idx).getAll(val))),
-    count: () => run(name, 'readonly', (s) => promisify(s.count())),
+    hardDelete: (id) => run(name, 'readwrite', (s) => promisify(s.delete(id))),
+    byIndex: (idx, val) => run(name, 'readonly', (s) => promisify(s.index(idx).getAll(val))).then(live),
+    count: () => run(name, 'readonly', (s) => promisify(s.getAll())).then((l) => live(l).length),
     clear: () => run(name, 'readwrite', (s) => promisify(s.clear())),
   };
 }
 
+/** Ortak alanlar (MOBIL.md §2): id, createdAt, updatedAt, deletedAt, deviceID */
 function stamp(obj) {
   const now = nowISO();
-  return { ...obj, id: obj.id || uid(), createdAt: obj.createdAt || now, updatedAt: now };
+  return { ...obj, id: obj.id || uid(), createdAt: obj.createdAt || now, updatedAt: now, deletedAt: obj.deletedAt ?? null, deviceID: deviceID() };
 }
+
+/* ---------------- Denetim kaydı ---------------- */
+const _audit = baseStore('audit');
+/** Görüntüleme dışındaki her eylem yazılır; silinemez, Ayarlar'dan okunur. */
+export async function audit(action, entity, entityId, summary = '') {
+  const e = { id: uid(), at: nowISO(), deviceID: deviceID(), action, entity, entityId: entityId || null, summary: String(summary || '').slice(0, 200) };
+  try { await _audit.put(e); } catch { /* denetim kaydı ana akışı durdurmaz */ }
+  return e;
+}
+export const Audit = {
+  async list(limit = 300) {
+    const all = await _audit.allWithDeleted();
+    return all.sort((a, b) => b.at.localeCompare(a.at)).slice(0, limit);
+  },
+  count: () => _audit.allWithDeleted().then((l) => l.length),
+};
 
 /* ---------------- Hastalar ---------------- */
 const _patients = baseStore('patients');
 export const Patients = {
   ..._patients,
   async save(p) {
+    const isNew = !p.id;
     const obj = stamp(p);
     obj.firstName = (obj.firstName || '').trim();
     obj.lastName = (obj.lastName || '').trim();
     await _patients.put(obj);
+    audit(isNew ? 'create' : 'update', 'patient', obj.id, fullName(obj));
     return obj;
   },
-  /** Hastayı ve ona bağlı tüm kayıtları siler. */
-  removeCascade(id) {
-    return run(['patients', 'procedures', 'photos', 'appointments'], 'readwrite', async (s) => {
+  /** Yumuşak silme: hasta ve bağlı tüm kayıtlar birlikte (deletedVia ile) işaretlenir; geri alınabilir. */
+  async remove(id) {
+    const now = nowISO();
+    const via = `patient:${id}`;
+    const p = await run(['patients', 'procedures', 'photos', 'appointments'], 'readwrite', async (s) => {
+      const patient = await promisify(s.patients.get(id));
+      if (!patient) return null;
+      s.patients.put({ ...patient, deletedAt: now, updatedAt: now });
+      for (const name of ['procedures', 'photos', 'appointments']) {
+        const rows = await promisify(s[name].index('patientId').getAll(id));
+        rows.filter((r) => !r.deletedAt).forEach((r) => s[name].put({ ...r, deletedAt: now, deletedVia: via }));
+      }
+      return patient;
+    });
+    if (p) audit('delete', 'patient', id, fullName(p));
+    return p;
+  },
+  async restore(id) {
+    const via = `patient:${id}`;
+    const p = await run(['patients', 'procedures', 'photos', 'appointments'], 'readwrite', async (s) => {
+      const patient = await promisify(s.patients.get(id));
+      if (!patient) return null;
+      s.patients.put({ ...patient, deletedAt: null, updatedAt: nowISO() });
+      for (const name of ['procedures', 'photos', 'appointments']) {
+        const rows = await promisify(s[name].index('patientId').getAll(id));
+        rows.filter((r) => r.deletedVia === via).forEach((r) => s[name].put({ ...r, deletedAt: null, deletedVia: null }));
+      }
+      return patient;
+    });
+    if (p) audit('restore', 'patient', id, fullName(p));
+    return p;
+  },
+  /** Kalıcı silme: hasta ve ona bağlı her şey. */
+  async purge(id) {
+    const p = await _patients.get(id);
+    await run(['patients', 'procedures', 'photos', 'appointments'], 'readwrite', async (s) => {
       for (const name of ['procedures', 'photos', 'appointments']) {
         const keys = await promisify(s[name].index('patientId').getAllKeys(id));
         keys.forEach((k) => s[name].delete(k));
       }
       s.patients.delete(id);
     });
-  },
-  async search(q) {
-    const all = await _patients.all();
-    const needle = normalize(q);
-    const list = needle
-      ? all.filter((p) => normalize(`${p.firstName} ${p.lastName} ${p.phone || ''}`).includes(needle))
-      : all;
-    return list.sort(byName);
+    if (p) audit('purge', 'patient', id, fullName(p));
   },
 };
 
@@ -143,18 +198,81 @@ export function normalize(s) {
   return (s || '').toLocaleLowerCase('tr').replace(/\s+/g, ' ').trim();
 }
 
+/* ---------------- Şablonlar ---------------- */
+const _templates = baseStore('templates');
+export const Templates = {
+  ..._templates,
+  async all() { return (await _templates.all()).sort((a, b) => a.name.localeCompare(b.name, 'tr')); },
+  async save(tpl) {
+    const isNew = !tpl.id;
+    const obj = stamp({ followUpPeriods: [], angleSet: [], fields: [], ...tpl });
+    obj.name = (obj.name || '').trim();
+    await _templates.put(obj);
+    audit(isNew ? 'create' : 'update', 'template', obj.id, obj.name);
+    return obj;
+  },
+  /** Şablon silinince eski işlemler bozulmaz: işlem, şablon adını (typeName) kendinde tutar. */
+  async remove(id) {
+    const tpl = await _templates.get(id);
+    await _templates.hardDelete(id);
+    if (tpl) audit('delete', 'template', id, tpl.name);
+  },
+};
+/** Depo boşsa varsayılan şablonlar geçerli dilde tohumlanır (bir kez). */
+async function seedTemplates() {
+  const existing = await _templates.allWithDeleted();
+  if (existing.length) return 0;
+  const rows = DEFAULT_TEMPLATES.map((d) => stamp({ name: procLabel(d.nameKey), nameKey: d.nameKey, followUpPeriods: d.followUpPeriods, angleSet: d.angleSet, fields: d.fields }));
+  await run('templates', 'readwrite', (s) => { rows.forEach((r) => s.put(r)); });
+  return rows.length;
+}
+
 /* ---------------- İşlemler ---------------- */
 const _procedures = baseStore('procedures');
 export const Procedures = {
   ..._procedures,
-  save: (p) => _procedures.put(stamp(p)),
+  async save(p) {
+    const isNew = !p.id;
+    const obj = stamp({ details: {}, complication: null, revisionOf: null, followUpSchedule: [], ...p });
+    await _procedures.put(obj);
+    audit(isNew ? 'create' : 'update', 'procedure', obj.id, `${obj.typeName} · ${obj.date}`);
+    return obj;
+  },
   async byPatient(patientId) {
     const list = await _procedures.byIndex('patientId', patientId);
     return list.sort((a, b) => b.date.localeCompare(a.date));
   },
-  /** İşlemi ve ona bağlı otomatik kontrol randevularını siler. Fotoğraflarda işlem bağı kaldırılır. */
-  removeCascade(id) {
-    return run(['procedures', 'appointments', 'photos'], 'readwrite', async (s) => {
+  /** Yumuşak silme: işlem ve otomatik randevuları (kontroller + işlem günü). Fotoğraflar bağlı kalır, işlem geri alınınca yeniden görünür. */
+  async remove(id) {
+    const now = nowISO();
+    const via = `procedure:${id}`;
+    const pr = await run(['procedures', 'appointments'], 'readwrite', async (s) => {
+      const proc = await promisify(s.procedures.get(id));
+      if (!proc) return null;
+      s.procedures.put({ ...proc, deletedAt: now, updatedAt: now });
+      const apps = await promisify(s.appointments.index('procedureId').getAll(id));
+      apps.filter((a) => a.auto && !a.deletedAt).forEach((a) => s.appointments.put({ ...a, deletedAt: now, deletedVia: via }));
+      return proc;
+    });
+    if (pr) audit('delete', 'procedure', id, pr.typeName);
+    return pr;
+  },
+  async restore(id) {
+    const via = `procedure:${id}`;
+    const pr = await run(['procedures', 'appointments'], 'readwrite', async (s) => {
+      const proc = await promisify(s.procedures.get(id));
+      if (!proc) return null;
+      s.procedures.put({ ...proc, deletedAt: null, updatedAt: nowISO() });
+      const apps = await promisify(s.appointments.index('procedureId').getAll(id));
+      apps.filter((a) => a.deletedVia === via).forEach((a) => s.appointments.put({ ...a, deletedAt: null, deletedVia: null }));
+      return proc;
+    });
+    if (pr) audit('restore', 'procedure', id, pr.typeName);
+    return pr;
+  },
+  async purge(id) {
+    const pr = await _procedures.get(id);
+    await run(['procedures', 'appointments', 'photos'], 'readwrite', async (s) => {
       const apps = await promisify(s.appointments.index('procedureId').getAll(id));
       apps.filter((a) => a.auto).forEach((a) => s.appointments.delete(a.id));
       apps.filter((a) => !a.auto).forEach((a) => s.appointments.put({ ...a, procedureId: null }));
@@ -162,15 +280,14 @@ export const Procedures = {
       photos.forEach((ph) => s.photos.put({ ...ph, procedureId: null }));
       s.procedures.delete(id);
     });
+    if (pr) audit('purge', 'procedure', id, pr.typeName);
   },
 };
 
 /* ---------------- Fotoğraflar ---------------- */
 /*
- * Görsel verisi IndexedDB'ye Blob değil ArrayBuffer olarak yazılır. Bazı Chromium
- * sürümleri (özellikle Android) Blob yazarken "Error preparing Blob/File data to be
- * stored in object store" hatası verir; ArrayBuffer bu yoldan geçmez. Okurken
- * görünümler için Blob'a çevrilir; eski kayıtlardaki Blob'lar da olduğu gibi çalışır.
+ * Görsel verisi IndexedDB'ye Blob değil ArrayBuffer olarak yazılır (bazı Chromium sürümleri Blob yazarken hata verir).
+ * Okurken görünümler için Blob'a çevrilir. Kayıtlı kopya canvas'tan yeniden kodlandığı için EXIF (konum dahil) taşımaz.
  */
 const PHOTO_MIME = 'image/jpeg';
 async function dehydrate(v) { return v instanceof Blob ? await v.arrayBuffer() : v; }
@@ -180,30 +297,45 @@ async function dehydratePhoto(p) {
   const mime = p.mime || (p.blob instanceof Blob && p.blob.type) || PHOTO_MIME;
   return { ...p, mime, blob: await dehydrate(p.blob), thumb: await dehydrate(p.thumb) };
 }
+export { hydrate as hydrateBlob, dehydrate as dehydrateBlob };
 
 const _photos = baseStore('photos');
 export const Photos = {
   ..._photos,
   all: async () => (await _photos.all()).map(hydratePhoto),
+  trashed: async () => (await _photos.trashed()).map(hydratePhoto),
   get: async (id) => hydratePhoto(await _photos.get(id)),
   byIndex: async (idx, val) => (await _photos.byIndex(idx, val)).map(hydratePhoto),
   async save(p) {
-    const obj = await dehydratePhoto(stamp(p));
+    const isNew = !p.id;
+    const obj = await dehydratePhoto(stamp({ period: 'other', angle: 'custom', notes: '', ...p }));
     await _photos.put(obj);
+    audit(isNew ? 'create' : 'update', 'photo', obj.id, `${obj.period} · ${obj.angle} · ${obj.date}`);
     return hydratePhoto(obj);
   },
   async byPatient(patientId) {
     const list = await Photos.byIndex('patientId', patientId);
     return list.sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.createdAt.localeCompare(a.createdAt));
   },
-  async countByPatient(patientId) {
-    return run('photos', 'readonly', (s) => promisify(s.index('patientId').count(patientId)));
+  async remove(id) {
+    const ph = await _photos.get(id);
+    if (!ph) return null;
+    const now = nowISO();
+    await _photos.put({ ...ph, deletedAt: now, updatedAt: now });
+    audit('delete', 'photo', id, `${ph.period} · ${ph.angle} · ${ph.date}`);
+    return ph;
   },
-  async allTags() {
-    const all = await _photos.all();
-    const set = new Set();
-    all.forEach((p) => (p.tags || []).forEach((t) => set.add(t)));
-    return [...set].sort((a, b) => a.localeCompare(b, 'tr'));
+  async restore(id) {
+    const ph = await _photos.get(id);
+    if (!ph) return null;
+    await _photos.put({ ...ph, deletedAt: null, deletedVia: null, updatedAt: nowISO() });
+    audit('restore', 'photo', id, `${ph.period} · ${ph.angle} · ${ph.date}`);
+    return ph;
+  },
+  async purge(id) {
+    const ph = await _photos.get(id);
+    await _photos.hardDelete(id);
+    if (ph) audit('purge', 'photo', id, `${ph.period} · ${ph.angle} · ${ph.date}`);
   },
 };
 
@@ -211,22 +343,46 @@ export const Photos = {
 const _appointments = baseStore('appointments');
 export const Appointments = {
   ..._appointments,
-  save: (a) => _appointments.put(stamp(a)),
-  saveMany(list) {
-    const stamped = list.map(stamp);
-    return run('appointments', 'readwrite', (s) => { stamped.forEach((a) => s.put(a)); return stamped; });
+  async save(a) {
+    const isNew = !a.id;
+    const obj = stamp({ type: 'control', status: 'planned', periodLabel: null, calendarEventID: null, ...a });
+    await _appointments.put(obj);
+    audit(isNew ? 'create' : 'update', 'appointment', obj.id, `${obj.label} · ${obj.date}`);
+    return obj;
+  },
+  async saveMany(list) {
+    const stamped = list.map((a) => stamp({ type: 'control', status: 'planned', periodLabel: null, calendarEventID: null, ...a }));
+    await run('appointments', 'readwrite', (s) => { stamped.forEach((a) => s.put(a)); });
+    if (stamped.length) audit('create', 'appointment', null, tr('audit.bulk', { n: stamped.length }));
+    return stamped;
   },
   async byPatient(patientId) {
     const list = await _appointments.byIndex('patientId', patientId);
     return list.sort((a, b) => a.date.localeCompare(b.date));
   },
-  async byRange(fromISO, toISO) {
-    return run('appointments', 'readonly', (s) =>
-      promisify(s.index('date').getAll(IDBKeyRange.bound(fromISO, toISO))));
-  },
   async allSorted() {
     const list = await _appointments.all();
     return list.sort((a, b) => a.date.localeCompare(b.date));
+  },
+  async remove(id) {
+    const a = await _appointments.get(id);
+    if (!a) return null;
+    const now = nowISO();
+    await _appointments.put({ ...a, deletedAt: now, updatedAt: now });
+    audit('delete', 'appointment', id, `${a.label} · ${a.date}`);
+    return a;
+  },
+  async restore(id) {
+    const a = await _appointments.get(id);
+    if (!a) return null;
+    await _appointments.put({ ...a, deletedAt: null, deletedVia: null, updatedAt: nowISO() });
+    audit('restore', 'appointment', id, `${a.label} · ${a.date}`);
+    return a;
+  },
+  async purge(id) {
+    const a = await _appointments.get(id);
+    await _appointments.hardDelete(id);
+    if (a) audit('purge', 'appointment', id, `${a.label} · ${a.date}`);
   },
 };
 
@@ -234,18 +390,46 @@ export const Appointments = {
 const _settings = baseStore('settings');
 export const Settings = {
   async get(key, fallback = null) {
-    const r = await _settings.get(key);
+    const r = await run('settings', 'readonly', (s) => promisify(s.get(key)));
     return r ? r.value : fallback;
   },
-  set: (key, value) => _settings.put({ key, value }),
-  remove: (key) => _settings.remove(key),
+  set: (key, value) => run('settings', 'readwrite', (s) => promisify(s.put({ key, value }))),
+  remove: (key) => run('settings', 'readwrite', (s) => promisify(s.delete(key))),
 };
+
+/* ---------------- Silinenler ---------------- */
+/** Doğrudan silinen (bir üst kayıtla birlikte değil) kayıtlar; geri alma / kalıcı silme için. */
+export async function trashList() {
+  const [patients, procedures, photos, appointments] = await Promise.all([
+    _patients.trashed(), _procedures.trashed(), Photos.trashed(), _appointments.trashed(),
+  ]);
+  const own = (l) => l.filter((x) => !x.deletedVia);
+  return { patients: own(patients), procedures: own(procedures), photos: own(photos), appointments: own(appointments) };
+}
+export async function trashCount() {
+  const tl = await trashList();
+  return tl.patients.length + tl.procedures.length + tl.photos.length + tl.appointments.length;
+}
+/** TRASH_DAYS geçmiş silinmişleri kalıcı olarak kaldırır (açılışta). */
+export async function purgeExpired(days = TRASH_DAYS) {
+  const cutoff = new Date(Date.now() - days * 86400000).toISOString();
+  const tl = await trashList();
+  let n = 0;
+  for (const p of tl.patients) if (p.deletedAt < cutoff) { await Patients.purge(p.id); n++; }
+  for (const p of tl.procedures) if (p.deletedAt < cutoff) { await Procedures.purge(p.id); n++; }
+  for (const p of tl.photos) if (p.deletedAt < cutoff) { await Photos.purge(p.id); n++; }
+  for (const p of tl.appointments) if (p.deletedAt < cutoff) { await Appointments.purge(p.id); n++; }
+  return n;
+}
 
 /* ---------------- Toplu işlemler ---------------- */
 export async function clearAllData({ keepSettings = true } = {}) {
-  const names = ['patients', 'procedures', 'photos', 'appointments'];
+  const names = ['patients', 'procedures', 'photos', 'appointments', 'templates', 'audit'];
   if (!keepSettings) names.push('settings');
-  return run(names, 'readwrite', (s) => { names.forEach((n) => s[n].clear()); });
+  await run(names, 'readwrite', (s) => { names.forEach((n) => s[n].clear()); });
+  if (!keepSettings) _deviceID = null;
+  await init();
+  audit('wipe', 'data', null, '');
 }
 
 export async function counts() {
@@ -269,56 +453,50 @@ async function dataURLToBuffer(url) {
   return r.arrayBuffer();
 }
 
-/** Eski kayıtlardaki Blob'ları ArrayBuffer'a çevirir (bir kez, arka planda). */
-export async function migratePhotoBlobs() {
-  const all = await _photos.all();
-  for (const p of all) {
-    if (p.blob instanceof Blob || p.thumb instanceof Blob) await _photos.put(await dehydratePhoto(p));
-  }
-}
-
-/** Tüm veriyi JSON'a dönüştürülebilir düz nesne olarak verir (fotoğraflar base64). */
+/** Tüm veriyi JSON'a dönüştürülebilir düz nesne olarak verir (fotoğraflar base64). Silinenler de dahildir (deletedAt ile). */
 export async function exportAll() {
-  const [patients, procedures, photos, appointments, settings] = await Promise.all([
-    _patients.all(), _procedures.all(), _photos.all(), _appointments.all(), _settings.all(),
+  const [patients, templates, procedures, photos, appointments, auditRows, settings] = await Promise.all([
+    _patients.allWithDeleted(), _templates.allWithDeleted(), _procedures.allWithDeleted(), _photos.allWithDeleted(), _appointments.allWithDeleted(), _audit.allWithDeleted(),
+    run('settings', 'readonly', (s) => promisify(s.getAll())),
   ]);
   const photosOut = [];
   for (const p of photos) {
-    photosOut.push({
-      ...p,
-      blob: p.blob ? await blobToDataURL(hydrate(p.blob, p.mime)) : null,
-      thumb: p.thumb ? await blobToDataURL(hydrate(p.thumb, p.mime)) : null,
-    });
+    photosOut.push({ ...p, blob: p.blob ? await blobToDataURL(hydrate(p.blob, p.mime)) : null, thumb: p.thumb ? await blobToDataURL(hydrate(p.thumb, p.mime)) : null });
+  }
+  const patientsOut = [];
+  for (const p of patients) {
+    patientsOut.push(p.consentDocument?.blob ? { ...p, consentDocument: { ...p.consentDocument, blob: await blobToDataURL(hydrate(p.consentDocument.blob, p.consentDocument.mime)) } } : p);
   }
   return {
-    app: 'hasta-takip',
-    schema: DB_VERSION,
-    exportedAt: nowISO(),
-    patients, procedures, appointments,
-    photos: photosOut,
-    settings: settings.filter((s) => s.key !== 'pin'),
+    app: BACKUP_APP, schema: SCHEMA, deviceID: deviceID(), exportedAt: nowISO(),
+    patients: patientsOut, templates, procedures, appointments, photos: photosOut, audit: auditRows,
+    settings: settings.filter((s) => s.key !== 'pin' && s.key !== 'deviceID'),
   };
 }
 
-/** Yedek dosyasından veriyi geri yükler. replace=true ise mevcut veriyi siler. */
+/** Yedek dosyasından veriyi geri yükler. replace=true ise mevcut veriyi siler; aksi hâlde id'ye göre birleştirir. */
 export async function importAll(data, { replace = true } = {}) {
-  if (!data || data.app !== 'hasta-takip') throw new Error(tr('db.badBackup'));
+  if (!data || data.app !== BACKUP_APP) throw new Error(tr('db.badBackup'));
+  if (data.schema !== SCHEMA) throw new Error(tr('db.badSchema'));
   const photos = [];
   for (const p of data.photos || []) {
-    photos.push({
-      ...p,
-      mime: p.mime || PHOTO_MIME,
-      blob: p.blob ? await dataURLToBuffer(p.blob) : null,
-      thumb: p.thumb ? await dataURLToBuffer(p.thumb) : null,
-    });
+    photos.push({ ...p, mime: p.mime || PHOTO_MIME, blob: p.blob ? await dataURLToBuffer(p.blob) : null, thumb: p.thumb ? await dataURLToBuffer(p.thumb) : null });
   }
-  const names = ['patients', 'procedures', 'photos', 'appointments', 'settings'];
-  return run(names, 'readwrite', (s) => {
-    if (replace) ['patients', 'procedures', 'photos', 'appointments'].forEach((n) => s[n].clear());
-    (data.patients || []).forEach((x) => s.patients.put(x));
+  const patients = [];
+  for (const p of data.patients || []) {
+    patients.push(p.consentDocument?.blob && typeof p.consentDocument.blob === 'string' ? { ...p, consentDocument: { ...p.consentDocument, blob: await dataURLToBuffer(p.consentDocument.blob) } } : p);
+  }
+  const names = ['patients', 'templates', 'procedures', 'photos', 'appointments', 'audit', 'settings'];
+  await run(names, 'readwrite', (s) => {
+    if (replace) ['patients', 'templates', 'procedures', 'photos', 'appointments'].forEach((n) => s[n].clear());
+    patients.forEach((x) => s.patients.put(x));
+    (data.templates || []).forEach((x) => s.templates.put(x));
     (data.procedures || []).forEach((x) => s.procedures.put(x));
     (data.appointments || []).forEach((x) => s.appointments.put(x));
     photos.forEach((x) => s.photos.put(x));
-    (data.settings || []).filter((x) => x.key !== 'pin').forEach((x) => s.settings.put(x));
+    (data.audit || []).forEach((x) => s.audit.put(x));
+    (data.settings || []).filter((x) => x.key !== 'pin' && x.key !== 'deviceID').forEach((x) => s.settings.put(x));
   });
+  await seedTemplates();
+  audit('restore_backup', 'data', null, `${replace ? 'replace' : 'merge'} · ${data.exportedAt || ''}`);
 }

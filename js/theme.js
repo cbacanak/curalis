@@ -1,6 +1,8 @@
 /* Tema: Açık / Koyu / Sistem — TASARIM.md §2.1
  * Seçim localStorage'da tutulur ve index.html'deki satır içi betik CSS yüklenmeden önce uygular (yanıp sönme olmaz). */
-const KEY = 'hasta-takip:theme';
+const KEY = 'curalis:theme';
+// Bir kez: eski anahtardaki seçimi taşı
+try { const o = localStorage.getItem('hasta-takip:theme'); if (o && !localStorage.getItem(KEY)) localStorage.setItem(KEY, o); if (o) localStorage.removeItem('hasta-takip:theme'); } catch { /* yok say */ }
 export const THEMES = ['light', 'dark', 'system']; // etiketler i18n: s.theme.*
 
 export const DEFAULT_THEME = 'system'; // seçim yapılmadıysa sistem tercihi izlenir

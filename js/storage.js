@@ -1,5 +1,5 @@
 /* Depolama sağlığı: ortam tespiti, kalıcı depolama isteği, yedek al / geri yükle */
-import { exportAll, importAll } from './db.js';
+import { exportAll, importAll, audit, SCHEMA } from './db.js';
 import { esc, icon, sheet, toast } from './ui.js';
 import { t, locale } from './i18n.js';
 
@@ -48,7 +48,7 @@ export function fmtBytes(n) {
 }
 
 /* ---------------- Uyarı bandı ---------------- */
-const NOTICE_KEY = 'hasta-takip:notice-dismissed';
+const NOTICE_KEY = 'curalis:notice-dismissed';
 function dismissed(id) { try { return localStorage.getItem(NOTICE_KEY) === id; } catch { return false; } }
 function dismiss(id) { try { localStorage.setItem(NOTICE_KEY, id); } catch { /* yok say */ } }
 
@@ -98,6 +98,7 @@ function backupName() {
 /** Yedeği dosya olarak verir: iOS'ta paylaşım sayfası, diğerlerinde indirme. */
 export async function downloadBackup() {
   const data = await exportAll();
+  audit('backup', 'data', null, `${(data.patients || []).length} patients`);
   const json = JSON.stringify(data);
   const name = backupName();
   const file = new File([json], name, { type: 'application/json' });
@@ -130,7 +131,8 @@ export function pickBackupFile() {
 export async function readBackup(file) {
   let data;
   try { data = JSON.parse(await file.text()); } catch { throw new Error(t('b.unreadable')); }
-  if (!data || data.app !== 'hasta-takip') throw new Error(t('b.notBackup'));
+  if (!data || data.app !== 'curalis') throw new Error(t('b.notBackup'));
+  if (data.schema !== SCHEMA) throw new Error(t('b.oldSchema'));
   return data;
 }
 
