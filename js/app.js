@@ -10,6 +10,7 @@ const routes = [
   { re: /^\/?$/, nav: 'patients', load: () => import('./views/patients.js'), params: () => ({}) },
   { re: /^\/patients$/, nav: 'patients', load: () => import('./views/patients.js'), params: () => ({}) },
   { re: /^\/patient\/([^/]+)(?:\/([a-z]+))?$/, nav: 'patients', load: () => import('./views/patient.js'), params: (m) => ({ id: m[1], tab: m[2] }) },
+  { re: /^\/camera(?:\/([^/]+))?$/, nav: 'camera', load: () => import('./views/camera.js'), params: (m) => ({ id: m[1] || null }) },
   { re: /^\/calendar$/, nav: 'calendar', load: () => import('./views/calendar.js'), params: () => ({}) },
   { re: /^\/settings$/, nav: 'settings', load: () => import('./views/settings.js'), params: () => ({}) },
 ];
