@@ -1,4 +1,5 @@
 /* Fotoğraf işleme: küçültme, önizleme URL yönetimi */
+import { t, upper } from './i18n.js';
 
 const MAX_EDGE = 1280;   // saklanan kopya
 const THUMB_EDGE = 360;  // galeri küçük resmi
@@ -14,7 +15,7 @@ async function loadBitmap(file) {
     const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => { URL.revokeObjectURL(url); res(img); };
-    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('Görsel okunamadı')); };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error(t('common.imgFail'))); };
     img.src = url;
   });
 }
@@ -193,7 +194,7 @@ export function releaseURLs() {
 /** Etiket metnini normalize eder: "Burun , Profil" → ["Burun", "Profil"] */
 export function parseTags(text) {
   const set = new Set();
-  String(text || '').split(/[,;\n]/).map((t) => t.trim()).filter(Boolean)
-    .forEach((t) => set.add(t.charAt(0).toLocaleUpperCase('tr') + t.slice(1)));
+  String(text || '').split(/[,;\n]/).map((x) => x.trim()).filter(Boolean)
+    .forEach((x) => set.add(upper(x.charAt(0)) + x.slice(1)));
   return [...set];
 }

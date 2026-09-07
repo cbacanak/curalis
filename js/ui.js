@@ -1,4 +1,5 @@
 /* Küçük UI yardımcıları: şablon, ikon, tarih, sheet, onay, toast */
+import { t, locale, upper } from './i18n.js';
 
 export function esc(s) {
   return String(s ?? '')
@@ -13,7 +14,7 @@ export function el(html) {
 }
 
 export function initials(name) {
-  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toLocaleUpperCase('tr')).join('');
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => upper(w[0])).join('');
 }
 
 /* ---------------- İkonlar ---------------- */
@@ -62,8 +63,7 @@ export function icon(name, cls = '') {
   return `<svg class="ic ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
 }
 
-/* ---------------- Tarih ---------------- */
-const TR = 'tr-TR';
+/* ---------------- Tarih (dile göre yerel biçim) ---------------- */
 
 export function parseDate(v) {
   if (!v) return null;
@@ -76,19 +76,19 @@ export function parseDate(v) {
 export function fmtDate(v, opts = {}) {
   const d = parseDate(v);
   if (!d) return '—';
-  return d.toLocaleDateString(TR, { day: 'numeric', month: 'short', year: 'numeric', ...opts });
+  return d.toLocaleDateString(locale(), { day: 'numeric', month: 'short', year: 'numeric', ...opts });
 }
 
 export function fmtDateLong(v) {
   const d = parseDate(v);
   if (!d) return '—';
-  return d.toLocaleDateString(TR, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  return d.toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 export function fmtTime(v) {
   const d = parseDate(v);
   if (!d) return '';
-  return d.toLocaleTimeString(TR, { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' });
 }
 
 export function fmtDateTime(v) {
@@ -100,12 +100,12 @@ export function fmtDateTime(v) {
 export function fmtDayMonth(v) {
   const d = parseDate(v);
   if (!d) return '—';
-  return d.toLocaleDateString(TR, { day: 'numeric', month: 'short' });
+  return d.toLocaleDateString(locale(), { day: 'numeric', month: 'short' });
 }
 
 export function weekdayShort(v) {
   const d = parseDate(v);
-  return d ? d.toLocaleDateString(TR, { weekday: 'short' }) : '';
+  return d ? d.toLocaleDateString(locale(), { weekday: 'short' }) : '';
 }
 
 export function age(birth) {
@@ -133,28 +133,26 @@ export function relDay(v) {
   const d = parseDate(v);
   if (!d) return '';
   const n = daysBetween(new Date(), d);
-  if (n === 0) return 'Bugün';
-  if (n === 1) return 'Yarın';
-  if (n === -1) return 'Dün';
-  if (n > 1 && n < 30) return `${n} gün sonra`;
-  if (n < -1 && n > -30) return `${-n} gün önce`;
-  const w = Math.round(n / 7);
-  if (Math.abs(n) < 90) return n > 0 ? `${w} hafta sonra` : `${-w} hafta önce`;
-  const mo = Math.round(n / 30);
-  if (Math.abs(n) < 365) return n > 0 ? `${mo} ay sonra` : `${-mo} ay önce`;
-  const y = Math.round(n / 365);
-  return n > 0 ? `${y} yıl sonra` : `${-y} yıl önce`;
+  if (n === 0) return t('common.today');
+  if (n === 1) return t('common.tomorrow');
+  if (n === -1) return t('common.yesterday');
+  const rel = (k, u) => t(n > 0 ? 'rel.after' : 'rel.before', { n: Math.abs(k), u: t(u) });
+  if (Math.abs(n) < 30) return rel(n, 'unit.day');
+  if (Math.abs(n) < 90) return rel(Math.round(n / 7), 'unit.week');
+  if (Math.abs(n) < 365) return rel(Math.round(n / 30), 'unit.month');
+  return rel(Math.round(n / 365), 'unit.year');
 }
 
 /** İşlem tarihine göre "3. gün", "2. hafta" vb. */
 export function sinceProcedure(procDate, at = new Date()) {
   const n = daysBetween(parseDate(procDate), at);
-  if (n < 0) return 'işlem öncesi';
-  if (n === 0) return 'işlem günü';
-  if (n < 7) return `${n}. gün`;
-  if (n < 28) return `${Math.floor(n / 7)}. hafta`;
-  if (n < 365) return `${Math.floor(n / 30)}. ay`;
-  return `${Math.floor(n / 365)}. yıl`;
+  if (n < 0) return t('since.pre');
+  if (n === 0) return t('since.day0');
+  const nth = (k, u) => t('since.nth', { n: k, u: t(u) });
+  if (n < 7) return nth(n, 'unit1.day');
+  if (n < 28) return nth(Math.floor(n / 7), 'unit1.week');
+  if (n < 365) return nth(Math.floor(n / 30), 'unit1.month');
+  return nth(Math.floor(n / 365), 'unit1.year');
 }
 
 export function phoneHref(phone) {
@@ -185,7 +183,8 @@ function unlockScroll() {
  * Alt sayfa (mobil) / diyalog (masaüstü). content: HTML string veya element.
  * Döner: { el, body, close(result) , result: Promise }
  */
-export function sheet({ title, content, footer = '', size = 'md', onClose, closeText = 'Vazgeç' } = {}) {
+export function sheet({ title, content, footer = '', size = 'md', onClose, closeText = null } = {}) {
+  closeText = closeText ?? t('common.cancel');
   const root = el(`
     <div class="sheet-backdrop" role="presentation">
       <div class="sheet sheet-${size}" role="dialog" aria-modal="true" aria-label="${esc(title || '')}">
@@ -225,7 +224,8 @@ export function sheet({ title, content, footer = '', size = 'md', onClose, close
 }
 
 /** Silme / geri alınamaz eylem onayı — alttan çıkan iOS eylem sayfası (TASARIM.md §5) */
-export function confirmDialog({ title = 'Emin misiniz?', message = '', okText = 'Evet', cancelText = 'Vazgeç', danger = false } = {}) {
+export function confirmDialog({ title = null, message = '', okText = null, cancelText = null, danger = false } = {}) {
+  title = title ?? t('common.sure'); okText = okText ?? t('common.yes'); cancelText = cancelText ?? t('common.cancel');
   return new Promise((resolve) => {
     const root = el(`
       <div class="action-sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}">
@@ -295,7 +295,7 @@ export function formData(form) {
 
 /** Alan etiketi: zorunlu değilse "· isteğe bağlı" (optional: false ile kapatılır) */
 export function fieldLabel(label, { required = false, optional = true } = {}) {
-  return `<span class="field-label">${esc(label)}${!required && optional ? ' <span class="opt">· isteğe bağlı</span>' : ''}</span>`;
+  return `<span class="field-label">${esc(label)}${!required && optional ? ` <span class="opt">${esc(t('common.optional'))}</span>` : ''}</span>`;
 }
 
 export function field({ label, name, type = 'text', value = '', placeholder = '', required = false, optional = true, hint = '', attrs = '' }) {
@@ -357,7 +357,7 @@ export function chipField({ label, name, value = '', options = [], multiple = fa
   // Çoklu seçimde seçili chip onay işareti taşır ve etikette canlı sayaç görünür
   return `
     <div class="field">
-      ${label ? `<span class="field-label">${esc(label)}${multiple ? ` <span class="opt" data-count-for="${name}">· ${selected.size} seçili</span>` : (!required && optional ? ' <span class="opt">· isteğe bağlı</span>' : '')}</span>` : ''}
+      ${label ? `<span class="field-label">${esc(label)}${multiple ? ` <span class="opt" data-count-for="${name}">${esc(t('common.selected', { n: selected.size }))}</span>` : (!required && optional ? ` <span class="opt">${esc(t('common.optional'))}</span>` : '')}</span>` : ''}
       <input type="hidden" name="${name}" value="${esc(value)}">
       <div class="chip-group" data-chips="${name}" data-multiple="${multiple ? '1' : ''}">
         ${options.map((o) => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<button type="button" class="chip ${selected.has(String(v)) ? 'on' : ''}" data-value="${esc(v)}" aria-pressed="${selected.has(String(v))}">${multiple ? icon('check') : ''}${esc(l)}</button>`; }).join('')}
@@ -381,7 +381,7 @@ export function bindChoiceFields(form) {
           b.classList.toggle('on');
           const on = [...group.querySelectorAll('.chip.on')];
           hidden.value = on.map((x) => x.dataset.value).join(',');
-          if (counter) counter.textContent = `· ${on.length} seçili`;
+          if (counter) counter.textContent = t('common.selected', { n: on.length });
         } else {
           group.querySelectorAll('.chip').forEach((x) => x.classList.toggle('on', x === b));
           hidden.value = b.dataset.value;
@@ -405,8 +405,8 @@ export function bindSegmented(segEl, onChange) {
 
 /** Durum düz metin olarak; renk yalnızca gerektiğinde (gecikmiş / gelmedi) */
 export function statusText(status, { overdue = false, today = false } = {}) {
-  if (overdue) return '<span class="status danger">Gecikti</span>';
-  const map = { planned: [today ? 'Bugün' : 'Planlı', ''], done: ['Yapıldı', 'muted'], missed: ['Gelmedi', 'warning'], cancelled: ['İptal', 'muted'] };
+  if (overdue) return `<span class="status danger">${esc(t('status.late'))}</span>`;
+  const map = { planned: [today ? t('common.today') : t('status.planned'), ''], done: [t('status.done'), 'muted'], missed: [t('status.missed'), 'warning'], cancelled: [t('status.cancelled'), 'muted'] };
   const [l, c] = map[status] || [status, ''];
   return `<span class="status ${c}">${esc(l)}</span>`;
 }

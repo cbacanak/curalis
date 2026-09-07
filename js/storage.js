@@ -1,6 +1,7 @@
 /* Depolama sağlığı: ortam tespiti, kalıcı depolama isteği, yedek al / geri yükle */
 import { exportAll, importAll } from './db.js';
 import { esc, icon, sheet, toast } from './ui.js';
+import { t, locale } from './i18n.js';
 
 const ua = navigator.userAgent || '';
 
@@ -56,22 +57,19 @@ export function storageNotice() {
   if (isInAppBrowser()) {
     return {
       id: 'inapp', kind: 'danger', dismissable: false,
-      title: 'Veriler burada kalıcı olmayabilir',
-      text: 'Sayfa bir uygulama içi tarayıcıda (mesajlaşma uygulaması vb.) açıldı; bu tarayıcılar kapanınca verileri silebilir. Bağlantıyı Safari veya Chrome ile açın ve ana ekrana ekleyin.',
+      title: t('n.inApp.title'), text: t('n.inApp.text'),
     };
   }
   if (isIOS() && !isStandalone()) {
     return {
       id: 'ios-tab', kind: 'warn', dismissable: true,
-      title: 'Ana ekrana ekleyin',
-      text: 'Safari, 7 gün açılmayan sitelerin verilerini silebilir. Paylaş → Ana Ekrana Ekle ile kurup uygulamayı oradan açın. Ana ekrandaki uygulamanın verileri Safari\'dekinden ayrıdır; mevcut verileri Ayarlar → Yedek al ile taşıyın.',
+      title: t('n.ios.title'), text: t('n.ios.text'),
     };
   }
   if (isMobile() && !isStandalone()) {
     return {
       id: 'mobile-tab', kind: 'info', dismissable: true,
-      title: 'Ana ekrana ekleyin',
-      text: 'Tarayıcı menüsünden "Ana ekrana ekle" ile kurarsanız uygulama gibi açılır ve verileriniz korunur.',
+      title: t('n.mobile.title'), text: t('n.mobile.text'),
     };
   }
   return null;
@@ -84,7 +82,7 @@ export function renderNotice(host) {
   host.innerHTML = `
     <div class="notice notice-${n.kind}" role="status">
       <div class="notice-main"><b>${esc(n.title)}</b><div>${esc(n.text)}</div></div>
-      ${n.dismissable ? `<button class="btn-icon" type="button" data-act="dismiss" aria-label="Kapat">${icon('x')}</button>` : ''}
+      ${n.dismissable ? `<button class="btn-icon" type="button" data-act="dismiss" aria-label="${esc(t('common.close'))}">${icon('x')}</button>` : ''}
     </div>`;
   const b = host.querySelector('[data-act=dismiss]');
   if (b) b.onclick = () => { dismiss(n.id); host.innerHTML = ''; };
@@ -94,7 +92,7 @@ export function renderNotice(host) {
 function backupName() {
   const d = new Date();
   const p = (n) => String(n).padStart(2, '0');
-  return `hasta-takip-yedek-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.json`;
+  return `${t('b.fileName')}-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.json`;
 }
 
 /** Yedeği dosya olarak verir: iOS'ta paylaşım sayfası, diğerlerinde indirme. */
@@ -105,7 +103,7 @@ export async function downloadBackup() {
   const file = new File([json], name, { type: 'application/json' });
   if (navigator.canShare && navigator.canShare({ files: [file] }) && isMobile()) {
     try {
-      await navigator.share({ files: [file], title: 'Hasta Takip yedeği' });
+      await navigator.share({ files: [file], title: t('b.shareTitle') });
       return { shared: true, name, size: file.size };
     } catch (e) {
       if (e && e.name === 'AbortError') return null; // kullanıcı vazgeçti
@@ -131,8 +129,8 @@ export function pickBackupFile() {
 
 export async function readBackup(file) {
   let data;
-  try { data = JSON.parse(await file.text()); } catch { throw new Error('Dosya okunamadı; geçerli bir yedek dosyası değil.'); }
-  if (!data || data.app !== 'hasta-takip') throw new Error('Bu dosya bir Hasta Takip yedeği değil.');
+  try { data = JSON.parse(await file.text()); } catch { throw new Error(t('b.unreadable')); }
+  if (!data || data.app !== 'hasta-takip') throw new Error(t('b.notBackup'));
   return data;
 }
 
@@ -140,16 +138,16 @@ export async function readBackup(file) {
 export async function restoreBackup(file) {
   const data = await readBackup(file);
   const c = { patients: (data.patients || []).length, photos: (data.photos || []).length, appointments: (data.appointments || []).length };
-  const when = data.exportedAt ? new Date(data.exportedAt).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+  const when = data.exportedAt ? new Date(data.exportedAt).toLocaleString(locale(), { dateStyle: 'medium', timeStyle: 'short' }) : '';
   const s = sheet({
-    title: 'Yedeği geri yükle',
+    title: t('b.restoreTitle'),
     size: 'sm',
     content: `
-      <p class="muted" style="margin:0 0 10px">${when ? `${esc(when)} tarihli yedek: ` : 'Yedek: '}<b>${c.patients} hasta</b>, ${c.photos} fotoğraf, ${c.appointments} randevu.</p>
-      <p class="muted small" style="margin:0"><b>Birleştir</b> mevcut kayıtları korur, aynı kayıtları günceller. <b>Değiştir</b> önce mevcut tüm verileri siler.</p>`,
-    footer: `<button class="btn btn-ghost" data-act="cancel">Vazgeç</button>
-             <button class="btn btn-danger-soft" data-act="replace">Değiştir</button>
-             <button class="btn btn-primary" data-act="merge">Birleştir</button>`,
+      <p class="muted" style="margin:0 0 10px">${when ? esc(t('b.datedBackup', { when })) : esc(t('b.backup'))}${t('b.contents', c)}</p>
+      <p class="muted small" style="margin:0">${t('b.modes')}</p>`,
+    footer: `<button class="btn btn-ghost" data-act="cancel">${esc(t('common.cancel'))}</button>
+             <button class="btn btn-danger-soft" data-act="replace">${esc(t('b.replace'))}</button>
+             <button class="btn btn-primary" data-act="merge">${esc(t('b.merge'))}</button>`,
   });
   s.el.querySelector('[data-act=cancel]').onclick = () => s.close(null);
   s.el.querySelector('[data-act=replace]').onclick = () => s.close('replace');
@@ -157,6 +155,6 @@ export async function restoreBackup(file) {
   const mode = await s.result;
   if (!mode) return null;
   await importAll(data, { replace: mode === 'replace' });
-  toast(`${c.patients} hasta geri yüklendi`, { kind: 'ok' });
+  toast(t('b.restored', { n: c.patients }), { kind: 'ok' });
   return c;
 }

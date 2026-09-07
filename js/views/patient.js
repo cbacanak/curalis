@@ -6,12 +6,12 @@ import {
 } from '../ui.js';
 import { blobURL, releaseURLs } from '../photos.js';
 import {
-  patientForm, procedureForm, appointmentForm, photoUploadForm, photoEditForm, regenerateControls, APPT_KIND_LABEL,
+  patientForm, procedureForm, appointmentForm, photoUploadForm, photoEditForm, regenerateControls,
 } from '../forms.js';
 import { setTopbar, go, replacePath } from '../nav.js';
+import { t, lower, cmp as cmpText, procLabel, anesthesiaLabel, apptLabel, kindLabel } from '../i18n.js';
 
-const TABS = [['genel', 'Genel'], ['islemler', 'İşlemler'], ['fotograflar', 'Fotoğraflar'], ['randevular', 'Randevular']];
-const lower = (s) => String(s || '').toLocaleLowerCase('tr');
+const TABS = [['genel', 'p.tab.general'], ['islemler', 'p.tab.procs'], ['fotograflar', 'p.tab.photos'], ['randevular', 'p.tab.appts']];
 
 const DEFAULT_TAB = 'islemler';
 
@@ -30,23 +30,23 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
 
   await load();
   if (!data.patient) {
-    setTopbar({ title: 'Hasta', back: '/' });
+    setTopbar({ title: t('p.title'), back: '/' });
     root.classList.remove('has-hero');
-    root.innerHTML = `<div class="screen">${emptyState({ title: 'Hasta bulunamadı', text: 'Kayıt silinmiş olabilir.', action: '<a class="btn btn-primary" href="#/">Hasta listesine dön</a>' })}</div>`;
+    root.innerHTML = `<div class="screen">${emptyState({ title: t('p.notFound'), text: t('p.notFoundText'), action: `<a class="btn btn-primary" href="#/">${esc(t('p.backToList'))}</a>` })}</div>`;
     return;
   }
 
   /* ---------- Eylemler ---------- */
   async function editPatient() {
     const r = await patientForm(data.patient);
-    if (r) { toast('Hasta bilgileri güncellendi'); refresh(); }
+    if (r) { toast(t('p.updated')); refresh(); }
   }
   async function patientMenu() {
     const v = await actionMenu(fullName(data.patient), [
-      { label: 'Bilgileri düzenle', icon: 'edit', value: 'edit' },
-      { label: 'Fotoğraf ekle', icon: 'camera', value: 'photo' },
-      { label: 'Randevu ekle', icon: 'calendar', value: 'appt' },
-      { label: 'Hastayı sil', icon: 'trash', value: 'delete', danger: true },
+      { label: t('p.editInfo'), icon: 'edit', value: 'edit' },
+      { label: t('p.addPhoto'), icon: 'camera', value: 'photo' },
+      { label: t('p.addAppt'), icon: 'calendar', value: 'appt' },
+      { label: t('p.delete'), icon: 'trash', value: 'delete', danger: true },
     ]);
     if (v === 'edit') editPatient();
     if (v === 'photo') addPhoto();
@@ -55,34 +55,34 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
   }
   async function deletePatient() {
     const ok = await confirmDialog({
-      title: 'Hasta silinsin mi?',
-      message: `${fullName(data.patient)} ile birlikte ${data.procedures.length} işlem, ${data.photos.length} fotoğraf ve ${data.appointments.length} randevu kalıcı olarak silinecek.`,
-      okText: 'Sil', danger: true,
+      title: t('p.deleteQ'),
+      message: t('p.deleteMsg', { name: fullName(data.patient), procs: data.procedures.length, photos: data.photos.length, appts: data.appointments.length }),
+      okText: t('common.delete'), danger: true,
     });
     if (!ok) return;
     await Patients.removeCascade(id);
-    toast('Hasta silindi');
+    toast(t('p.deleted'));
     go('/');
   }
   async function addProcedure() {
     const r = await procedureForm({ patientId: id });
     if (!r) return;
-    toast(r.createdControls.length ? `İşlem eklendi · ${r.createdControls.length} kontrol planlandı` : 'İşlem eklendi');
+    toast(r.createdControls.length ? t('p.procAddedControls', { n: r.createdControls.length }) : t('p.procAdded'));
     setTab('islemler');
     refresh();
   }
   async function addAppointment(defaults = {}) {
     const r = await appointmentForm({ patientId: id, procedures: data.procedures, ...defaults });
-    if (r) { toast('Randevu eklendi'); refresh(); }
+    if (r) { toast(t('p.apptAdded')); refresh(); }
   }
   async function addPhoto(defaults = {}) {
     const r = await photoUploadForm({ patientId: id, procedures: data.procedures, defaultProcedureId: data.procedures[0]?.id || '', ...defaults });
     if (r && r.length) { setTab('fotograflar'); refresh(); }
   }
-  function setTab(t) {
-    state.tab = t;
+  function setTab(tab) {
+    state.tab = tab;
     state.compare = false;
-    replacePath(`/patient/${id}/${t}`);
+    replacePath(`/patient/${id}/${tab}`);
   }
 
   /* ---------- Türetilmiş ---------- */
@@ -99,12 +99,12 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
   /** "7 gün", "bugün", "3 gün gecikti" */
   function daysLabel(a) {
     const n = daysBetween(new Date(), parseDate(a.date));
-    if (n === 0) return 'bugün';
-    if (n === 1) return 'yarın';
-    if (n > 1) return `${n} gün`;
-    return `${-n} gün gecikti`;
+    if (n === 0) return lower(t('common.today'));
+    if (n === 1) return lower(t('common.tomorrow'));
+    if (n > 1) return t('days.n', { n });
+    return t('days.late', { n: -n });
   }
-  const phaseLabel = (ph) => (ph.phase === 'before' ? 'Öncesi' : 'Sonrası');
+  const phaseLabel = (ph) => t(ph.phase === 'before' ? 'phase.before' : 'phase.after');
   const photoCaption = (ph, pr) => {
     const extra = pr && ph.phase === 'after' ? sinceProcedure(pr.date, parseDate(ph.date)) : (ph.tags || [])[0] || '';
     return [phaseLabel(ph), fmtDayMonth(ph.date), extra].filter(Boolean).join(' · ');
@@ -116,13 +116,13 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const p = data.patient;
     const name = fullName(p);
     const a = age(p.birthDate);
-    const genderLabel = p.gender === 'F' ? 'Kadın' : p.gender === 'M' ? 'Erkek' : '';
+    const genderLabel = p.gender === 'F' ? t('gender.F') : p.gender === 'M' ? t('gender.M') : '';
     const nc = nextControl();
     const lastProc = data.procedures[0];
 
     setTopbar({
       title: name, back: '/', center: true, anchor: '.hero-name', tone: 'inverse',
-      actions: [{ icon: 'edit', label: 'Düzenle', onClick: editPatient }, { icon: 'more', label: 'Diğer', onClick: patientMenu }],
+      actions: [{ icon: 'edit', label: t('common.edit'), onClick: editPatient }, { icon: 'more', label: t('common.more'), onClick: patientMenu }],
     });
     root.classList.add('has-hero');
 
@@ -130,39 +130,39 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       <div class="screen">
       <section class="hero">
         <div class="hero-nav">
-          <button class="btn-icon" type="button" data-act="back" aria-label="Geri">${icon('back')}</button>
+          <button class="btn-icon" type="button" data-act="back" aria-label="${esc(t('common.back'))}">${icon('back')}</button>
           <span class="spacer"></span>
-          <button class="btn-icon" type="button" data-act="edit" aria-label="Düzenle">${icon('edit')}</button>
-          <button class="btn-icon" type="button" data-act="more" aria-label="Diğer">${icon('more')}</button>
+          <button class="btn-icon" type="button" data-act="edit" aria-label="${esc(t('common.edit'))}">${icon('edit')}</button>
+          <button class="btn-icon" type="button" data-act="more" aria-label="${esc(t('common.more'))}">${icon('more')}</button>
         </div>
-        <div class="hero-label">${lastProc ? `${esc(lastProc.type)} · ${esc(fmtDate(lastProc.date))}` : 'Henüz işlem yok'}</div>
+        <div class="hero-label">${lastProc ? `${esc(procLabel(lastProc.type))} · ${esc(fmtDate(lastProc.date))}` : esc(t('p.noProc'))}</div>
         <h1 class="hero-name">${esc(name)}</h1>
-        <div class="hero-meta">${[a !== null ? `${a} yaş` : null, genderLabel || null, p.bloodType ? esc(p.bloodType) : null, p.phone ? `<a href="${phoneHref(p.phone)}" class="num">${esc(p.phone)}</a>` : null].filter(Boolean).join(' · ') || '<span class="t-tertiary">Bilgi girilmedi</span>'}</div>
+        <div class="hero-meta">${[a !== null ? esc(t('age', { n: a })) : null, genderLabel ? esc(genderLabel) : null, p.bloodType ? esc(p.bloodType) : null, p.phone ? `<a href="${phoneHref(p.phone)}" class="num">${esc(p.phone)}</a>` : null].filter(Boolean).join(' · ') || `<span class="t-tertiary">${esc(t('p.noInfo'))}</span>`}</div>
         <div class="hero-actions">
-          <button class="btn btn-primary" type="button" data-act="add-proc">İşlem ekle</button>
-          ${p.phone ? `<a class="btn-outline-icon" href="${phoneHref(p.phone)}" aria-label="Ara" title="Ara">${icon('phone')}</a>` : ''}
-          <button class="btn-outline-icon" type="button" data-act="add-photo" aria-label="Fotoğraf ekle" title="Fotoğraf ekle">${icon('camera')}</button>
-          <button class="btn-outline-icon" type="button" data-act="add-appt" aria-label="Randevu ekle" title="Randevu ekle">${icon('calendar')}</button>
+          <button class="btn btn-primary" type="button" data-act="add-proc">${esc(t('p.addProc'))}</button>
+          ${p.phone ? `<a class="btn-outline-icon" href="${phoneHref(p.phone)}" aria-label="${esc(t('p.call'))}" title="${esc(t('p.call'))}">${icon('phone')}</a>` : ''}
+          <button class="btn-outline-icon" type="button" data-act="add-photo" aria-label="${esc(t('p.addPhoto'))}" title="${esc(t('p.addPhoto'))}">${icon('camera')}</button>
+          <button class="btn-outline-icon" type="button" data-act="add-appt" aria-label="${esc(t('p.addAppt'))}" title="${esc(t('p.addAppt'))}">${icon('calendar')}</button>
         </div>
       </section>
 
       <div class="stats">
         <button class="stat" type="button" data-tab="islemler">
           <div class="stat-value num">${data.procedures.length}</div>
-          <div class="stat-label">işlem</div>
+          <div class="stat-label">${esc(t('p.stat.procs'))}</div>
         </button>
         <button class="stat" type="button" data-tab="fotograflar">
           <div class="stat-value num">${data.photos.length}</div>
-          <div class="stat-label">fotoğraf</div>
+          <div class="stat-label">${esc(t('p.stat.photos'))}</div>
         </button>
         <button class="stat end ${nc && isOverdue(nc) ? 'warn' : ''}" type="button" data-tab="randevular">
           <div class="stat-value">${nc ? esc(fmtDayMonth(nc.date)) : '—'}</div>
-          <div class="stat-label">${nc ? `${esc(lower(nc.label))} · ${esc(daysLabel(nc))}` : 'Planlı kontrol yok'}</div>
+          <div class="stat-label">${nc ? `${esc(lower(apptLabel(nc)))} · ${esc(daysLabel(nc))}` : esc(t('p.stat.noControl'))}</div>
         </button>
       </div>
 
       <div class="tabs sticky" role="tablist">
-        ${TABS.map(([k, l]) => `<button class="tab-btn ${state.tab === k ? 'on' : ''}" type="button" role="tab" data-tab="${k}" aria-selected="${state.tab === k}">${l}</button>`).join('')}
+        ${TABS.map(([k, l]) => `<button class="tab-btn ${state.tab === k ? 'on' : ''}" type="button" role="tab" data-tab="${k}" aria-selected="${state.tab === k}">${esc(t(l))}</button>`).join('')}
       </div>
       <div id="tab-body"></div>
       </div>`;
@@ -198,33 +198,33 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const recent = [...data.photos].sort((x, y) => (y.date || '').localeCompare(x.date || '')).slice(0, 2);
 
     body.innerHTML = `
-      ${p.allergies ? `<div class="alert">Alerji · ${esc(p.allergies)}</div>` : ''}
-      ${overdue.length ? `<div class="alert danger">${overdue.length} gecikmiş kontrol · ${esc(overdue.map((x) => `${lower(x.label)} (${fmtDayMonth(x.date)})`).join(', '))}</div>` : ''}
+      ${p.allergies ? `<div class="alert">${esc(t('p.allergy'))} · ${esc(p.allergies)}</div>` : ''}
+      ${overdue.length ? `<div class="alert danger">${esc(t('p.overdueAlert', { n: overdue.length, list: overdue.map((x) => `${lower(apptLabel(x))} (${fmtDayMonth(x.date)})`).join(', ') }))}</div>` : ''}
       <div class="info" style="margin-top:6px">
-        ${row('Doğum tarihi', p.birthDate ? `${esc(fmtDate(p.birthDate))}${a !== null ? ` <span class="t-secondary">· ${a}</span>` : ''}` : '')}
-        ${row('Kan grubu', esc(p.bloodType))}
-        ${row('E-posta', p.email ? `<a href="mailto:${esc(p.email)}">${esc(p.email)}</a>` : '')}
-        ${row('Yönlendiren', esc(p.referral))}
-        ${row('Alerjiler', esc(p.allergies))}
-        ${row('Kayıt', esc(fmtDate(p.createdAt)))}
-        ${p.notes ? row('Notlar', esc(p.notes), { block: true }) : ''}
+        ${row(t('form.birthDate'), p.birthDate ? `${esc(fmtDate(p.birthDate))}${a !== null ? ` <span class="t-secondary">· ${a}</span>` : ''}` : '')}
+        ${row(t('form.bloodType'), esc(p.bloodType))}
+        ${row(t('form.email'), p.email ? `<a href="mailto:${esc(p.email)}">${esc(p.email)}</a>` : '')}
+        ${row(t('form.referral'), esc(p.referral))}
+        ${row(t('form.allergies'), esc(p.allergies))}
+        ${row(t('p.registered'), esc(fmtDate(p.createdAt)))}
+        ${p.notes ? row(t('form.notes'), esc(p.notes), { block: true }) : ''}
       </div>
 
       <section class="section">
         <div class="section-head">
-          <div class="section-title">Son fotoğraflar</div>
-          ${data.photos.length ? `<button class="section-link" type="button" data-tab-link="fotograflar">Tümü</button>` : ''}
+          <div class="section-title">${esc(t('p.recentPhotos'))}</div>
+          ${data.photos.length ? `<button class="section-link" type="button" data-tab-link="fotograflar">${esc(t('common.all'))}</button>` : ''}
         </div>
         ${recent.length
           ? `<div class="photo-grid">${recent.map((ph) => photoTile(ph, ph.procedureId ? data.procById[ph.procedureId] : null)).join('')}</div>`
-          : emptyState({ title: 'Henüz fotoğraf yok', text: 'İlk öncesi fotoğrafını ekle.', action: `<button class="btn btn-secondary btn-sm" type="button" data-act="add-photo">Fotoğraf ekle</button>` })}
+          : emptyState({ title: t('p.noPhotos'), text: t('p.noPhotosText'), action: `<button class="btn btn-secondary btn-sm" type="button" data-act="add-photo">${esc(t('p.addPhoto'))}</button>` })}
       </section>
 
       ${upcoming.length ? `
       <section class="section">
         <div class="section-head">
-          <div class="section-title">Yaklaşan kontroller</div>
-          <button class="section-link" type="button" data-tab-link="randevular">Tümü</button>
+          <div class="section-title">${esc(t('p.upcomingControls'))}</div>
+          <button class="section-link" type="button" data-tab-link="randevular">${esc(t('common.all'))}</button>
         </div>
         <div class="list">${upcoming.map(apptRow).join('')}</div>
       </section>` : ''}`;
@@ -240,12 +240,12 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const controls = controlsOf(pr.id);
     const done = controls.filter((c) => c.status === 'done').length;
     const photos = data.photos.filter((x) => x.procedureId === pr.id).length;
-    const line1 = [fmtDate(pr.date), pr.anesthesia && pr.anesthesia !== 'Yok' ? `${pr.anesthesia} anestezi` : null].filter(Boolean).join(' · ');
-    const line2 = [controls.length ? `${done}/${controls.length} kontrol` : null, photos ? `${photos} fotoğraf` : null].filter(Boolean).join(' · ');
+    const line1 = [fmtDate(pr.date), pr.anesthesia && pr.anesthesia !== 'Yok' ? t('anest.line', { a: anesthesiaLabel(pr.anesthesia) }) : null].filter(Boolean).join(' · ');
+    const line2 = [controls.length ? t('p.controls', { done, n: controls.length }) : null, photos ? t('p.photosN', { n: photos }) : null].filter(Boolean).join(' · ');
     return `
       <button class="row" type="button" data-proc="${pr.id}">
         <div class="row-main">
-          <div class="row-title">${esc(pr.type)}${pr.title ? ` <span class="t-secondary">· ${esc(pr.title)}</span>` : ''}</div>
+          <div class="row-title">${esc(procLabel(pr.type))}${pr.title ? ` <span class="t-secondary">· ${esc(pr.title)}</span>` : ''}</div>
           <div class="row-sub">${esc(line1)}</div>
           ${line2 ? `<div class="row-sub">${esc(line2)}</div>` : ''}
         </div>
@@ -256,7 +256,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
   function paintProcedures(body) {
     body.innerHTML = data.procedures.length
       ? `<div class="list" style="margin-top:4px">${data.procedures.map(procedureRow).join('')}</div>`
-      : emptyState({ title: 'Henüz işlem yok', text: 'İşlem eklendiğinde 1. gün, 1. hafta, 1. ay, 3. ay, 6. ay ve 1. yıl kontrolleri otomatik planlanır.', action: `<button class="btn btn-primary" type="button" data-act="add">İşlem ekle</button>` });
+      : emptyState({ title: t('p.noProc'), text: t('p.noProcText'), action: `<button class="btn btn-primary" type="button" data-act="add">${esc(t('p.addProc'))}</button>` });
     body.querySelectorAll('[data-act=add]').forEach((b) => { b.onclick = addProcedure; });
     body.querySelectorAll('[data-proc]').forEach((b) => { b.onclick = () => openProcedure(b.dataset.proc); });
   }
@@ -270,53 +270,53 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const done = controls.filter((c) => c.status === 'done').length;
     const info = (label, value) => `<div class="info-row"><div class="info-label">${esc(label)}</div><div class="info-value ${value ? '' : 'is-empty'}">${value || '—'}</div></div>`;
     const s = sheet({
-      title: pr.type,
+      title: procLabel(pr.type),
       size: 'md',
-      closeText: 'Kapat',
-      footer: `<button class="btn btn-ghost" type="button" data-act="more">Diğer</button><span class="spacer"></span>
-               <button class="btn btn-secondary" type="button" data-act="edit">Düzenle</button>
-               <button class="btn btn-primary" type="button" data-act="photo">Fotoğraf ekle</button>`,
+      closeText: t('common.close'),
+      footer: `<button class="btn btn-ghost" type="button" data-act="more">${esc(t('common.more'))}</button><span class="spacer"></span>
+               <button class="btn btn-secondary" type="button" data-act="edit">${esc(t('common.edit'))}</button>
+               <button class="btn btn-primary" type="button" data-act="photo">${esc(t('p.addPhoto'))}</button>`,
       content: `
         <div class="info">
-          ${info('Tarih', esc(fmtDateLong(pr.date)))}
-          ${info('Geçen süre', esc(sinceProcedure(pr.date)))}
-          ${info('Anestezi', esc(pr.anesthesia))}
-          ${info('Teknik', esc(pr.title))}
-          ${info('Fotoğraf', photos.length ? `${photos.length} · ${photos.filter((x) => x.phase === 'before').length} öncesi, ${photos.filter((x) => x.phase === 'after').length} sonrası` : '')}
-          ${pr.notes ? `<div class="info-row block"><div class="info-label">Ameliyat notu</div><div class="info-value">${esc(pr.notes)}</div></div>` : ''}
+          ${info(t('p.proc.date'), esc(fmtDateLong(pr.date)))}
+          ${info(t('p.proc.since'), esc(sinceProcedure(pr.date)))}
+          ${info(t('p.proc.anesthesia'), esc(anesthesiaLabel(pr.anesthesia)))}
+          ${info(t('p.proc.technique'), esc(pr.title))}
+          ${info(t('p.proc.photo'), photos.length ? esc(t('p.proc.photoLine', { n: photos.length, before: photos.filter((x) => x.phase === 'before').length, after: photos.filter((x) => x.phase === 'after').length })) : '')}
+          ${pr.notes ? `<div class="info-row block"><div class="info-label">${esc(t('p.proc.note'))}</div><div class="info-value">${esc(pr.notes)}</div></div>` : ''}
         </div>
         <section class="section">
           <div class="section-head">
-            <div class="section-title">Kontrol takvimi</div>
-            ${controls.length ? `<span class="t-caption">${done}/${controls.length} yapıldı</span>` : ''}
+            <div class="section-title">${esc(t('p.proc.controls'))}</div>
+            ${controls.length ? `<span class="t-caption">${esc(t('p.proc.doneOf', { done, n: controls.length }))}</span>` : ''}
           </div>
           ${controls.length ? `<div class="list">${controls.map(apptRow).join('')}</div>`
-            : `<div class="empty" style="padding:8px 0 4px"><div class="empty-text">Bu işlem için kontrol takvimi yok.</div><button class="btn btn-secondary btn-sm" type="button" data-act="regen">Kontrol takvimi oluştur</button></div>`}
+            : `<div class="empty" style="padding:8px 0 4px"><div class="empty-text">${esc(t('p.proc.noControls'))}</div><button class="btn btn-secondary btn-sm" type="button" data-act="regen">${esc(t('p.proc.makeControls'))}</button></div>`}
         </section>
-        ${others.length ? `<section class="section"><div class="section-head"><div class="section-title">Diğer randevular</div></div><div class="list">${others.map(apptRow).join('')}</div></section>` : ''}`,
+        ${others.length ? `<section class="section"><div class="section-head"><div class="section-title">${esc(t('p.proc.otherAppts'))}</div></div><div class="list">${others.map(apptRow).join('')}</div></section>` : ''}`,
     });
     bindApptRows(s.body, () => s.close());
     s.el.querySelector('[data-act=edit]').onclick = async () => {
       s.close();
       const r = await procedureForm({ patientId: id, existing: pr });
-      if (r) { toast('İşlem güncellendi'); refresh(); }
+      if (r) { toast(t('p.proc.updated')); refresh(); }
     };
     s.el.querySelector('[data-act=photo]').onclick = () => { s.close(); addPhoto({ defaultProcedureId: pr.id, defaultPhase: daysBetween(parseDate(pr.date), new Date()) > 0 ? 'after' : 'before' }); };
     const regen = s.body.querySelector('[data-act=regen]');
-    if (regen) regen.onclick = async () => { s.close(); await regenerateControls(pr); toast('Kontrol takvimi oluşturuldu'); refresh(); };
+    if (regen) regen.onclick = async () => { s.close(); await regenerateControls(pr); toast(t('p.proc.controlsMade')); refresh(); };
     s.el.querySelector('[data-act=more]').onclick = async () => {
       s.close();
-      const v = await actionMenu(pr.type, [
-        { label: 'Kontrol takvimini yeniden oluştur', icon: 'calendar', value: 'regen' },
-        { label: 'İşlemi sil', icon: 'trash', value: 'delete', danger: true },
+      const v = await actionMenu(procLabel(pr.type), [
+        { label: t('p.proc.regen'), icon: 'calendar', value: 'regen' },
+        { label: t('p.proc.delete'), icon: 'trash', value: 'delete', danger: true },
       ]);
       if (v === 'regen') {
-        const ok = await confirmDialog({ title: 'Kontroller yeniden oluşturulsun mu?', message: 'Bu işleme bağlı otomatik kontroller silinip işlem tarihine göre yeniden planlanır. Durum bilgileri kaybolur.', okText: 'Yeniden oluştur' });
-        if (ok) { await regenerateControls(pr); toast('Kontrol takvimi yenilendi'); refresh(); }
+        const ok = await confirmDialog({ title: t('p.proc.regenQ'), message: t('p.proc.regenMsg'), okText: t('p.proc.regenOk') });
+        if (ok) { await regenerateControls(pr); toast(t('p.proc.regenerated')); refresh(); }
       }
       if (v === 'delete') {
-        const ok = await confirmDialog({ title: 'İşlem silinsin mi?', message: `${pr.type} kaydı ve ${controls.length} otomatik kontrol randevusu silinecek. Fotoğraflar korunur.`, okText: 'Sil', danger: true });
-        if (ok) { await Procedures.removeCascade(pr.id); toast('İşlem silindi'); refresh(); }
+        const ok = await confirmDialog({ title: t('p.proc.deleteQ'), message: t('p.proc.deleteMsg', { type: procLabel(pr.type), n: controls.length }), okText: t('common.delete'), danger: true });
+        if (ok) { await Procedures.removeCascade(pr.id); toast(t('p.proc.deleted')); refresh(); }
       }
     };
   }
@@ -327,11 +327,11 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const today = daysBetween(new Date(), d) === 0;
     const overdue = isOverdue(a);
     const pr = a.procedureId ? data.procById[a.procedureId] : null;
-    const sub = [fmtDayMonth(a.date), fmtTime(a.date), APPT_KIND_LABEL[a.kind] || a.kind, pr ? pr.type : null, pr && a.auto ? sinceProcedure(pr.date, d) : null, a.notes || null].filter(Boolean).join(' · ');
+    const sub = [fmtDayMonth(a.date), fmtTime(a.date), kindLabel(a.kind), pr ? procLabel(pr.type) : null, pr && a.auto ? sinceProcedure(pr.date, d) : null, a.notes || null].filter(Boolean).join(' · ');
     return `
       <button class="row ${a.status === 'done' || a.status === 'cancelled' ? 'muted' : ''}" type="button" data-appt="${a.id}">
         <div class="row-main">
-          <div class="row-title">${esc(a.label)}</div>
+          <div class="row-title">${esc(apptLabel(a))}</div>
           <div class="row-sub">${esc(sub)}</div>
         </div>
         <div class="row-end">${statusText(a.status, { overdue, today })}</div>
@@ -344,28 +344,28 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const a = data.appointments.find((x) => x.id === apptId);
     if (!a) return;
     const pr = a.procedureId ? data.procById[a.procedureId] : null;
-    const title = `${a.label} · ${fmtDate(a.date)} ${fmtTime(a.date)}`;
+    const title = `${apptLabel(a)} · ${fmtDate(a.date)} ${fmtTime(a.date)}`;
     const items = [];
-    if (a.status !== 'done') items.push({ label: 'Yapıldı olarak işaretle', icon: 'check', value: 'done' });
-    if (a.status !== 'missed') items.push({ label: 'Gelmedi', icon: 'alert', value: 'missed' });
-    if (a.status !== 'planned') items.push({ label: 'Planlıya al', icon: 'clock', value: 'planned' });
-    items.push({ label: 'Düzenle / tarihi değiştir', icon: 'edit', value: 'edit' });
-    if (pr) items.push({ label: `İşlemi aç · ${pr.type}`, icon: 'activity', value: 'proc' });
-    items.push({ label: 'Randevuyu sil', icon: 'trash', value: 'delete', danger: true });
+    if (a.status !== 'done') items.push({ label: t('appt.markDone'), icon: 'check', value: 'done' });
+    if (a.status !== 'missed') items.push({ label: t('appt.markMissed'), icon: 'alert', value: 'missed' });
+    if (a.status !== 'planned') items.push({ label: t('appt.markPlanned'), icon: 'clock', value: 'planned' });
+    items.push({ label: t('appt.editDate'), icon: 'edit', value: 'edit' });
+    if (pr) items.push({ label: t('appt.openProc', { p: procLabel(pr.type) }), icon: 'activity', value: 'proc' });
+    items.push({ label: t('appt.delete'), icon: 'trash', value: 'delete', danger: true });
     const v = await actionMenu(title, items);
     if (!v) return;
     if (['done', 'missed', 'planned'].includes(v)) {
       await Appointments.save({ ...a, status: v });
-      toast({ done: 'Yapıldı olarak işaretlendi', missed: 'Gelmedi olarak işaretlendi', planned: 'Planlıya alındı' }[v]);
+      toast(t({ done: 'appt.doneToast', missed: 'appt.missedToast', planned: 'appt.plannedToast' }[v]));
       refresh();
     } else if (v === 'edit') {
       const r = await appointmentForm({ patientId: id, procedures: data.procedures, existing: a });
-      if (r) { toast('Randevu güncellendi'); refresh(); }
+      if (r) { toast(t('appt.updated')); refresh(); }
     } else if (v === 'proc') {
       openProcedure(pr.id);
     } else if (v === 'delete') {
-      const ok = await confirmDialog({ title: 'Randevu silinsin mi?', message: title, okText: 'Sil', danger: true });
-      if (ok) { await Appointments.remove(a.id); toast('Randevu silindi'); refresh(); }
+      const ok = await confirmDialog({ title: t('appt.deleteQ'), message: title, okText: t('common.delete'), danger: true });
+      if (ok) { await Appointments.remove(a.id); toast(t('appt.deleted')); refresh(); }
     }
   }
   function paintAppointments(body) {
@@ -374,9 +374,9 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const past = data.appointments.filter((a) => a.status !== 'planned').sort((x, y) => y.date.localeCompare(x.date));
     const group = (label, list) => list.length ? `<section class="section"><div class="section-label">${label}</div><div class="list">${list.map(apptRow).join('')}</div></section>` : '';
     body.innerHTML = data.appointments.length
-      ? `${group('Gecikmiş', overdue)}${group('Yaklaşan', upcoming)}${group('Geçmiş', past)}
-         <div class="action-bar"><button class="btn btn-secondary btn-block" type="button" data-act="add">Randevu ekle</button></div>`
-      : emptyState({ title: 'Randevu yok', text: 'İşlem eklediğinde kontrol takvimi otomatik oluşur. Serbest randevu da ekleyebilirsin.', action: `<button class="btn btn-primary" type="button" data-act="add">Randevu ekle</button>` });
+      ? `${group(esc(t('p.appt.overdue')), overdue)}${group(esc(t('p.appt.upcoming')), upcoming)}${group(esc(t('p.appt.past')), past)}
+         <div class="action-bar"><button class="btn btn-secondary btn-block" type="button" data-act="add">${esc(t('p.addAppt'))}</button></div>`
+      : emptyState({ title: t('p.appt.empty'), text: t('p.appt.emptyText'), action: `<button class="btn btn-primary" type="button" data-act="add">${esc(t('p.addAppt'))}</button>` });
     body.querySelectorAll('[data-act=add]').forEach((b) => { b.onclick = () => addAppointment(); });
     bindApptRows(body);
   }
@@ -404,7 +404,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
 
   function paintPhotos(body) {
     const photos = filteredPhotos();
-    const tags = [...new Set(data.photos.flatMap((x) => x.tags || []))].sort((a, b) => a.localeCompare(b, 'tr'));
+    const tags = [...new Set(data.photos.flatMap((x) => x.tags || []))].sort(cmpText);
     const byProc = new Map();
     photos.forEach((ph) => {
       const key = ph.procedureId && data.procById[ph.procedureId] ? ph.procedureId : '_';
@@ -417,32 +417,32 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const hasPair = data.photos.some((x) => x.phase === 'before') && data.photos.some((x) => x.phase === 'after');
 
     if (!data.photos.length) {
-      body.innerHTML = emptyState({ title: 'Henüz fotoğraf yok', text: 'İlk öncesi fotoğrafını ekle.', action: `<button class="btn btn-primary" type="button" data-act="add">Fotoğraf ekle</button>` });
+      body.innerHTML = emptyState({ title: t('p.noPhotos'), text: t('p.noPhotosText'), action: `<button class="btn btn-primary" type="button" data-act="add">${esc(t('p.addPhoto'))}</button>` });
       body.querySelector('[data-act=add]').onclick = () => addPhoto({ defaultPhase: 'before' });
       return;
     }
 
     body.innerHTML = `
       <div class="chips" style="margin-top:16px">
-        ${[['all', 'Tümü'], ['before', 'Öncesi'], ['after', 'Sonrası'], ...tags.map((t) => [t, t])].map(([v, l]) =>
+        ${[['all', t('common.all')], ['before', t('phase.before')], ['after', t('phase.after')], ...tags.map((x) => [x, x])].map(([v, l]) =>
           `<button class="chip ${state.photoFilter === v ? 'on' : ''}" type="button" data-filter="${esc(v)}">${esc(l)}</button>`).join('')}
       </div>
       ${state.compare ? `<div class="compare-hint" id="compare-hint"></div>` : ''}
       ${photos.length ? groups.map(({ pr, list }) => `
         <div class="photo-group">
           <div class="photo-group-head">
-            <div class="photo-group-title">${pr ? esc(pr.type) : 'İşleme bağlı olmayan'}</div>
-            <div class="photo-group-sub">${pr ? `${esc(fmtDate(pr.date))} · ` : ''}${list.length} fotoğraf</div>
+            <div class="photo-group-title">${pr ? esc(procLabel(pr.type)) : esc(t('p.photo.unlinked'))}</div>
+            <div class="photo-group-sub">${pr ? `${esc(fmtDate(pr.date))} · ` : ''}${esc(t('p.photosN', { n: list.length }))}</div>
           </div>
           <div class="photo-grid">${sortGroup(list).map((ph) => photoTile(ph, pr)).join('')}</div>
         </div>`).join('')
-        : emptyState({ title: 'Bu filtreye uyan fotoğraf yok' })}
+        : emptyState({ title: t('p.photo.noMatch') })}
       <div class="action-bar sticky">
         ${state.compare
-          ? `<button class="btn btn-ghost" type="button" data-act="compare-cancel">Vazgeç</button>
-             <button class="btn btn-primary" type="button" data-act="compare-go" disabled>Göster</button>`
-          : `<button class="btn btn-primary" type="button" data-act="compare" ${hasPair ? '' : 'disabled'}>Karşılaştır</button>
-             <button class="btn-outline-icon" type="button" data-act="add" aria-label="Fotoğraf ekle">${icon('plus')}</button>`}
+          ? `<button class="btn btn-ghost" type="button" data-act="compare-cancel">${esc(t('common.cancel'))}</button>
+             <button class="btn btn-primary" type="button" data-act="compare-go" disabled>${esc(t('p.photo.show'))}</button>`
+          : `<button class="btn btn-primary" type="button" data-act="compare" ${hasPair ? '' : 'disabled'}>${esc(t('p.photo.compare'))}</button>
+             <button class="btn-outline-icon" type="button" data-act="add" aria-label="${esc(t('p.addPhoto'))}">${icon('plus')}</button>`}
       </div>`;
 
     body.querySelectorAll('[data-act=add]').forEach((b) => { b.onclick = () => addPhoto({ defaultPhase: data.photos.some((x) => x.phase === 'before') ? 'after' : 'before' }); });
@@ -470,7 +470,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const afters = pool.filter((x) => x.phase === 'after').sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     let b = befores[0], a = afters[0];
     for (const x of befores) {
-      const match = afters.find((y) => (y.tags || []).some((t) => (x.tags || []).includes(t)));
+      const match = afters.find((y) => (y.tags || []).some((tg) => (x.tags || []).includes(tg)));
       if (match) { b = x; a = match; break; }
     }
     state.selected = { before: b || null, after: a || null };
@@ -487,7 +487,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
   function updateCompareBar(body) {
     const { before, after } = state.selected;
     const hint = body.querySelector('#compare-hint');
-    if (hint) hint.textContent = `${before ? `Öncesi · ${fmtDayMonth(before.date)}` : 'Bir öncesi seç'} · ${after ? `Sonrası · ${fmtDayMonth(after.date)}` : 'bir sonrası seç'}`;
+    if (hint) hint.textContent = `${before ? `${t('phase.before')} · ${fmtDayMonth(before.date)}` : t('p.photo.pickBefore')} · ${after ? `${t('phase.after')} · ${fmtDayMonth(after.date)}` : t('p.photo.pickAfter')}`;
     const go = body.querySelector('[data-act=compare-go]');
     if (go) go.disabled = !(before && after);
   }
@@ -496,16 +496,16 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
   function openViewer(photo, list) {
     let idx = Math.max(0, list.findIndex((x) => x.id === photo.id));
     const v = el(`
-      <div class="viewer" role="dialog" aria-modal="true" aria-label="Fotoğraf">
+      <div class="viewer" role="dialog" aria-modal="true" aria-label="${esc(t('p.photo.viewer'))}">
         <div class="viewer-head">
-          <button class="btn-icon" type="button" data-act="close" aria-label="Kapat">${icon('x')}</button>
+          <button class="btn-icon" type="button" data-act="close" aria-label="${esc(t('common.close'))}">${icon('x')}</button>
           <div class="viewer-title"></div>
-          <button class="btn-icon" type="button" data-act="edit" aria-label="Düzenle">${icon('edit')}</button>
-          <button class="btn-icon" type="button" data-act="delete" aria-label="Sil">${icon('trash')}</button>
+          <button class="btn-icon" type="button" data-act="edit" aria-label="${esc(t('common.edit'))}">${icon('edit')}</button>
+          <button class="btn-icon" type="button" data-act="delete" aria-label="${esc(t('common.delete'))}">${icon('trash')}</button>
         </div>
         <div class="viewer-stage">
           <img alt="">
-          ${list.length > 1 ? `<button class="viewer-nav prev" type="button" data-act="prev" aria-label="Önceki">${icon('left')}</button><button class="viewer-nav next" type="button" data-act="next" aria-label="Sonraki">${icon('right')}</button>` : ''}
+          ${list.length > 1 ? `<button class="viewer-nav prev" type="button" data-act="prev" aria-label="${esc(t('p.photo.prev'))}">${icon('left')}</button><button class="viewer-nav next" type="button" data-act="next" aria-label="${esc(t('p.photo.next'))}">${icon('right')}</button>` : ''}
         </div>
         <div class="viewer-foot">
           <div class="viewer-meta"></div>
@@ -519,7 +519,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       img.src = blobURL(ph.id, ph.blob);
       v.querySelector('.viewer-title').textContent = `${idx + 1} / ${list.length}`;
       v.querySelector('.viewer-meta').textContent = `${phaseLabel(ph)} · ${fmtDateLong(ph.date)}`;
-      v.querySelector('.viewer-sub').textContent = [pr ? pr.type : null, pr ? sinceProcedure(pr.date, parseDate(ph.date)) : null, ...(ph.tags || [])].filter(Boolean).join(' · ') || 'Etiket yok';
+      v.querySelector('.viewer-sub').textContent = [pr ? procLabel(pr.type) : null, pr ? sinceProcedure(pr.date, parseDate(ph.date)) : null, ...(ph.tags || [])].filter(Boolean).join(' · ') || t('p.photo.noTags');
     };
     const close = () => { document.removeEventListener('keydown', onKey); v.remove(); };
     const prev = () => { idx = (idx - 1 + list.length) % list.length; show(); };
@@ -531,17 +531,17 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     v.querySelector('[data-act=edit]').onclick = async () => {
       const ph = list[idx];
       const r = await photoEditForm(ph, data.procedures);
-      if (r) { list[idx] = r; await load(); paint(); show(); toast('Fotoğraf güncellendi'); }
+      if (r) { list[idx] = r; await load(); paint(); show(); toast(t('p.photo.updated')); }
     };
     v.querySelector('[data-act=delete]').onclick = async () => {
       const ph = list[idx];
-      const ok = await confirmDialog({ title: 'Fotoğraf silinsin mi?', message: 'Bu işlem geri alınamaz.', okText: 'Sil', danger: true });
+      const ok = await confirmDialog({ title: t('p.photo.deleteQ'), message: t('p.photo.irreversible'), okText: t('common.delete'), danger: true });
       if (!ok) return;
       await Photos.remove(ph.id);
       // Silme sonrası görüntüleyici kapanır ve galeriye dönülür; sonraki fotoğrafa geçmek "silinmedi" izlenimi veriyordu
       close();
       await refresh();
-      toast('Fotoğraf silindi');
+      toast(t('p.photo.deleted'));
     };
     let sx = null;
     v.querySelector('.viewer-stage').addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });
@@ -566,24 +566,24 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const corner = (ph) => { const pr = prOf(ph); return ph.phase === 'after' && pr ? sinceProcedure(pr.date, parseDate(ph.date)) : (ph.tags || [])[0] || ''; };
 
     const v = el(`
-      <div class="viewer cmp" role="dialog" aria-modal="true" aria-label="Karşılaştır">
+      <div class="viewer cmp" role="dialog" aria-modal="true" aria-label="${esc(t('p.photo.compare'))}">
         <div class="viewer-head">
-          <button class="btn-icon" type="button" data-act="close" aria-label="Kapat">${icon('x')}</button>
-          <div class="viewer-title">Karşılaştır</div>
-          <button class="btn-icon" type="button" data-act="share" aria-label="Paylaş">${icon('share')}</button>
+          <button class="btn-icon" type="button" data-act="close" aria-label="${esc(t('common.close'))}">${icon('x')}</button>
+          <div class="viewer-title">${esc(t('p.photo.compare'))}</div>
+          <button class="btn-icon" type="button" data-act="share" aria-label="${esc(t('p.cmp.share'))}">${icon('share')}</button>
         </div>
         <div class="cmp-stage" id="cmp-stage"></div>
         <div class="cmp-modes">
-          ${[['side', 'Yan yana'], ['slide', 'Kaydır'], ['overlay', 'Üst üste']].map(([k, l]) => `<button class="cmp-chip ${k === mode ? 'on' : ''}" type="button" data-mode="${k}">${l}</button>`).join('')}
+          ${[['side', t('p.cmp.side')], ['slide', t('p.cmp.slide')], ['overlay', t('p.cmp.overlay')]].map(([k, l]) => `<button class="cmp-chip ${k === mode ? 'on' : ''}" type="button" data-mode="${k}">${esc(l)}</button>`).join('')}
         </div>
         <div class="cmp-foot">
           <div class="cmp-pick">
             <img class="cmp-thumb" alt="">
             <div class="cmp-pick-main">
-              <div class="cmp-pick-title">Sonrası</div>
+              <div class="cmp-pick-title">${esc(t('phase.after'))}</div>
               <div class="cmp-pick-sub"></div>
             </div>
-            <button class="cmp-change" type="button" data-act="change">Değiştir</button>
+            <button class="cmp-change" type="button" data-act="change">${esc(t('p.cmp.change'))}</button>
           </div>
         </div>
       </div>`);
@@ -598,17 +598,17 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
 
     function paintStage() {
       if (mode === 'side') {
-        stage.innerHTML = `<div class="cmp-side">${pane(before, 'Öncesi')}${pane(after, 'Sonrası')}</div>`;
+        stage.innerHTML = `<div class="cmp-side">${pane(before, t('phase.before'))}${pane(after, t('phase.after'))}</div>`;
       } else if (mode === 'slide') {
         stage.innerHTML = `
           <div class="cmp-stack" id="cmp-stack">
-            <img class="base" src="${blobURL(before.id, before.blob)}" alt="Öncesi" draggable="false">
-            <img class="top" src="${blobURL(after.id, after.blob)}" alt="Sonrası" draggable="false" style="clip-path: inset(0 50% 0 0)">
+            <img class="base" src="${blobURL(before.id, before.blob)}" alt="${esc(t('phase.before'))}" draggable="false">
+            <img class="top" src="${blobURL(after.id, after.blob)}" alt="${esc(t('phase.after'))}" draggable="false" style="clip-path: inset(0 50% 0 0)">
             <div class="cmp-handle" style="left:50%"></div>
             <span class="cmp-cap">${esc(cap(before))}</span>
             <span class="cmp-cap right">${esc(cap(after))}</span>
           </div>
-          <input class="cmp-range" type="range" min="0" max="100" value="50" aria-label="Kaydır">`;
+          <input class="cmp-range" type="range" min="0" max="100" value="50" aria-label="${esc(t('p.cmp.slide'))}">`;
         const top = stage.querySelector('.top'), handle = stage.querySelector('.cmp-handle'), range = stage.querySelector('.cmp-range');
         const setPos = (pct) => { top.style.clipPath = `inset(0 ${100 - pct}% 0 0)`; handle.style.left = `${pct}%`; range.value = pct; };
         range.oninput = () => setPos(+range.value);
@@ -621,12 +621,12 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       } else {
         stage.innerHTML = `
           <div class="cmp-stack">
-            <img class="base" src="${blobURL(before.id, before.blob)}" alt="Öncesi" draggable="false">
-            <img class="top" src="${blobURL(after.id, after.blob)}" alt="Sonrası" draggable="false" style="opacity:.5">
+            <img class="base" src="${blobURL(before.id, before.blob)}" alt="${esc(t('phase.before'))}" draggable="false">
+            <img class="top" src="${blobURL(after.id, after.blob)}" alt="${esc(t('phase.after'))}" draggable="false" style="opacity:.5">
             <span class="cmp-cap">${esc(cap(before))}</span>
             <span class="cmp-cap right">${esc(cap(after))}</span>
           </div>
-          <input class="cmp-range" type="range" min="0" max="100" value="50" aria-label="Opaklık">`;
+          <input class="cmp-range" type="range" min="0" max="100" value="50" aria-label="${esc(t('p.cmp.opacity'))}">`;
         const top = stage.querySelector('.top'), range = stage.querySelector('.cmp-range');
         range.oninput = () => { top.style.opacity = String(+range.value / 100); };
       }
@@ -643,7 +643,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     v.querySelector('[data-act=change]').onclick = async () => {
       const pr = prOf(after) || prOf(before);
       const pool = data.photos.filter((x) => x.phase === 'after' && (!pr || x.procedureId === pr.id));
-      const picked = await pickPhotoSheet('Sonrası fotoğrafını seç', pool, after.id);
+      const picked = await pickPhotoSheet(t('p.cmp.pickAfter'), pool, after.id);
       if (picked) { after = picked; state.selected.after = picked; paintStage(); }
     };
     v.querySelector('[data-act=share]').onclick = () => shareCompare(before, after, { cap, corner });
@@ -660,7 +660,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
         <button class="pick ${ph.id === currentId ? 'on' : ''}" type="button" data-pick="${ph.id}">
           <img src="${blobURL(ph.id + ':t', ph.thumb || ph.blob)}" alt="">
           <span>${esc(fmtDayMonth(ph.date))}${(ph.tags || [])[0] ? ` · ${esc(ph.tags[0])}` : ''}</span>
-        </button>`).join('')}</div>` : emptyState({ title: 'Seçilebilecek sonrası fotoğrafı yok' }),
+        </button>`).join('')}</div>` : emptyState({ title: t('p.cmp.noAfter') }),
     });
     s.body.querySelectorAll('[data-pick]').forEach((b) => { b.onclick = () => s.close(pool.find((x) => x.id === b.dataset.pick)); });
     return s.result;
@@ -685,15 +685,15 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       if (corner(before)) x.fillText(corner(before), pad + wa, pad + H + label / 2);
       if (corner(after)) x.fillText(corner(after), pad + wa + gap + wb, pad + H + label / 2);
       const blob = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.9));
-      const file = new File([blob], 'karsilastirma.jpg', { type: 'image/jpeg' });
+      const file = new File([blob], t('p.cmp.file'), { type: 'image/jpeg' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try { await navigator.share({ files: [file], title: 'Karşılaştırma' }); return; } catch (e) { if (e?.name === 'AbortError') return; }
+        try { await navigator.share({ files: [file], title: t('p.cmp.title') }); return; } catch (e) { if (e?.name === 'AbortError') return; }
       }
       const url = URL.createObjectURL(file);
       const link = document.createElement('a'); link.href = url; link.download = file.name; document.body.appendChild(link); link.click(); link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
-      toast('Görsel indirildi');
-    } catch (e) { toast('Paylaşım hazırlanamadı', { kind: 'danger' }); }
+      toast(t('p.cmp.downloaded'));
+    } catch (e) { toast(t('p.cmp.shareFail'), { kind: 'danger' }); }
   }
 
   paint();

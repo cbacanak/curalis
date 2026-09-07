@@ -1,5 +1,6 @@
 /* Gezinme ve üst çubuk */
 import { esc, icon } from './ui.js';
+import { t } from './i18n.js';
 
 export function go(path) {
   location.hash = '#' + path;
@@ -23,7 +24,7 @@ export function setTopbar({ title = '', back = null, actions = [], center = fals
   bar.classList.toggle('inverse', tone === 'inverse');
   bar.innerHTML = `
     <div class="topbar-inner">
-      ${back !== null ? `<button class="btn-icon" type="button" data-back aria-label="Geri">${icon('back')}</button>` : '<span style="width:8px"></span>'}
+      ${back !== null ? `<button class="btn-icon" type="button" data-back aria-label="${esc(t('common.back'))}">${icon('back')}</button>` : '<span style="width:8px"></span>'}
       <div class="topbar-title ${center ? 'center' : ''}">${esc(title)}</div>
       <div class="topbar-actions">
         ${actions.map((a, i) => `<button class="btn-icon" type="button" data-i="${i}" aria-label="${esc(a.label)}" title="${esc(a.label)}">${icon(a.icon)}</button>`).join('')}

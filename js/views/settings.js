@@ -3,26 +3,20 @@ import { counts, clearAllData } from '../db.js';
 import { esc, icon, toast, confirmDialog, actionMenu } from '../ui.js';
 import { setTopbar } from '../nav.js';
 import { storageInfo, requestPersist, fmtBytes, downloadBackup, pickBackupFile, restoreBackup } from '../storage.js';
-import { hasPin, getLockDelay, setLockDelay, clearPin, setupPinFlow, requirePin, LOCK_DELAYS } from '../lock.js';
+import { hasPin, getLockDelay, setLockDelay, clearPin, setupPinFlow, requirePin, LOCK_DELAYS, delayLabel as lockDelayLabel } from '../lock.js';
 import { getTheme, applyTheme, THEMES } from '../theme.js';
 import { segmented, bindSegmented } from '../ui.js';
+import { t, getLang, setLang, LANGS, applyStaticText } from '../i18n.js';
 
-export const APP_VERSION = '0.3.8';
+export const APP_VERSION = '0.4.0';
 
 export async function render(root) {
-  setTopbar({ title: 'Ayarlar' });
+  setTopbar({ title: t('s.title') });
   const [c, st, pinOn, lockDelay] = await Promise.all([counts(), storageInfo(), hasPin(), getLockDelay()]);
-  const delayLabel = (LOCK_DELAYS.find(([v]) => v === lockDelay) || [0, 'Hemen'])[1];
-  const modeTitle = st.inApp ? 'Uygulama içi tarayıcı' : st.standalone ? 'Ana ekran uygulaması' : 'Tarayıcı sekmesi';
-  const modeSub = st.inApp
-    ? 'Veriler kalıcı olmayabilir. Safari veya Chrome ile açıp ana ekrana ekle.'
-    : st.standalone ? 'Veriler bu uygulamaya özel saklanır.'
-    : st.ios ? 'Safari 7 gün kullanılmayan site verilerini silebilir. Ana ekrana ekle.'
-    : 'Ana ekrana eklersen uygulama gibi açılır.';
-  const persistTitle = st.persisted === true ? 'Kalıcı depolama açık' : st.persisted === false ? 'Kalıcı depolama kapalı' : 'Kalıcı depolama';
-  const persistSub = st.persisted === true ? 'Tarayıcı yer açmak için bu verileri silmez.'
-    : st.persisted === false ? 'Tarayıcı yer darlığında verileri silebilir. Dokunarak iste.'
-    : 'Bu tarayıcı kalıcı depolama isteğini desteklemiyor.';
+  const delayLabel = lockDelayLabel(lockDelay);
+  const modeTitle = st.inApp ? t('s.mode.inApp') : st.standalone ? t('s.mode.standalone') : t('s.mode.tab');
+  const modeSub = st.inApp ? t('s.mode.inAppSub') : st.ios && !st.standalone ? t('s.mode.iosSub') : '';
+  const persistTitle = st.persisted === true ? t('s.persist.on') : st.persisted === false ? t('s.persist.off') : t('s.persist');
 
   const rowBtn = (act, title, sub, { value = '', danger = false, disabled = false } = {}) => `
     <button class="setting-row ${danger ? 'danger' : ''}" type="button" data-act="${act}" ${disabled ? 'disabled' : ''}>
@@ -39,66 +33,73 @@ export async function render(root) {
     <div class="screen">
     <div class="page-head">
       <div>
-        <h1 class="page-title">Ayarlar</h1>
-        <div class="page-sub">Veriler yalnızca bu cihazda saklanır</div>
+        <h1 class="page-title">${esc(t('s.title'))}</h1>
+        <div class="page-sub">${esc(t('s.sub'))}</div>
       </div>
     </div>
 
     <section class="section">
-      <div class="section-label">Görünüm</div>
-      ${segmented({ name: 'theme', value: getTheme(), options: THEMES })}
+      <div class="section-label">${esc(t('s.appearance'))}</div>
+      ${segmented({ name: 'theme', value: getTheme(), options: THEMES.map((k) => [k, t(`s.theme.${k}`)]) })}
     </section>
 
     <section class="section">
-      <div class="section-label">Güvenlik</div>
-      ${rowBtn('pin', 'PIN kilidi', pinOn ? `${esc(delayLabel === 'Hemen' ? 'Arka planda hemen' : delayLabel + ' sonra')} kilitlenir` : '', { value: pinOn ? 'Açık' : 'Kapalı' })}
+      <div class="section-label">${esc(t('s.language'))}</div>
+      ${segmented({ name: 'lang', value: getLang(), options: LANGS })}
     </section>
 
     <section class="section">
-      <div class="section-label">Yedekleme</div>
-      ${rowBtn('backup', 'Yedek al', '')}
-      ${rowBtn('restore', 'Yedeği geri yükle', '')}
+      <div class="section-label">${esc(t('s.security'))}</div>
+      ${rowBtn('pin', esc(t('s.pin')), pinOn ? esc(lockDelay ? t('s.pin.locksAfter', { d: delayLabel }) : t('s.pin.locksImmediately')) : '', { value: esc(pinOn ? t('s.pin.on') : t('s.pin.off')) })}
     </section>
 
     <section class="section">
-      <div class="section-label">Depolama</div>
-      ${rowInfo(esc(modeTitle), st.inApp || (st.ios && !st.standalone) ? esc(modeSub) : '')}
-      ${st.persisted === false ? rowBtn('persist', esc(persistTitle), 'Dokunarak iste') : rowInfo(esc(persistTitle), '')}
-      ${rowInfo('Kullanılan alan', '', `${esc(fmtBytes(st.usage))}${st.quota ? ` / ${esc(fmtBytes(st.quota))}` : ''}`)}
-      ${rowInfo('Kayıtlar', '', `${c.patients} hasta · ${c.procedures} işlem · ${c.photos} fotoğraf · ${c.appointments} randevu`)}
+      <div class="section-label">${esc(t('s.backup'))}</div>
+      ${rowBtn('backup', esc(t('s.backup.take')), '')}
+      ${rowBtn('restore', esc(t('s.backup.restore')), '')}
     </section>
 
     <section class="section">
-      <div class="section-label">Veri</div>
-      ${rowBtn('clear', 'Tüm verileri sil', '', { danger: true })}
+      <div class="section-label">${esc(t('s.storage'))}</div>
+      ${rowInfo(esc(modeTitle), esc(modeSub))}
+      ${st.persisted === false ? rowBtn('persist', esc(persistTitle), esc(t('s.persist.tap'))) : rowInfo(esc(persistTitle), '')}
+      ${rowInfo(esc(t('s.usage')), '', `${esc(fmtBytes(st.usage))}${st.quota ? ` / ${esc(fmtBytes(st.quota))}` : ''}`)}
+      ${rowInfo(esc(t('s.records')), '', esc(t('s.records.line', c)))}
     </section>
 
-    <p class="t-caption section app-mark" style="color:var(--text-tertiary)"><img src="icons/icon.svg" alt="" width="20" height="20">Hasta Takip · sürüm ${APP_VERSION}</p>
+    <section class="section">
+      <div class="section-label">${esc(t('s.data'))}</div>
+      ${rowBtn('clear', esc(t('s.clear')), '', { danger: true })}
+    </section>
+
+    <p class="t-caption section app-mark" style="color:var(--text-tertiary)"><img src="icons/icon.svg" alt="" width="20" height="20">${esc(t('s.version', { v: APP_VERSION }))}</p>
     </div>`;
 
   bindSegmented(root.querySelector('.seg[data-name=theme]'), (v) => applyTheme(v));
+  // Dil değişince sabit metinler ve bu ekran yeniden çizilir; diğer ekranlar açıldıklarında yeni dili kullanır
+  bindSegmented(root.querySelector('.seg[data-name=lang]'), (v) => { setLang(v); applyStaticText(); render(root); });
   root.querySelector('[data-act=pin]').onclick = async () => {
     if (!pinOn) {
-      if (await setupPinFlow()) { toast('PIN kilidi açıldı'); render(root); }
+      if (await setupPinFlow()) { toast(t('s.pin.enabled')); render(root); }
       return;
     }
-    const v = await actionMenu('PIN kilidi', [
-      { label: 'PIN\'i değiştir', value: 'change' },
-      { label: `Kilitleme süresi · ${delayLabel}`, value: 'delay' },
-      { label: 'PIN kilidini kaldır', danger: true, value: 'remove' },
+    const v = await actionMenu(t('s.pin'), [
+      { label: t('s.pin.change'), value: 'change' },
+      { label: t('s.pin.delay', { d: delayLabel }), value: 'delay' },
+      { label: t('s.pin.remove'), danger: true, value: 'remove' },
     ]);
     if (v === 'change') {
       if (!(await requirePin())) return;
-      if (await setupPinFlow()) { toast('PIN değiştirildi'); render(root); }
+      if (await setupPinFlow()) { toast(t('s.pin.changed')); render(root); }
     } else if (v === 'delay') {
-      const d = await actionMenu('Arka plana alındıktan sonra kilitle', LOCK_DELAYS.map(([sec, label]) => ({ label, value: String(sec), checked: sec === lockDelay })));
+      const d = await actionMenu(t('s.pin.delayTitle'), LOCK_DELAYS.map((sec) => ({ label: lockDelayLabel(sec), value: String(sec), checked: sec === lockDelay })));
       if (d == null) return;
       await setLockDelay(Number(d));
       render(root);
     } else if (v === 'remove') {
       if (!(await requirePin())) return;
       await clearPin();
-      toast('PIN kilidi kaldırıldı');
+      toast(t('s.pin.removed'));
       render(root);
     }
   };
@@ -107,8 +108,8 @@ export async function render(root) {
     b.disabled = true;
     try {
       const r = await downloadBackup();
-      if (r) toast(r.shared ? 'Yedek paylaşıldı' : `Yedek indirildi · ${fmtBytes(r.size)}`);
-    } catch (e) { toast(`Yedek alınamadı: ${e.message || e}`, { kind: 'danger', duration: 5000 }); }
+      if (r) toast(r.shared ? t('s.backup.shared') : t('s.backup.downloaded', { size: fmtBytes(r.size) }));
+    } catch (e) { toast(t('s.backup.fail', { e: e.message || e }), { kind: 'danger', duration: 5000 }); }
     b.disabled = false;
   };
   root.querySelector('[data-act=restore]').onclick = async () => {
@@ -117,19 +118,19 @@ export async function render(root) {
     try {
       const r = await restoreBackup(f);
       if (r) render(root);
-    } catch (e) { toast(e.message || 'Geri yükleme başarısız', { kind: 'danger', duration: 5000 }); }
+    } catch (e) { toast(e.message || t('s.restore.fail'), { kind: 'danger', duration: 5000 }); }
   };
   const persist = root.querySelector('[data-act=persist]');
   if (persist) persist.onclick = async () => {
     const ok = await requestPersist();
-    toast(ok ? 'Kalıcı depolama açıldı' : 'Tarayıcı kalıcı depolamaya izin vermedi');
+    toast(ok ? t('s.persist.granted') : t('s.persist.denied'));
     render(root);
   };
   root.querySelector('[data-act=clear]').onclick = async () => {
-    const ok = await confirmDialog({ title: 'Tüm veriler silinsin mi?', message: `${c.patients} hasta, ${c.photos} fotoğraf ve tüm randevular kalıcı olarak silinecek. Bu işlem geri alınamaz.`, okText: 'Hepsini sil', danger: true });
+    const ok = await confirmDialog({ title: t('s.clearQ'), message: t('s.clearMsg', c), okText: t('s.clearOk'), danger: true });
     if (!ok) return;
     await clearAllData();
-    toast('Tüm veriler silindi');
+    toast(t('s.cleared'));
     render(root);
   };
 }

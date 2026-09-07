@@ -3,6 +3,7 @@
  * Depolar: patients, procedures, photos, appointments, settings
  */
 
+import { t as tr } from './i18n.js';
 const DB_NAME = 'hasta-takip';
 const DB_VERSION = 1;
 
@@ -54,7 +55,7 @@ export function openDB() {
       resolve(_db);
     };
     req.onerror = () => reject(req.error);
-    req.onblocked = () => reject(new Error('Veritabanı başka bir sekmede açık.'));
+    req.onblocked = () => reject(new Error(tr('db.blocked')));
   });
 }
 
@@ -75,7 +76,7 @@ async function run(storeNames, mode, fn) {
   const done = new Promise((res, rej) => {
     t.oncomplete = () => res();
     t.onerror = () => rej(t.error);
-    t.onabort = () => rej(t.error || new Error('İşlem iptal edildi'));
+    t.onabort = () => rej(t.error || new Error(tr('db.aborted')));
   });
   const result = await fn(Array.isArray(storeNames) ? stores : stores[storeNames], t);
   await done;
@@ -131,7 +132,7 @@ export const Patients = {
 };
 
 export function fullName(p) {
-  return `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'İsimsiz';
+  return `${p.firstName || ''} ${p.lastName || ''}`.trim() || tr('common.unnamed');
 }
 
 export function byName(a, b) {
@@ -301,7 +302,7 @@ export async function exportAll() {
 
 /** Yedek dosyasından veriyi geri yükler. replace=true ise mevcut veriyi siler. */
 export async function importAll(data, { replace = true } = {}) {
-  if (!data || data.app !== 'hasta-takip') throw new Error('Geçersiz yedek dosyası.');
+  if (!data || data.app !== 'hasta-takip') throw new Error(tr('db.badBackup'));
   const photos = [];
   for (const p of data.photos || []) {
     photos.push({

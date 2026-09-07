@@ -5,12 +5,14 @@
  */
 import { Settings, clearAllData } from './db.js';
 import { el, icon, esc, toast } from './ui.js';
+import { t } from './i18n.js';
 
 const PIN_KEY = 'pin';
 const DELAY_KEY = 'lockDelay';            // saniye; 0 = hemen
 const FAIL_KEY = 'hasta-takip:pin-fail';  // deneme sayacı (kaba kuvvet frenleme)
 const ITER = 150000;
-export const LOCK_DELAYS = [[0, 'Hemen'], [60, '1 dakika'], [300, '5 dakika'], [900, '15 dakika']];
+export const LOCK_DELAYS = [0, 60, 300, 900]; // saniye
+export const delayLabel = (sec) => (sec ? t('lock.min', { n: Math.round(sec / 60) }) : t('lock.now'));
 export const DEFAULT_DELAY = 60;
 
 /* ---------------- Kriptografi ---------------- */
@@ -66,7 +68,7 @@ export function pinEntry({ title, sub = '', length = null, minLength = 4, maxLen
     const max = length || maxLength;
     const root = el(`
       <div class="lock" role="dialog" aria-modal="true" aria-label="${esc(title)}">
-        <div class="lock-head">${cancel ? `<button class="btn-icon" type="button" data-act="cancel" aria-label="Vazgeç">${icon('x')}</button>` : ''}</div>
+        <div class="lock-head">${cancel ? `<button class="btn-icon" type="button" data-act="cancel" aria-label="${esc(t('common.cancel'))}">${icon('x')}</button>` : ''}</div>
         <div class="lock-body">
           <h2 class="lock-title">${esc(title)}</h2>
           <div class="lock-sub">${esc(sub)}</div>
@@ -74,11 +76,11 @@ export function pinEntry({ title, sub = '', length = null, minLength = 4, maxLen
           <div class="lock-msg" role="alert"></div>
           <div class="lock-pad">
             ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<button type="button" data-k="${n}">${n}</button>`).join('')}
-            <button type="button" class="lock-ok ${length ? 'ghost' : ''}" data-act="ok" aria-label="Tamam" disabled ${length ? 'tabindex="-1"' : ''}>${icon('check')}</button>
+            <button type="button" class="lock-ok ${length ? 'ghost' : ''}" data-act="ok" aria-label="${esc(t('common.ok'))}" disabled ${length ? 'tabindex="-1"' : ''}>${icon('check')}</button>
             <button type="button" data-k="0">0</button>
-            <button type="button" class="lock-del" data-act="del" aria-label="Sil">${icon('backspace')}</button>
+            <button type="button" class="lock-del" data-act="del" aria-label="${esc(t('common.delete'))}">${icon('backspace')}</button>
           </div>
-          ${forgot ? `<button type="button" class="lock-extra" data-act="forgot">PIN'i unuttum</button>` : ''}
+          ${forgot ? `<button type="button" class="lock-extra" data-act="forgot">${esc(t('lock.forgot'))}</button>` : ''}
         </div>
       </div>`);
     const dots = root.querySelector('.lock-dots');
@@ -101,17 +103,17 @@ export function pinEntry({ title, sub = '', length = null, minLength = 4, maxLen
       if (throttle) {
         const st = failState();
         if (st.until > Date.now()) {
-          showMsg(`Çok fazla deneme. ${Math.ceil((st.until - Date.now()) / 1000)} saniye bekleyin.`);
+          showMsg(t('lock.tooMany', { s: Math.ceil((st.until - Date.now()) / 1000) }));
           shake(); val = ''; draw(); busy = false; return;
         }
       }
       let r;
-      try { r = await verify(val); } catch (e) { r = e?.message || 'Doğrulama yapılamadı'; }
+      try { r = await verify(val); } catch (e) { r = e?.message || t('lock.verifyFail'); }
       if (r === true) { if (throttle) resetFail(); close(val); return; }
-      let text = typeof r === 'string' ? r : 'Yanlış PIN';
+      let text = typeof r === 'string' ? r : t('lock.wrong');
       if (throttle) {
         const f = recordFail();
-        if (f.n >= 5) text = `Yanlış PIN. ${f.n >= 10 ? '5 dakika' : '30 saniye'} bekleyin.`;
+        if (f.n >= 5) text = t('lock.wrongWait', { d: t(f.n >= 10 ? 'lock.min5' : 'lock.sec30') });
       }
       shake(); showMsg(text);
       val = ''; draw(); busy = false;
@@ -159,9 +161,9 @@ function forgotPanel(root, close) {
   root.querySelector('.lock-dots').classList.add('hidden');
   const panel = el(`
     <div class="lock-confirm">
-      <p style="margin:0">PIN yalnızca bu cihazda saklanır ve kurtarılamaz. Sıfırlamanın tek yolu tüm hasta verilerini silmektir. Yedeğin varsa sonra geri yükleyebilirsin.</p>
-      <button type="button" class="btn btn-primary" data-act="wipe">Tüm verileri sil ve PIN'i kaldır</button>
-      <button type="button" class="btn btn-ghost" data-act="back">Vazgeç</button>
+      <p style="margin:0">${esc(t('lock.forgotText'))}</p>
+      <button type="button" class="btn btn-primary" data-act="wipe">${esc(t('lock.wipe'))}</button>
+      <button type="button" class="btn btn-ghost" data-act="back">${esc(t('common.cancel'))}</button>
     </div>`);
   body.appendChild(panel);
   panel.querySelector('[data-act=back]').onclick = () => {
@@ -171,7 +173,7 @@ function forgotPanel(root, close) {
     panel.querySelector('[data-act=wipe]').disabled = true;
     await clearAllData({ keepSettings: false });
     resetFail();
-    toast('Tüm veriler silindi, PIN kaldırıldı');
+    toast(t('lock.wiped'));
     close(null);
     location.hash = '#/';
   };
@@ -188,7 +190,7 @@ export async function showLock() {
   locked = true;
   document.body.classList.add('locked');
   try {
-    await pinEntry({ title: 'Hasta Takip', sub: 'Devam etmek için PIN girin', length: rec.len, cancel: false, verify: verifyPin, throttle: true, forgot: true });
+    await pinEntry({ title: t('app.name'), sub: t('lock.enter'), length: rec.len, cancel: false, verify: verifyPin, throttle: true, forgot: true });
   } finally {
     document.body.classList.remove('locked');
     locked = false;
@@ -210,12 +212,12 @@ export async function initLock() {
 
 /* ---------------- Ayarlar akışları ---------------- */
 export async function setupPinFlow() {
-  if (!cryptoAvailable()) { toast('PIN için güvenli bağlantı (https) gerekir', { kind: 'danger' }); return false; }
-  const first = await pinEntry({ title: 'Yeni PIN', sub: '4 haneli bir PIN belirle', length: 4 });
+  if (!cryptoAvailable()) { toast(t('lock.needsHttps'), { kind: 'danger' }); return false; }
+  const first = await pinEntry({ title: t('lock.new'), sub: t('lock.newSub'), length: 4 });
   if (!first) return false;
   const second = await pinEntry({
-    title: 'PIN\'i doğrulayın', sub: 'Aynı PIN\'i bir kez daha girin', length: first.length,
-    verify: (p) => (p === first ? true : 'PIN\'ler eşleşmedi, tekrar deneyin'),
+    title: t('lock.confirm'), sub: t('lock.confirmSub'), length: first.length,
+    verify: (p) => (p === first ? true : t('lock.mismatch')),
   });
   if (!second) return false;
   await setPin(first);
@@ -224,9 +226,10 @@ export async function setupPinFlow() {
 }
 
 /** Ayar değişikliği için mevcut PIN'i ister. PIN yoksa doğrudan true. */
-export async function requirePin(title = 'Mevcut PIN') {
+export async function requirePin(title = null) {
+  title = title ?? t('lock.current');
   const rec = await Settings.get(PIN_KEY);
   if (!rec) return true;
-  const r = await pinEntry({ title, sub: 'Devam etmek için mevcut PIN\'i girin', length: rec.len, verify: verifyPin, throttle: true });
+  const r = await pinEntry({ title, sub: t('lock.currentSub'), length: rec.len, verify: verifyPin, throttle: true });
   return r !== null;
 }
