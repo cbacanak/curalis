@@ -48,7 +48,7 @@ export function fmtBytes(n) {
 }
 
 /* ---------------- Uyarı bandı ---------------- */
-const NOTICE_KEY = 'hasta-takip:notice-dismissed';
+const NOTICE_KEY = 'curalis:notice-dismissed';
 function dismissed(id) { try { return localStorage.getItem(NOTICE_KEY) === id; } catch { return false; } }
 function dismiss(id) { try { localStorage.setItem(NOTICE_KEY, id); } catch { /* yok say */ } }
 
@@ -130,7 +130,7 @@ export function pickBackupFile() {
 export async function readBackup(file) {
   let data;
   try { data = JSON.parse(await file.text()); } catch { throw new Error(t('b.unreadable')); }
-  if (!data || data.app !== 'hasta-takip') throw new Error(t('b.notBackup'));
+  if (!data || (data.app !== 'curalis' && data.app !== 'hasta-takip')) throw new Error(t('b.notBackup'));   // eski yedekler de açılır
   return data;
 }
 

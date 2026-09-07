@@ -4,7 +4,9 @@
  * Kayıtlı veri her zaman Türkçe kanonik değerlerle saklanır (işlem türü, anestezi, kontrol adı);
  * görüntülerken procLabel / anesthesiaLabel / apptLabel ile çevrilir. Bu dosya başka modül içe aktarmaz.
  */
-const KEY = 'hasta-takip:lang';
+const KEY = 'curalis:lang';
+// Bir kez: eski anahtardaki seçimi taşı
+try { const o = localStorage.getItem('hasta-takip:lang'); if (o && !localStorage.getItem(KEY)) localStorage.setItem(KEY, o); if (o) localStorage.removeItem('hasta-takip:lang'); } catch { /* yok say */ }
 export const LANGS = [['tr', 'Türkçe'], ['en', 'English']];
 const LOCALES = { tr: 'tr-TR', en: 'en-GB' };
 
@@ -27,7 +29,7 @@ export const cmp = (a, b) => String(a).localeCompare(String(b), locale());
 const pl = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
 const TR = {
-  'app.name': 'Hasta Takip',
+  'app.name': 'Curalis',
   'nav.patients': 'Hastalar', 'nav.calendar': 'Ajanda', 'nav.settings': 'Ayarlar', 'nav.foot': 'Veriler bu cihazda saklanır.',
   'common.back': 'Geri', 'common.cancel': 'Vazgeç', 'common.close': 'Kapat', 'common.save': 'Kaydet', 'common.delete': 'Sil', 'common.edit': 'Düzenle',
   'common.more': 'Diğer', 'common.ok': 'Tamam', 'common.yes': 'Evet', 'common.sure': 'Emin misiniz?', 'common.all': 'Tümü', 'common.optional': '· isteğe bağlı',
@@ -136,7 +138,7 @@ const TR = {
   's.usage': 'Kullanılan alan', 's.records': 'Kayıtlar', 's.records.line': (p) => `${p.patients} hasta · ${p.procedures} işlem · ${p.photos} fotoğraf · ${p.appointments} randevu`,
   's.data': 'Veri', 's.clear': 'Tüm verileri sil', 's.clearQ': 'Tüm veriler silinsin mi?',
   's.clearMsg': (p) => `${p.patients} hasta, ${p.photos} fotoğraf ve tüm randevular kalıcı olarak silinecek. Bu işlem geri alınamaz.`, 's.clearOk': 'Hepsini sil', 's.cleared': 'Tüm veriler silindi',
-  's.version': 'Hasta Takip · sürüm {v}',
+  's.version': 'Curalis · sürüm {v}',
   // Kilit
   'lock.now': 'Hemen', 'lock.min': (p) => `${p.n} dakika`, 'lock.forgot': 'PIN\'i unuttum',
   'lock.tooMany': 'Çok fazla deneme. {s} saniye bekleyin.', 'lock.verifyFail': 'Doğrulama yapılamadı', 'lock.wrong': 'Yanlış PIN', 'lock.wrongWait': 'Yanlış PIN. {d} bekleyin.',
@@ -151,7 +153,7 @@ const TR = {
   'n.ios.title': 'Ana ekrana ekleyin',
   'n.ios.text': 'Safari, 7 gün açılmayan sitelerin verilerini silebilir. Paylaş → Ana Ekrana Ekle ile kurup uygulamayı oradan açın. Ana ekrandaki uygulamanın verileri Safari\'dekinden ayrıdır; mevcut verileri Ayarlar → Yedek al ile taşıyın.',
   'n.mobile.title': 'Ana ekrana ekleyin', 'n.mobile.text': 'Tarayıcı menüsünden "Ana ekrana ekle" ile kurarsanız uygulama gibi açılır ve verileriniz korunur.',
-  'b.fileName': 'hasta-takip-yedek', 'b.shareTitle': 'Hasta Takip yedeği', 'b.unreadable': 'Dosya okunamadı; geçerli bir yedek dosyası değil.', 'b.notBackup': 'Bu dosya bir Hasta Takip yedeği değil.',
+  'b.fileName': 'curalis-yedek', 'b.shareTitle': 'Curalis yedeği', 'b.unreadable': 'Dosya okunamadı; geçerli bir yedek dosyası değil.', 'b.notBackup': 'Bu dosya bir Curalis yedeği değil.',
   'b.restoreTitle': 'Yedeği geri yükle', 'b.datedBackup': '{when} tarihli yedek: ', 'b.backup': 'Yedek: ',
   'b.contents': (p) => `<b>${p.patients} hasta</b>, ${p.photos} fotoğraf, ${p.appointments} randevu.`,
   'b.modes': '<b>Birleştir</b> mevcut kayıtları korur, aynı kayıtları günceller. <b>Değiştir</b> önce mevcut tüm verileri siler.',
@@ -159,7 +161,7 @@ const TR = {
 };
 
 const EN = {
-  'app.name': 'Hasta Takip',
+  'app.name': 'Curalis',
   'nav.patients': 'Patients', 'nav.calendar': 'Agenda', 'nav.settings': 'Settings', 'nav.foot': 'Data stays on this device.',
   'common.back': 'Back', 'common.cancel': 'Cancel', 'common.close': 'Close', 'common.save': 'Save', 'common.delete': 'Delete', 'common.edit': 'Edit',
   'common.more': 'More', 'common.ok': 'OK', 'common.yes': 'Yes', 'common.sure': 'Are you sure?', 'common.all': 'All', 'common.optional': '· optional',
@@ -263,7 +265,7 @@ const EN = {
   's.usage': 'Space used', 's.records': 'Records', 's.records.line': (p) => `${pl(p.patients, 'patient', 'patients')} · ${pl(p.procedures, 'procedure', 'procedures')} · ${pl(p.photos, 'photo', 'photos')} · ${pl(p.appointments, 'appointment', 'appointments')}`,
   's.data': 'Data', 's.clear': 'Delete all data', 's.clearQ': 'Delete all data?',
   's.clearMsg': (p) => `${pl(p.patients, 'patient', 'patients')}, ${pl(p.photos, 'photo', 'photos')} and all appointments will be permanently deleted. This cannot be undone.`, 's.clearOk': 'Delete everything', 's.cleared': 'All data deleted',
-  's.version': 'Hasta Takip · version {v}',
+  's.version': 'Curalis · version {v}',
   'lock.now': 'Immediately', 'lock.min': (p) => pl(p.n, 'minute', 'minutes'), 'lock.forgot': 'Forgot PIN',
   'lock.tooMany': 'Too many attempts. Wait {s} seconds.', 'lock.verifyFail': 'Could not verify', 'lock.wrong': 'Wrong PIN', 'lock.wrongWait': 'Wrong PIN. Wait {d}.',
   'lock.sec30': '30 seconds', 'lock.min5': '5 minutes',
@@ -276,7 +278,7 @@ const EN = {
   'n.ios.title': 'Add to home screen',
   'n.ios.text': 'Safari may delete data of sites not opened for 7 days. Install with Share → Add to Home Screen and open the app from there. The home screen app keeps separate data from Safari; move existing data with Settings → Back up.',
   'n.mobile.title': 'Add to home screen', 'n.mobile.text': 'Install via the browser menu "Add to home screen" so it opens like an app and your data is protected.',
-  'b.fileName': 'hasta-takip-backup', 'b.shareTitle': 'Hasta Takip backup', 'b.unreadable': 'Could not read the file; not a valid backup.', 'b.notBackup': 'This file is not a Hasta Takip backup.',
+  'b.fileName': 'curalis-backup', 'b.shareTitle': 'Curalis backup', 'b.unreadable': 'Could not read the file; not a valid backup.', 'b.notBackup': 'This file is not a Curalis backup.',
   'b.restoreTitle': 'Restore backup', 'b.datedBackup': 'Backup from {when}: ', 'b.backup': 'Backup: ',
   'b.contents': (p) => `<b>${pl(p.patients, 'patient', 'patients')}</b>, ${pl(p.photos, 'photo', 'photos')}, ${pl(p.appointments, 'appointment', 'appointments')}.`,
   'b.modes': '<b>Merge</b> keeps existing records and updates matching ones. <b>Replace</b> deletes all existing data first.',

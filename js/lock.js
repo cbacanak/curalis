@@ -9,7 +9,7 @@ import { t } from './i18n.js';
 
 const PIN_KEY = 'pin';
 const DELAY_KEY = 'lockDelay';            // saniye; 0 = hemen
-const FAIL_KEY = 'hasta-takip:pin-fail';  // deneme sayacı (kaba kuvvet frenleme)
+const FAIL_KEY = 'curalis:pin-fail';  // deneme sayacı (kaba kuvvet frenleme)
 const ITER = 150000;
 export const LOCK_DELAYS = [0, 60, 300, 900]; // saniye
 export const delayLabel = (sec) => (sec ? t('lock.min', { n: Math.round(sec / 60) }) : t('lock.now'));

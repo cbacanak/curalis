@@ -4,7 +4,10 @@
  */
 
 import { t as tr } from './i18n.js';
+// Veritabanı adı bilinçli olarak eski kaldı: IndexedDB adı değişirse mevcut kayıtlar görünmez olur (isim kullanıcıya gösterilmez).
 const DB_NAME = 'hasta-takip';
+const BACKUP_APP = 'curalis';
+const BACKUP_APP_LEGACY = 'hasta-takip';
 const DB_VERSION = 1;
 
 let _db = null;
@@ -291,7 +294,7 @@ export async function exportAll() {
     });
   }
   return {
-    app: 'hasta-takip',
+    app: BACKUP_APP,
     schema: DB_VERSION,
     exportedAt: nowISO(),
     patients, procedures, appointments,
@@ -302,7 +305,7 @@ export async function exportAll() {
 
 /** Yedek dosyasından veriyi geri yükler. replace=true ise mevcut veriyi siler. */
 export async function importAll(data, { replace = true } = {}) {
-  if (!data || data.app !== 'hasta-takip') throw new Error(tr('db.badBackup'));
+  if (!data || (data.app !== BACKUP_APP && data.app !== BACKUP_APP_LEGACY)) throw new Error(tr('db.badBackup'));
   const photos = [];
   for (const p of data.photos || []) {
     photos.push({

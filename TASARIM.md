@@ -1,4 +1,4 @@
-# Hasta Takip — Tasarım Sistemi v2 ("Gece Laciverti")
+# Curalis — Tasarım Sistemi v2 ("Gece Laciverti")
 
 Bu dosya uygulamanın görsel dilini tanımlar. Repo köküne `TASARIM.md` olarak ekle ve her arayüz değişikliğinde referans al. Amaç: mevcut "şablon" görünümünden kurtulup sade, premium, klinik‑lüks bir his vermek. Uygulama şu an GitHub Pages'te PWA; ileride iOS uygulamasına dönüşecek, bu yüzden tüm değerler tek bir token dosyasından okunmalı.
 
@@ -143,7 +143,7 @@ Kurallar: Cümle düzeni (sentence case), BÜYÜK HARF yok. Satır yüksekliği 
 - 3 ikon, 22px, seçili `--text`, diğerleri `#A3A6AE`. Etiket metni kaldırılır (iOS kalıbı için isteğe bağlı 10px etiket eklenebilir ama tercih ikon‑only). Üstte 1px `--divider`. Safe-area alt boşluk.
 
 ### PIN ekranı
-- Zemin `--bg-inverse`, tüm metin `--text-on-inverse`. Rakam tuşları kenarlıksız, 72px daire, zemin `#16213A`, basılıyken `#22304F`. Kilit ikonu kaldırılır; sadece "Hasta Takip" Display + Caption açıklama + 4 nokta + tuş takımı.
+- Zemin `--bg-inverse`, tüm metin `--text-on-inverse`. Rakam tuşları kenarlıksız, 72px daire, zemin `#16213A`, basılıyken `#22304F`. Kilit ikonu kaldırılır; sadece "Curalis" Display + Caption açıklama + 4 nokta + tuş takımı.
 
 ### Butonlar
 - Primary: `--bg-inverse` zemin, `--text-on-inverse` metin, 14px yarıçap, 44–48px yükseklik, 14px/500 metin. Ekranda en fazla 1.
