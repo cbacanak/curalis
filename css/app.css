@@ -501,10 +501,10 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .cam-controls { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
 .cam-thumb { grid-column: 1; width: 48px; height: 48px; border-radius: 10px; overflow: hidden; background: #16213A; justify-self: start; }
 .cam-shutter { grid-column: 2; }
-.cam-done { grid-column: 3; justify-self: end; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 64px; height: 56px; padding: 0 14px; border-radius: 14px; color: var(--text-on-inverse-secondary); font-size: var(--fs-small); }
-.cam-done.ready { background: var(--text-on-inverse); color: var(--bg-inverse); font-weight: var(--fw-medium); }
-.cam-done.ready .cam-count { color: var(--bg-inverse); opacity: .7; }
-.cam-done-label { line-height: 1; }
+.cam-done-wrap { grid-column: 3; justify-self: end; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.cam-done { width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid var(--border-on-inverse); display: grid; place-items: center; color: var(--text-on-inverse-tertiary); transition: color var(--dur-fast), border-color var(--dur-fast); }
+.cam-done .ic { width: 22px; height: 22px; }
+.cam-done.ready { color: var(--text-on-inverse); border-color: var(--text-on-inverse); }
 .cam-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .cam-shutter { width: 72px; height: 72px; border-radius: 50%; border: 3px solid var(--text-on-inverse); display: grid; place-items: center; justify-self: center; }
 .cam-shutter span { width: 58px; height: 58px; border-radius: 50%; background: var(--text-on-inverse); transition: transform 100ms; }

@@ -66,7 +66,10 @@ export async function render(root, { id = null } = {}) {
         <div class="cam-controls">
           <button class="cam-thumb" type="button" data-act="last" aria-label="${esc(t('cam.last'))}" hidden><img alt=""></button>
           <button class="cam-shutter" type="button" data-act="shoot" aria-label="${esc(t('cam.shoot'))}"><span></span></button>
-          <button class="cam-done" type="button" data-act="done"><span class="cam-done-label">${esc(t('cam.done'))}</span><span class="cam-count" id="cam-count"></span></button>
+          <div class="cam-done-wrap">
+            <button class="cam-done" type="button" data-act="done" aria-label="${esc(t('cam.done'))}" title="${esc(t('cam.done'))}">${icon('check')}</button>
+            <span class="cam-count" id="cam-count"></span>
+          </div>
         </div>
         <button type="button" class="cam-level-btn" data-act="level" hidden>${esc(t('cam.level'))}</button>
       </div>
