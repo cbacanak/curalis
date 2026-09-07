@@ -86,8 +86,7 @@ b, strong { font-weight: var(--fw-medium); }
     position: sticky; top: 0; height: 100dvh; border-right: 1px solid var(--hairline); background: var(--bg); padding: 24px 16px;
   }
   .brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 28px; font-size: var(--fs-title); font-weight: var(--fw-medium); letter-spacing: -.01em; }
-  .brand-mark { width: 28px; height: 28px; border-radius: 8px; background: var(--bg-inverse); color: var(--text-on-inverse); display: grid; place-items: center; }
-  .brand-mark .ic { width: 16px; height: 16px; }
+  .brand-mark { width: 28px; height: 28px; border-radius: 8px; display: block; }
   .navlink { display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: var(--r-control); color: var(--text-secondary); font-size: var(--fs-small); }
   .navlink:hover { color: var(--text); }
   .navlink.on { background: var(--bg-subtle); color: var(--text); }
@@ -448,6 +447,8 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 @media (min-width: 640px) { .cal-cell { height: 56px; } }
 
 /* ---------------- Ayarlar ---------------- */
+.app-mark { display: inline-flex; align-items: center; gap: 8px; }
+.app-mark img { width: 20px; height: 20px; border-radius: 5px; display: block; }
 .setting-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--hairline); width: 100%; text-align: left; color: inherit; min-height: 52px; }
 .setting-row:last-child { border-bottom: 0; }
 .setting-main { flex: 1; min-width: 0; }

@@ -3,14 +3,16 @@
 const KEY = 'hasta-takip:theme';
 export const THEMES = [['light', 'Açık'], ['dark', 'Koyu'], ['system', 'Sistem']];
 
+export const DEFAULT_THEME = 'system'; // seçim yapılmadıysa sistem tercihi izlenir
+
 export function getTheme() {
-  try { const t = localStorage.getItem(KEY); return t === 'light' || t === 'dark' ? t : 'system'; } catch { return 'system'; }
+  try { const t = localStorage.getItem(KEY); return t === 'light' || t === 'dark' || t === 'system' ? t : DEFAULT_THEME; } catch { return DEFAULT_THEME; }
 }
 
 export function applyTheme(mode) {
   const el = document.documentElement;
   if (mode === 'light' || mode === 'dark') el.setAttribute('data-theme', mode); else el.removeAttribute('data-theme');
-  try { if (mode === 'system') localStorage.removeItem(KEY); else localStorage.setItem(KEY, mode); } catch { /* yok say */ }
+  try { localStorage.setItem(KEY, mode); } catch { /* yok say */ }
 }
 
 /** Etkin görünüm ('light' | 'dark'), sistem tercihi çözülmüş hâliyle */

@@ -7,7 +7,7 @@ import { hasPin, getLockDelay, setLockDelay, clearPin, setupPinFlow, requirePin,
 import { getTheme, applyTheme, THEMES } from '../theme.js';
 import { segmented, bindSegmented } from '../ui.js';
 
-export const APP_VERSION = '0.3.0';
+export const APP_VERSION = '0.3.5';
 
 export async function render(root) {
   setTopbar({ title: 'Ayarlar' });
@@ -73,7 +73,7 @@ export async function render(root) {
       ${rowBtn('clear', 'Tüm verileri sil', '', { danger: true })}
     </section>
 
-    <p class="t-caption section" style="color:var(--text-tertiary)">Hasta Takip · sürüm ${APP_VERSION}</p>
+    <p class="t-caption section app-mark" style="color:var(--text-tertiary)"><img src="icons/icon.svg" alt="" width="20" height="20">Hasta Takip · sürüm ${APP_VERSION}</p>
     </div>`;
 
   bindSegmented(root.querySelector('.seg[data-name=theme]'), (v) => applyTheme(v));
