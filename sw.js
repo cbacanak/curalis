@@ -1,10 +1,10 @@
 /* Service worker — uygulama kabuğunu çevrimdışı kullanım için önbelleğe alır */
-const VERSION = 'v0.3.0';
+const VERSION = 'v0.3.1';
 const CACHE = `hasta-takip-${VERSION}`;
 const SHELL = [
   './',
   './index.html',
-  './manifest.webmanifest',
+  './manifest.json',
   './css/tokens.css',
   './css/app.css',
   './js/app.js',
@@ -22,8 +22,12 @@ const SHELL = [
   './js/views/calendar.js',
   './js/views/settings.js',
   './icons/icon.svg',
+  './icons/favicon-32.png',
+  './icons/apple-touch-icon.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './icons/icon-maskable-192.png',
+  './icons/icon-maskable-512.png',
 ];
 
 self.addEventListener('install', (e) => {
