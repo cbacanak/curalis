@@ -214,6 +214,7 @@ export function sheet({ title, content, footer = '', size = 'md', onClose, close
   const onKey = (e) => { if (e.key === 'Escape') close(null); };
   root.addEventListener('click', (e) => { if (e.target === root) close(null); });
   root.querySelector('.sheet-close').addEventListener('click', () => close(null));
+  enableSwipeToClose(root, root.querySelector('.sheet'), body, close);
   document.addEventListener('keydown', onKey);
   lockScroll();
   layer().appendChild(root);
@@ -221,6 +222,53 @@ export function sheet({ title, content, footer = '', size = 'md', onClose, close
   const first = body.querySelector('input:not([type=hidden]),select,textarea,button');
   if (first && window.matchMedia('(min-width: 880px)').matches) setTimeout(() => first.focus(), 200);
   return { el: root, body, close, result };
+}
+
+/*
+ * Aşağı kaydırarak kapatma (mobil). Başlık alanından her zaman; gövdeden yalnızca içerik en üstteyken
+ * (aksi hâlde normal kaydırma). Yatay ağırlıklı hareketler yok sayılır. Eşik: yükseklik %35'i ya da 140px,
+ * veya hızlı fırlatma. Bırakınca eşiğin altındaysa yerine döner. Masaüstü diyaloğunda kapalı.
+ */
+function enableSwipeToClose(root, sheetEl, body, close) {
+  if (window.matchMedia('(min-width: 880px)').matches) return;
+  const head = sheetEl.querySelector('.sheet-head');
+  let sx = null, sy = null, dy = 0, t0 = 0, fromBody = false, active = false;
+  const reset = () => { sx = sy = null; active = false; sheetEl.classList.remove('dragging'); sheetEl.style.transform = ''; root.style.opacity = ''; };
+  const start = (e, isBody) => {
+    if (e.touches.length !== 1 || sy !== null) return;
+    if (isBody && body.scrollTop > 0) return;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; t0 = Date.now(); dy = 0; fromBody = isBody; active = false;
+  };
+  const move = (e) => {
+    if (sy === null) return;
+    const x = e.touches[0].clientX - sx, y = e.touches[0].clientY - sy;
+    if (!active) {
+      if (Math.abs(x) > Math.abs(y) || (fromBody && y < 0)) { sx = sy = null; return; }   // yatay ya da yukarı: bırak
+      if (y < 8) return;
+      active = true; sheetEl.classList.add('dragging');
+    }
+    if (fromBody && body.scrollTop > 0) { reset(); return; }
+    dy = Math.max(0, y);
+    if (e.cancelable) e.preventDefault();
+    sheetEl.style.transform = `translateY(${dy}px)`;
+    root.style.opacity = String(1 - Math.min(0.5, dy / sheetEl.offsetHeight));
+  };
+  const end = () => {
+    if (sy === null) return;
+    const v = dy / Math.max(1, Date.now() - t0);   // px/ms
+    const shouldClose = active && (dy > Math.min(140, sheetEl.offsetHeight * 0.35) || v > 0.6);
+    if (!shouldClose) { reset(); return; }
+    sheetEl.classList.remove('dragging');
+    root.style.opacity = '';
+    sheetEl.style.transform = 'translateY(100%)';   // bulunduğu yerden aşağı kayarak kapanır
+    sx = sy = null;
+    close(null);
+  };
+  head.addEventListener('touchstart', (e) => start(e, false), { passive: true });
+  body.addEventListener('touchstart', (e) => start(e, true), { passive: true });
+  sheetEl.addEventListener('touchmove', move, { passive: false });
+  sheetEl.addEventListener('touchend', end);
+  sheetEl.addEventListener('touchcancel', reset);
 }
 
 /** Silme / geri alınamaz eylem onayı — alttan çıkan iOS eylem sayfası (TASARIM.md §5) */

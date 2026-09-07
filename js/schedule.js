@@ -58,6 +58,22 @@ export function buildControls(procedure, { hour = 10, minute = 0, avoidSunday = 
   });
 }
 
+/** İşlemin kendisi için Ajanda kaydı (ameliyat / işlem günü). scheduleKey 'op'; auto: true (işlemle birlikte silinir). */
+export const OP_KEY = 'op';
+export const DEFAULT_OP_TIME = '09:00';
+export function buildOperation(procedure, existing = null) {
+  const time = procedure.time || DEFAULT_OP_TIME;
+  const past = procedure.date < todayISO();
+  // Geçmiş tarih: yapıldı sayılır; ileri tarih: planlı. Kullanıcının verdiği 'gelmedi' / 'iptal' korunur.
+  const keep = existing && (existing.status === 'missed' || existing.status === 'cancelled');
+  return {
+    ...(existing || {}),
+    patientId: procedure.patientId, procedureId: procedure.id,
+    date: `${procedure.date}T${time}`, kind: 'operasyon', label: procedure.type, scheduleKey: OP_KEY,
+    status: keep ? existing.status : (past ? 'done' : 'planned'), auto: true, notes: existing?.notes || '',
+  };
+}
+
 /** Yerel saatle, saat dilimi kaymadan ISO benzeri "YYYY-MM-DDTHH:mm" verir. */
 export function toLocalISO(d) {
   const p = (n) => String(n).padStart(2, '0');

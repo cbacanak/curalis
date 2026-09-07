@@ -50,6 +50,7 @@ const TR = {
   'sched.short.d1': '1. gün', 'sched.short.w1': '1. hafta', 'sched.short.m1': '1. ay', 'sched.short.m3': '3. ay', 'sched.short.m6': '6. ay', 'sched.short.y1': '1. yıl',
   'anest.Genel': 'Genel', 'anest.Lokal': 'Lokal', 'anest.Sedasyon': 'Sedasyon', 'anest.Lokal + Sedasyon': 'Lokal + Sedasyon', 'anest.Yok': 'Yok',
   'anest.line': '{a} anestezi',
+  'op.planned': 'Planlı', 'op.row': 'Ameliyat / işlem', 'op.editProc': 'İşlemi düzenle', 'op.inDays': '{n} gün sonra',
   // Formlar
   'form.patient.new': 'Yeni hasta', 'form.patient.edit': 'Hastayı düzenle', 'form.patient.save': 'Hastayı kaydet',
   'form.firstName': 'Ad', 'form.lastName': 'Soyad', 'form.phone': 'Telefon', 'form.phone.ph': '05xx xxx xx xx', 'form.birthDate': 'Doğum tarihi',
@@ -57,7 +58,9 @@ const TR = {
   'form.allergies': 'Alerjiler', 'form.allergies.ph': 'Penisilin, lateks…', 'form.referral': 'Yönlendiren', 'form.referral.ph': 'Tavsiye, sosyal medya, hekim…',
   'form.notes': 'Notlar', 'form.notes.ph': 'Sistemik hastalıklar, ilaçlar, sigara, beklentiler…', 'form.nameRequired': 'Ad ve soyad zorunludur.',
   'form.proc.new': 'Yeni işlem', 'form.proc.edit': 'İşlemi düzenle', 'form.proc.save': 'İşlemi kaydet', 'form.proc.type': 'İşlem türü',
-  'form.proc.title': 'Açıklama / teknik', 'form.proc.title.ph': 'Açık teknik, kıkırdak greft…', 'form.proc.date': 'İşlem tarihi', 'form.proc.anesthesia': 'Anestezi',
+  'form.proc.title': 'Açıklama / teknik', 'form.proc.title.ph': 'Açık teknik, kıkırdak greft…', 'form.proc.date': 'İşlem tarihi', 'form.proc.time': 'İşlem saati', 'form.proc.anesthesia': 'Anestezi',
+  'form.proc.dateHint': 'İleri bir tarih seçersen işlem planlı olarak Ajanda\'ya düşer; kontroller bu tarihe göre hesaplanır.',
+  'form.proc.shifted': 'İşlem tarihi değişti · {n} planlı kontrol yeni tarihe göre kaydırıldı',
   'form.proc.notes': 'Ameliyat notu', 'form.proc.notes.ph': 'Bulgular, uygulanan teknik, komplikasyon, öneriler…', 'form.proc.controls': 'Kontrol takvimi',
   'form.proc.controlTime': 'Kontrol saati', 'form.proc.controlsHint': 'Seçili dönemler işlem tarihine göre randevu olarak eklenir; pazara düşenler pazartesiye alınır.',
   'form.proc.typeRequired': 'İşlem türü seçin.', 'form.proc.dateRequired': 'İşlem tarihi zorunludur.',
@@ -76,13 +79,13 @@ const TR = {
   'form.photo.saveFail': (p) => `"${p.name}" kaydedilemedi: ${p.err}.${p.done ? ` ${p.done} fotoğraf kaydedildi.` : ''}`,
   'form.photo.added': '{n} fotoğraf eklendi', 'form.photo.info': 'Fotoğraf bilgileri',
   // Hastalar
-  'patients.title': 'Hastalar', 'patients.count': '{n} kayıt', 'patients.upcoming': '{n} yaklaşan kontrol', 'patients.new': 'Yeni hasta',
+  'patients.title': 'Hastalar', 'patients.count': '{n} kayıt', 'patients.upcoming': '{n} yaklaşan randevu', 'patients.new': 'Yeni hasta',
   'patients.search.ph': 'Ad, soyad veya telefon', 'patients.search': 'Hasta ara', 'patients.added': 'Hasta eklendi', 'patients.noProc': 'Henüz işlem yok',
   'patients.empty': 'Henüz hasta yok', 'patients.emptyText': 'İlk hasta kartını oluşturarak başla.', 'patients.noResult': 'Sonuç yok',
-  'patients.noMatch': '"{q}" ile eşleşen hasta bulunamadı.', 'patients.upcomingLabel': 'Yaklaşan kontrol', 'patients.results': '{n} sonuç', 'patients.all': 'Tüm hastalar',
+  'patients.noMatch': '"{q}" ile eşleşen hasta bulunamadı.', 'patients.upcomingLabel': 'Yaklaşan', 'patients.results': '{n} sonuç', 'patients.all': 'Tüm hastalar',
   // Ajanda
   'cal.title': 'Ajanda', 'cal.todayCount': 'bugün {n} randevu', 'cal.list': 'Liste', 'cal.month': 'Takvim', 'cal.overdue': 'Gecikmiş · {n}',
-  'cal.upcoming': 'Yaklaşan kontrol', 'cal.emptyList': 'Önümüzdeki {n} günde randevu yok', 'cal.emptyListText': 'İşlem eklendiğinde kontrol takvimi buraya düşer.',
+  'cal.upcoming': 'Yaklaşan kontrol', 'cal.upcomingOp': 'Yaklaşan ameliyat / işlem', 'cal.emptyList': 'Önümüzdeki {n} günde randevu yok', 'cal.emptyListText': 'İşlem eklendiğinde kontrol takvimi buraya düşer.',
   'cal.later': (p) => `${p.days} günden sonra ${p.n} planlı randevu daha var.`, 'cal.count': '{n} randevu', 'cal.prev': 'Önceki ay', 'cal.next': 'Sonraki ay',
   'cal.weekdays': () => ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'], 'cal.add': 'Randevu ekle', 'cal.noneDay': 'Bu günde randevu yok.', 'cal.noneMonth': 'Bu ayda randevu yok.',
   'cal.addPatientFirst': 'Önce hasta ekleyin', 'cal.whichPatient': 'Hangi hasta için?', 'cal.added': 'Randevu eklendi', 'cal.openPatient': 'Hasta kartını aç',
@@ -179,13 +182,16 @@ const EN = {
   'sched.short.d1': 'day 1', 'sched.short.w1': 'week 1', 'sched.short.m1': 'month 1', 'sched.short.m3': 'month 3', 'sched.short.m6': 'month 6', 'sched.short.y1': 'year 1',
   'anest.Genel': 'General', 'anest.Lokal': 'Local', 'anest.Sedasyon': 'Sedation', 'anest.Lokal + Sedasyon': 'Local + Sedation', 'anest.Yok': 'None',
   'anest.line': '{a} anaesthesia',
+  'op.planned': 'Planned', 'op.row': 'Surgery / procedure', 'op.editProc': 'Edit procedure', 'op.inDays': (p) => `in ${pl(p.n, 'day', 'days')}`,
   'form.patient.new': 'New patient', 'form.patient.edit': 'Edit patient', 'form.patient.save': 'Save patient',
   'form.firstName': 'First name', 'form.lastName': 'Last name', 'form.phone': 'Phone', 'form.phone.ph': '+90 5xx xxx xx xx', 'form.birthDate': 'Date of birth',
   'form.gender': 'Sex', 'form.bloodType': 'Blood type', 'form.bloodType.unknown': 'Unknown', 'form.email': 'Email',
   'form.allergies': 'Allergies', 'form.allergies.ph': 'Penicillin, latex…', 'form.referral': 'Referred by', 'form.referral.ph': 'Recommendation, social media, physician…',
   'form.notes': 'Notes', 'form.notes.ph': 'Systemic conditions, medications, smoking, expectations…', 'form.nameRequired': 'First and last name are required.',
   'form.proc.new': 'New procedure', 'form.proc.edit': 'Edit procedure', 'form.proc.save': 'Save procedure', 'form.proc.type': 'Procedure type',
-  'form.proc.title': 'Description / technique', 'form.proc.title.ph': 'Open technique, cartilage graft…', 'form.proc.date': 'Procedure date', 'form.proc.anesthesia': 'Anaesthesia',
+  'form.proc.title': 'Description / technique', 'form.proc.title.ph': 'Open technique, cartilage graft…', 'form.proc.date': 'Procedure date', 'form.proc.time': 'Procedure time', 'form.proc.anesthesia': 'Anaesthesia',
+  'form.proc.dateHint': 'A future date schedules the procedure in the Agenda; follow-ups are calculated from that date.',
+  'form.proc.shifted': (p) => `Procedure date changed · ${pl(p.n, 'planned follow-up', 'planned follow-ups')} moved to the new date`,
   'form.proc.notes': 'Operative note', 'form.proc.notes.ph': 'Findings, technique, complications, recommendations…', 'form.proc.controls': 'Follow-up schedule',
   'form.proc.controlTime': 'Follow-up time', 'form.proc.controlsHint': 'Selected periods are added as appointments based on the procedure date; those falling on Sunday move to Monday.',
   'form.proc.typeRequired': 'Choose a procedure type.', 'form.proc.dateRequired': 'Procedure date is required.',
@@ -203,12 +209,12 @@ const EN = {
   'form.photo.none': 'Select at least one photo.', 'form.photo.processing': 'Processing {i}/{n}',
   'form.photo.saveFail': (p) => `Could not save "${p.name}": ${p.err}.${p.done ? ` ${pl(p.done, 'photo', 'photos')} saved.` : ''}`,
   'form.photo.added': (p) => `${pl(p.n, 'photo', 'photos')} added`, 'form.photo.info': 'Photo details',
-  'patients.title': 'Patients', 'patients.count': (p) => pl(p.n, 'record', 'records'), 'patients.upcoming': (p) => `${pl(p.n, 'upcoming follow-up', 'upcoming follow-ups')}`, 'patients.new': 'New patient',
+  'patients.title': 'Patients', 'patients.count': (p) => pl(p.n, 'record', 'records'), 'patients.upcoming': (p) => pl(p.n, 'upcoming appointment', 'upcoming appointments'), 'patients.new': 'New patient',
   'patients.search.ph': 'Name or phone', 'patients.search': 'Search patients', 'patients.added': 'Patient added', 'patients.noProc': 'No procedures yet',
   'patients.empty': 'No patients yet', 'patients.emptyText': 'Start by creating the first patient record.', 'patients.noResult': 'No results',
-  'patients.noMatch': 'No patient matches "{q}".', 'patients.upcomingLabel': 'Upcoming follow-up', 'patients.results': (p) => pl(p.n, 'result', 'results'), 'patients.all': 'All patients',
+  'patients.noMatch': 'No patient matches "{q}".', 'patients.upcomingLabel': 'Upcoming', 'patients.results': (p) => pl(p.n, 'result', 'results'), 'patients.all': 'All patients',
   'cal.title': 'Agenda', 'cal.todayCount': (p) => `${pl(p.n, 'appointment', 'appointments')} today`, 'cal.list': 'List', 'cal.month': 'Calendar', 'cal.overdue': 'Overdue · {n}',
-  'cal.upcoming': 'Upcoming follow-up', 'cal.emptyList': 'No appointments in the next {n} days', 'cal.emptyListText': 'Follow-ups appear here when you add a procedure.',
+  'cal.upcoming': 'Upcoming follow-up', 'cal.upcomingOp': 'Upcoming surgery / procedure', 'cal.emptyList': 'No appointments in the next {n} days', 'cal.emptyListText': 'Follow-ups appear here when you add a procedure.',
   'cal.later': (p) => `${pl(p.n, 'more planned appointment', 'more planned appointments')} after ${p.days} days.`, 'cal.count': (p) => pl(p.n, 'appointment', 'appointments'), 'cal.prev': 'Previous month', 'cal.next': 'Next month',
   'cal.weekdays': () => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], 'cal.add': 'Add appointment', 'cal.noneDay': 'No appointments on this day.', 'cal.noneMonth': 'No appointments this month.',
   'cal.addPatientFirst': 'Add a patient first', 'cal.whichPatient': 'Which patient?', 'cal.added': 'Appointment added', 'cal.openPatient': 'Open patient record',
@@ -303,7 +309,9 @@ export function kindLabel(kind) { const k = `kind.${kind}`; return TR[k] ? t(k) 
 // Randevu başlığı: bilinen kontrol/tür adları (her iki dilde) çevrilir, serbest metin olduğu gibi kalır
 const KNOWN_LABELS = {};
 for (const dict of [TR, EN]) for (const k of Object.keys(dict)) if ((k.startsWith('sched.') && !k.startsWith('sched.short.')) || k.startsWith('kind.')) KNOWN_LABELS[dict[k]] = k;
+export const isOp = (a) => a?.scheduleKey === 'op';
 export function apptLabel(a) {
+  if (isOp(a)) return procLabel(a.label);   // ameliyat / işlem kaydı: başlık işlem türüdür
   if (a.scheduleKey && TR[`sched.${a.scheduleKey}`]) return t(`sched.${a.scheduleKey}`);
   const k = KNOWN_LABELS[a.label];
   if (k) return t(k);
