@@ -77,7 +77,14 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const r = await appointmentForm({ patientId: id, procedures: data.procedures, ...defaults });
     if (r) { toast(t('p.apptAdded')); refresh(); }
   }
+  /** Fotoğraf ekle: önce yol seçimi (kamera ile çek / galeriden seç), sonra ilgili akış */
   async function addPhoto(defaults = {}) {
+    const v = await actionMenu(t('photo.menuTitle'), [
+      { label: t('photo.camera'), icon: 'camera', value: 'camera' },
+      { label: t('photo.gallery'), icon: 'image', value: 'gallery' },
+    ]);
+    if (v === 'camera') { go(`/camera/${id}`); return; }
+    if (v !== 'gallery') return;
     const r = await photoUploadForm({ patientId: id, procedures: data.procedures, defaultProcedureId: data.procedures[0]?.id || '', ...defaults });
     if (r && r.length) { setTab('fotograflar'); refresh(); }
   }

@@ -48,7 +48,7 @@ export async function render(root, { id = null } = {}) {
         <button class="btn-icon" type="button" data-act="close" aria-label="${esc(t('common.close'))}">${icon('x')}</button>
         <div class="cam-ctx">
           <div class="cam-name">${esc(fullName(patient))}</div>
-          <div class="cam-sub"><button type="button" class="cam-link" data-act="proc"></button> · <button type="button" class="cam-link" data-act="period"></button></div>
+          <div class="cam-sub"><button type="button" class="cam-pill" data-act="proc"><span></span>${icon('down')}</button><button type="button" class="cam-pill" data-act="period"><span></span>${icon('down')}</button></div>
         </div>
         <button class="btn-icon ${state.ghost ? 'on' : ''}" type="button" data-act="ghost" aria-label="${esc(t('cam.ghost'))}" title="${esc(t('cam.ghost'))}">${icon('image')}</button>
         <button class="btn-icon ${state.grid ? 'on' : ''}" type="button" data-act="grid" aria-label="${esc(t('cam.grid'))}" title="${esc(t('cam.grid'))}">${icon('grid')}</button>
@@ -81,8 +81,8 @@ export async function render(root, { id = null } = {}) {
   /* ---------- Bağlam: işlem / dönem / açılar ---------- */
   function paintCtx() {
     const pr = proc();
-    el('[data-act=proc]').textContent = pr ? `${procLabel(pr.typeName)} · ${fmtDayMonth(pr.date)}` : t('form.appt.noProc');
-    el('[data-act=period]').textContent = periodLabel(state.period);
+    el('[data-act=proc] span').textContent = pr ? `${procLabel(pr.typeName)} · ${fmtDayMonth(pr.date)}` : t('form.appt.noProc');
+    el('[data-act=period] span').textContent = periodLabel(state.period);
   }
   function paintAngles() {
     const box = el('#cam-angles');
