@@ -51,3 +51,7 @@ export function closeSearch() {
   onClose?.();
 }
 export const isSearching = () => !!active;
+
+/** Tab bar: alt ekranlarda (hasta kartı) gizlenir; rota değişince app.js yeniden gösterir */
+export function setDock(visible) { document.body.classList.toggle('no-dock', !visible); }
+export const isMobile = () => window.matchMedia('(max-width: 879px)').matches;
