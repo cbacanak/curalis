@@ -3,6 +3,7 @@ import { Appointments, Patients, Procedures, fullName } from '../db.js';
 import { esc, icon, initials, fmtTime, fmtDateLong, fmtDayMonth, weekdayShort, parseDate, daysBetween, statusText, emptyState, toast, undoToast, actionMenu, segmented, bindSegmented } from '../ui.js';
 import { swipeWrap, bindSwipe, apptActions } from '../swipe.js';
 import { openReminder } from '../messages.js';
+import { pickPatientSheet } from '../picker.js';
 import { appointmentForm, procedureForm } from '../forms.js';
 import { setTopbar, go } from '../nav.js';
 import { setIsland, openSearch, closeSearch, isMobile } from '../dock.js';
@@ -113,7 +114,7 @@ export async function render(root) {
   /** Randevu ekle: hasta seç → form (varsayılan gün) */
   async function addAppt(defaultDay = todayKey) {
     if (!patients.length) { toast(t('cal.addPatientFirst')); return; }
-    const pick = await actionMenu(t('cal.whichPatient'), patients.map((p) => ({ label: fullName(p), value: p.id })));
+    const pick = await pickPatientSheet({ title: t('cal.whichPatient') });
     if (!pick) return;
     const r = await appointmentForm({ patientId: pick, procedures: procedures.filter((x) => x.patientId === pick), defaultDate: `${defaultDay}T10:00` });
     if (r) { toast(t('cal.added')); refresh(); }

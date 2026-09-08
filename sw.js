@@ -18,6 +18,7 @@ const SHELL = [
   './js/dock.js',
   './js/swipe.js',
   './js/messages.js',
+  './js/picker.js',
   './js/theme.js',
   './js/i18n.js',
   './js/model.js',

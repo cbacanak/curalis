@@ -751,3 +751,12 @@ body.has-undo .toast { margin-top: -58px; }   /* bildirim, geri al kapsülünün
 .cmp.full .cmp-stage { padding: 0; }
 .cmp.full .cmp-side, .cmp.full .cmp-stack { height: 100%; border-radius: 0; }
 .cmp.full .cmp-pane { border-radius: 0; }
+
+/* Hasta seçici (picker.js): sheet içinde arama */
+.pick-search { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px; border-radius: var(--r-control); background: var(--bg-subtle); color: var(--text-secondary); margin-top: 4px; }
+.pick-search .ic { width: 18px; height: 18px; flex: 0 0 auto; }
+.pick-search input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; height: 100%; font-size: 1rem; color: var(--text); }
+.pick-search input::placeholder { color: var(--text-tertiary); }
+.pick-search input::-webkit-search-cancel-button { -webkit-appearance: none; }
+#pick-list .section { margin-top: 20px; }
+#pick-list .row .ic { color: var(--text-tertiary); width: 18px; height: 18px; }

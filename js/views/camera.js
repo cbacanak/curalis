@@ -8,6 +8,7 @@ import { Patients, Procedures, Photos, Templates, fullName } from '../db.js';
 import { esc, icon, toast, actionMenu, fmtDayMonth, emptyState } from '../ui.js';
 import { processImage, blobURL, releaseURLs } from '../photos.js';
 import { photoUploadForm, defaultPeriodFor } from '../forms.js';
+import { pickPatientSheet } from '../picker.js';
 import { go, replacePath, setTopbar } from '../nav.js';
 import { t, procLabel } from '../i18n.js';
 import { PERIODS, ANGLES, sortAngles, periodLabel, angleLabel } from '../model.js';
@@ -21,7 +22,7 @@ export async function render(root, { id = null } = {}) {
 
   // Hasta seçili değilse önce seçtir (MOBIL.md §3.4)
   if (!id || !patients.some((p) => p.id === id)) {
-    const pick = await actionMenu(t('cam.pickPatient'), patients.map((p) => ({ label: fullName(p), value: p.id })));
+    const pick = await pickPatientSheet({ title: t('cam.pickPatient') });
     if (!pick) { go('/'); return; }
     id = pick;
     replacePath(`/camera/${id}`);
