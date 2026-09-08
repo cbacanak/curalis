@@ -1,5 +1,6 @@
 /* Küçük UI yardımcıları: şablon, ikon, tarih, sheet, onay, toast */
 import { t, locale, upper } from './i18n.js';
+import { relayoutSoon } from './viewport.js';
 
 export function esc(s) {
   return String(s ?? '')
@@ -171,6 +172,7 @@ export function lockScroll() {
   savedScrollY = window.scrollY;
   document.body.style.top = `-${savedScrollY}px`;
   document.body.classList.add('scroll-locked');
+  relayoutSoon();   // iOS: gövde sabitlenince yerleşim görünümü kısalabiliyor
 }
 export function unlockScroll() {
   if (--openSheets > 0) return;
@@ -178,6 +180,7 @@ export function unlockScroll() {
   document.body.classList.remove('scroll-locked');
   document.body.style.top = '';
   window.scrollTo(0, savedScrollY);
+  relayoutSoon();
 }
 
 /**

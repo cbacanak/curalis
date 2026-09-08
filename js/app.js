@@ -3,7 +3,7 @@ import { openDB, purgeExpired } from './db.js';
 import { currentPath, setActiveNav } from './nav.js';
 import { requestPersist, renderNotice } from './storage.js';
 import { initLock } from './lock.js';
-import { initViewportFix, relayoutBars } from './viewport.js';
+import { initViewportFix } from './viewport.js';
 import { toast, emptyState } from './ui.js';
 import { t, applyStaticText } from './i18n.js';
 
