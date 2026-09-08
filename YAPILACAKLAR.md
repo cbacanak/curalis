@@ -62,7 +62,7 @@ Plan dışı yapılan: İngilizce dil desteği. Kural (8 Eyl 2026): plan dışı
 2. [x] WhatsApp hatırlatma çalışmıyor: numara E.164 (0 → 90), wa.me bağlantısına hazır mesaj, dokunma olayı içinde senkron `location.href`; `window.open` yok.
 3. [x] Ara / WhatsApp'tan dönüşte kaydırma bozuluyor: visibilitychange, pagehide, touchcancel'da kaydırma durumu sıfırlanır, açık satırlar kapanır.
 4. [x] Kamera hasta seçimi: üstte arama; bölümler "Bugün randevusu olanlar", "Son 5", "Tümü".
-5. [ ] Randevu formunda "Tüm alanları göster" yok; kademeli sheet: kısa form tarih-saat, tür, bağlı işlem (son işlem önseçili), dönem; yukarı çekince kalan alanlar.
+5. [x] Randevu formunda "Tüm alanları göster" yok; kademeli sheet: kısa form tarih-saat, tür, bağlı işlem (son işlem önseçili), dönem; yukarı çekince kalan alanlar.
 
 ## Küçük iyileştirmeler
 

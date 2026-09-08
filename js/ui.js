@@ -264,7 +264,7 @@ function enableSwipeToClose(root, sheetEl, body, close) {
     if (sy === null) return;
     const x = e.touches[0].clientX - sx, y = e.touches[0].clientY - sy;
     if (!active) {
-      if (!fromBody && y < -16 && sheetEl.classList.contains('sheet-half')) { sheetEl.classList.remove('sheet-half'); sx = sy = null; return; }   // yarı sheet: yukarı çekince tam
+      if (y < -16 && sheetEl.classList.contains('sheet-half') && (!fromBody || body.scrollTop === 0)) { sheetEl.classList.remove('sheet-half'); sx = sy = null; return; }   // yarı sheet: başlıktan ya da gövdeden yukarı çekince tam
       if (Math.abs(x) > Math.abs(y) || (fromBody && y < 0)) { sx = sy = null; return; }   // yatay ya da yukarı: bırak
       if (y < 8) return;
       active = true; sheetEl.classList.add('dragging');
