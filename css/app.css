@@ -70,7 +70,7 @@ b, strong { font-weight: var(--fw-medium); }
 
 /* Alt sekme çubuğu — yalnızca ikon */
 .tabbar {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  position: fixed; left: 0; right: 0; bottom: calc(0px - var(--vv-fix, 0px)); z-index: 30;   /* --vv-fix: js/viewport.js (iOS açılış) */
   height: calc(var(--tabbar-h) + var(--safe-b)); padding-bottom: var(--safe-b);
   display: flex; background: var(--bg); border-top: 1px solid var(--divider);
 }
@@ -288,7 +288,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .menu-item .check-mark { margin-left: auto; color: var(--text); }
 
 .toast {
-  position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + var(--safe-b) + 20px); transform: translate(-50%, 12px);
+  position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + var(--safe-b) + 20px - var(--vv-fix, 0px)); transform: translate(-50%, 12px);
   background: var(--primary-bg); color: var(--primary-text); padding: 12px 18px; border-radius: var(--r-control); font-size: var(--fs-small);
   opacity: 0; pointer-events: none; transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease); z-index: 200; max-width: min(92vw, 420px); text-align: center;
 }
@@ -379,7 +379,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .action-bar { display: flex; gap: 10px; margin-top: 28px; }
 .action-bar .btn-primary { flex: 1; }
 .action-bar.equal .btn { flex: 1; padding: 0 12px; }   /* Vazgeç / Göster: eşit genişlik */
-.action-bar.sticky { position: sticky; bottom: calc(var(--tabbar-h) + var(--safe-b) + 12px); z-index: 20; background: var(--bg); padding-top: 12px; }
+.action-bar.sticky { position: sticky; bottom: calc(var(--tabbar-h) + var(--safe-b) + 12px - var(--vv-fix, 0px)); z-index: 20; background: var(--bg); padding-top: 12px; }
 @media (min-width: 880px) { .action-bar.sticky { bottom: 16px; } }
 .compare-hint { font-size: var(--fs-caption); color: var(--text-secondary); margin-top: 16px; }
 
