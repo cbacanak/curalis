@@ -2,6 +2,7 @@
 import { Patients, Procedures, Appointments, fullName } from '../db.js';
 import { esc, icon, initials, fmtDate, fmtDayMonth, fmtTime, parseDate, daysBetween, emptyState, toast, undoToast, age, actionMenu, statusText, phoneHref, waHref, sheet } from '../ui.js';
 import { swipeWrap, bindSwipe } from '../swipe.js';
+import { reminderHref } from '../messages.js';
 import { patientForm, appointmentForm } from '../forms.js';
 import { setTopbar, go } from '../nav.js';
 import { setIsland, openSearch, closeSearch } from '../dock.js';
@@ -103,8 +104,10 @@ export async function render(root) {
       { label: t('appt.markDone'), icon: 'check', value: 'attended' },
     ];
     if (a.status !== 'missed') items.push({ label: t('appt.markMissed'), icon: 'alert', value: 'missed' });
+    if (p.phone) items.push({ label: t('appt.remind'), icon: 'chat', value: 'remind' });
     items.push({ label: t('cal.openPatient'), icon: 'user', value: 'open' });
     const v = await actionMenu(`${fullName(p)} · ${apptLabel(a)}`, items);
+    if (v === 'remind') { window.open(await reminderHref(a.status === 'missed' ? 'missed' : 'reminder', { patient: p, a, pr: a.procedureId ? prById[a.procedureId] : null }), '_blank', 'noopener'); return; }
     if (v === 'reschedule') { const r = await appointmentForm({ patientId: a.patientId, procedures: procedures.filter((x) => x.patientId === a.patientId), existing: { ...a, status: 'planned' } }); if (r) { toast(t('overdue.rescheduled')); render(root); } }
     else if (v === 'attended' || v === 'missed') setStatus(a, v);
     else if (v === 'open') go(`/patient/${a.patientId}/randevular`);

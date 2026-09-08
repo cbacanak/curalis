@@ -21,6 +21,11 @@ function footer(okText = t('common.save')) {
 function wireForm(s, onSubmit) {
   const form = s.body.querySelector('form');
   bindChoiceFields(form);
+  // Kaydet: zorunlu alanlar dolana dek pasif (§5B)
+  const submitBtn = s.el.querySelector('[type=submit]');
+  const requiredOk = () => [...form.querySelectorAll('[required]')].every((el) => String(el.value || '').trim() !== '');
+  const syncSubmit = () => { if (submitBtn) submitBtn.disabled = !requiredOk(); };
+  form.addEventListener('input', syncSubmit); form.addEventListener('change', syncSubmit); syncSubmit();
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const err = form.querySelector('.form-error');
@@ -32,7 +37,7 @@ function wireForm(s, onSubmit) {
       s.close(result);
     } catch (ex) {
       form.insertAdjacentHTML('afterbegin', `<div class="form-error">${esc(ex.message || t('common.saveFail'))}</div>`);
-      submit.disabled = false;
+      syncSubmit();
     }
   });
   return form;
@@ -42,25 +47,30 @@ const sectionLabel = (k) => `<div class="form-section">${esc(t(k))}</div>`;
 const yesNo = (name, value, label) => segmentField({ label, name, value: value ? '1' : '', options: [['', t('form.no')], ['1', t('form.yes')]], optional: false });
 
 /* ---------------- Hasta ---------------- */
+const contactsSupported = () => !!(navigator.contacts && typeof navigator.contacts.select === 'function');
+
 export function patientForm(existing = null) {
   const p = existing || {};
   let consentDoc = p.consentDocument || null;   // { blob: ArrayBuffer, mime, width, height }
+  const isNew = !existing;
   const s = sheet({
     title: existing ? t('form.patient.edit') : t('form.patient.new'),
     footer: footer(t('form.patient.save')),
+    half: isNew,   // §5B kademeli sheet: önce ad + telefon, yukarı çekince tam form
     content: `
       <form id="sheet-form" class="form" novalidate>
-        ${sectionLabel('form.sec.identity')}
+        <div class="form-section-row">${sectionLabel('form.sec.identity')}${contactsSupported() ? `<button type="button" class="section-link" data-act="contacts">${esc(t('form.contacts'))}</button>` : ''}</div>
         <div class="form-row">
-          ${field({ label: t('form.firstName'), name: 'firstName', value: p.firstName, required: true, attrs: 'autocomplete="off" autocapitalize="words"' })}
-          ${field({ label: t('form.lastName'), name: 'lastName', value: p.lastName, required: true, attrs: 'autocomplete="off" autocapitalize="words"' })}
+          ${field({ label: t('form.firstName'), name: 'firstName', value: p.firstName, required: true, attrs: 'autocomplete="off" autocapitalize="words" enterkeyhint="next"' })}
+          ${field({ label: t('form.lastName'), name: 'lastName', value: p.lastName, required: true, attrs: 'autocomplete="off" autocapitalize="words" enterkeyhint="next"' })}
         </div>
         <div class="form-row">
-          ${field({ label: t('form.phone'), name: 'phone', type: 'tel', value: p.phone, placeholder: t('form.phone.ph'), attrs: 'inputmode="tel"' })}
+          ${field({ label: t('form.phone'), name: 'phone', type: 'tel', value: p.phone, placeholder: t('form.phone.ph'), attrs: 'inputmode="tel" enterkeyhint="done"' })}
           ${field({ label: t('form.birthDate'), name: 'birthDate', type: 'date', value: p.birthDate })}
         </div>
         ${segmentField({ label: t('form.gender'), name: 'gender', value: existing ? (p.gender || '') : 'F', options: [['F', t('gender.F')], ['M', t('gender.M')], ['', t('gender.none')]] })}
-
+        <button type="button" class="form-expand section-link" data-act="expand">${esc(t('form.showAll'))}</button>
+        <div class="form-more">
         ${sectionLabel('form.sec.clinical')}
         ${field({ label: t('form.allergies'), name: 'allergies', value: p.allergies, placeholder: t('form.allergies.ph') })}
         ${field({ label: t('form.medications'), name: 'medications', value: p.medications, placeholder: t('form.medications.ph') })}
@@ -88,9 +98,23 @@ export function patientForm(existing = null) {
         </div>
         ${field({ label: t('form.referral'), name: 'referral', value: p.referral, placeholder: t('form.referral.ph') })}
         ${textareaField({ label: t('form.notes'), name: 'notes', value: p.notes, placeholder: t('form.notes.ph') })}
+        </div>
       </form>`,
   });
   const form = s.body.querySelector('form');
+  // Rehberden seç (Contact Picker API; iOS Safari destekler): ad soyad + telefon dolar
+  const cb = form.querySelector('[data-act=contacts]');
+  if (cb) cb.onclick = async () => {
+    try {
+      const [c] = await navigator.contacts.select(['name', 'tel'], { multiple: false });
+      if (!c) return;
+      const full = (c.name?.[0] || '').trim().replace(/\s+/g, ' ');
+      const parts = full.split(' ');
+      if (parts.length > 1) { form.firstName.value = parts.slice(0, -1).join(' '); form.lastName.value = parts.at(-1); } else form.firstName.value = full;
+      if (c.tel?.[0]) form.phone.value = c.tel[0];
+      form.dispatchEvent(new Event('input', { bubbles: true }));
+    } catch (e) { if (e?.name !== 'AbortError') toast(t('form.contacts.fail')); }
+  };
   const input = form.querySelector('#consent-input');
   const pick = form.querySelector('#consent-pick');
   const paintDoc = () => {
@@ -248,12 +272,14 @@ export function appointmentForm({ patientId, procedures = [], existing = null, d
   const a = existing || {};
   const isNew = !existing;
   const dt = a.date ? a.date : (defaultDate || toLocalISO(nextSlot()));
+  // §5B kademeli sheet: yeni randevuda önce tarih/saat/tür
   const [dPart, tPart] = [dt.slice(0, 10), dt.slice(11, 16) || '10:00'];
   const procOpts = [['', t('form.appt.noProc')], ...procedures.map(procOption)];
   const types = APPT_TYPES.filter((k) => k !== 'operation' || a.type === 'operation');
   const s = sheet({
     title: isNew ? t('form.appt.new') : t('form.appt.edit'),
     footer: footer(t('form.appt.save')),
+    half: isNew,
     content: `
       <form id="sheet-form" class="form" novalidate>
         <div class="form-row">
@@ -262,9 +288,12 @@ export function appointmentForm({ patientId, procedures = [], existing = null, d
         </div>
         ${chipField({ label: t('form.appt.kind'), name: 'type', value: a.type || 'control', options: types.map((k) => [k, apptTypeLabel(k)]), required: true })}
         ${isNew ? '<input type="hidden" name="status" value="planned">' : segmentField({ label: t('form.appt.status'), name: 'status', value: a.status || 'planned', options: APPT_STATUSES.map((k) => [k, statusLabel(k)]), optional: false })}
+        <button type="button" class="form-expand section-link" data-act="expand">${esc(t('form.showAll'))}</button>
+        <div class="form-more">
         ${field({ label: t('form.appt.label'), name: 'label', value: a.label, placeholder: t('form.appt.label.ph') })}
         ${selectField({ label: t('form.appt.proc'), name: 'procedureId', value: a.procedureId || '', options: procOpts })}
         ${textareaField({ label: t('form.appt.note'), name: 'notes', value: a.notes, rows: 2 })}
+        </div>
       </form>`,
   });
   wireForm(s, async (d) => {

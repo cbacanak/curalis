@@ -1,5 +1,5 @@
 /* Service worker — uygulama kabuğunu çevrimdışı kullanım için önbelleğe alır */
-const VERSION = 'v0.10.2';
+const VERSION = 'v0.11.0';
 const CACHE = `curalis-${VERSION}`;   // isim değişti: eski 'hasta-takip-*' önbellekleri activate'te düşer
 const SHELL = [
   './',
@@ -17,6 +17,7 @@ const SHELL = [
   './js/viewport.js',
   './js/dock.js',
   './js/swipe.js',
+  './js/messages.js',
   './js/theme.js',
   './js/i18n.js',
   './js/model.js',

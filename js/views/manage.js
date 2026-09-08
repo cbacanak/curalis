@@ -4,6 +4,7 @@ import { sheet, field, selectField, chipField, bindChoiceFields, segmentField, e
 import { t, procLabel, apptLabel } from '../i18n.js';
 import { FOLLOWUP_PERIODS, ANGLES, FIELD_TYPES, TRASH_DAYS, angleLabel, fieldTypeLabel, fieldLabel, periodLabel } from '../model.js';
 import { blobURL } from '../photos.js';
+import { MESSAGE_KEYS, getTemplates, saveTemplates, defaultTemplate } from '../messages.js';
 
 /* ---------------- Şablonlar ---------------- */
 export async function templatesSheet() {
@@ -138,5 +139,33 @@ export async function auditSheet() {
       <div class="t-body">${esc(t(`audit.${r.action}`))} · ${esc(t(`audit.entity.${r.entity}`))}${r.summary ? ` · ${esc(r.summary)}` : ''}</div>
       <span class="t-caption">${esc(fmtDateTime(r.at))}</span>
     </div>`).join('') : emptyState({ title: t('audit.empty') });
+  return s.result;
+}
+
+/* ---------------- Mesaj şablonları (Adım 8) ---------------- */
+export async function messagesSheet() {
+  const tpls = await getTemplates();
+  const s = sheet({
+    title: t('msg.title'), size: 'md',
+    footer: `<button class="btn btn-primary" type="submit" form="sheet-form">${esc(t('common.save'))}</button>`,
+    content: `
+      <form id="sheet-form" class="form" novalidate>
+        <p class="t-caption">${esc(t('msg.placeholders'))}</p>
+        ${MESSAGE_KEYS.map((k) => `
+          <label class="field">
+            <span class="field-label">${esc(t(`msg.${k}`))}</span>
+            <textarea class="input" name="${k}" rows="4">${esc(tpls[k])}</textarea>
+            <button type="button" class="section-link" data-reset="${k}">${esc(t('msg.reset'))}</button>
+          </label>`).join('')}
+      </form>`,
+  });
+  const form = s.body.querySelector('form');
+  form.querySelectorAll('[data-reset]').forEach((b) => { b.onclick = () => { form[b.dataset.reset].value = defaultTemplate(b.dataset.reset); }; });
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const d = formData(form);
+    await saveTemplates(Object.fromEntries(MESSAGE_KEYS.map((k) => [k, String(d[k] || '').trim() || defaultTemplate(k)])));
+    toast(t('msg.saved')); s.close(true);
+  });
   return s.result;
 }

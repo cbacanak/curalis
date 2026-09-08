@@ -2,6 +2,7 @@
 import { Appointments, Patients, Procedures, fullName } from '../db.js';
 import { esc, icon, initials, fmtTime, fmtDateLong, fmtDayMonth, weekdayShort, parseDate, daysBetween, statusText, emptyState, toast, undoToast, actionMenu, segmented, bindSegmented } from '../ui.js';
 import { swipeWrap, bindSwipe } from '../swipe.js';
+import { reminderHref } from '../messages.js';
 import { appointmentForm, procedureForm } from '../forms.js';
 import { setTopbar, go } from '../nav.js';
 import { setIsland, openSearch, closeSearch, isMobile } from '../dock.js';
@@ -254,6 +255,7 @@ export async function render(root) {
         const a = appointments.find((x) => x.id === b.dataset.appt);
         const p = pById[a.patientId];
         const items = [{ label: t('cal.openPatient'), icon: 'user', value: 'open' }];
+        if (p?.phone) items.push({ label: t('appt.remind'), icon: 'chat', value: 'remind' });
         if (a.status !== 'attended') items.push({ label: t('appt.markDone'), icon: 'check', value: 'attended' });
         if (a.status !== 'missed') items.push({ label: t('appt.markMissed'), icon: 'alert', value: 'missed' });
         if (a.status !== 'planned') items.push({ label: t('appt.markPlanned'), icon: 'clock', value: 'planned' });
@@ -261,6 +263,7 @@ export async function render(root) {
         if (isOp(a)) items.push({ label: t('op.editProc'), icon: 'edit', value: 'editProc' });
         else { items.push({ label: t('common.edit'), icon: 'edit', value: 'edit' }); items.push({ label: t('common.delete'), icon: 'trash', value: 'delete', danger: true }); }
         const v = await actionMenu(`${p ? fullName(p) : ''} · ${apptLabel(a)}`, items);
+        if (v === 'remind') { window.open(await reminderHref(a.status === 'missed' ? 'missed' : 'reminder', { patient: p, a, pr: prById[a.procedureId] }), '_blank', 'noopener'); return; }
         if (v === 'open') go(`/patient/${a.patientId}/${isOp(a) ? 'islemler' : 'randevular'}`);
         else if (['attended', 'missed', 'planned'].includes(v)) setStatus(a, v);
         else if (v === 'editProc') { const pr = prById[a.procedureId]; if (!pr) return; const r = await procedureForm({ patientId: a.patientId, existing: pr }); if (r) { toast(r.shiftedControls ? t('form.proc.shifted', { n: r.shiftedControls }) : t('p.proc.updated')); refresh(); } }
