@@ -28,6 +28,33 @@ gerekli olanlar yapılır.
 - [x] Alt sayfalar aşağı kaydırarak kapanır (başlıktan her zaman, gövdeden en üstteyken; eşik altında yerine döner)
 - [x] İngilizce dil desteği (`js/i18n.js`): Ayarlar > Dil; tarih biçimi dile göre; kayıtlı veri Türkçe kanonik kalır, görüntüde çevrilir
 
+## WEB-PLAN.md durumu (8 Eyl 2026, sürüm 0.9.3)
+
+Sürüm numaraları plandaki v0.x sayılarıyla değil, gerçek sürümle (0.8.x / 0.9.x) izlenir; eşleme CHANGELOG.md'de.
+
+- [x] **Adım 0 — Rename ve ikon:** tamamen. Repo `curalis`, manifest/başlık/ikon Curalis, eski adres yönlendiriyor.
+- [~] **Adım 1 — Veri modeli:** kısmen. Alanlar MOBIL.md §2 ile birebir (aşağıya bak); "eski veri bozulmadan taşınır", migrasyon öncesi otomatik yedek ve geri alma yapılmadı — eski veri istekle atıldı (IndexedDB adı değişti). Ayarlar'da "şema v2" yazısı yok.
+- [x] **Adım 2 — Navigasyon katmanı (5A):** tamamen (0.9.0–0.9.3). Kaydırınca küçülen tab bar (isteğe bağlı) yok. Kamera sekmesi canlı kameraya açılır, kamera yoksa galeriye düşer (Adım 10 tamamlandığı için).
+- [x] **Adım 3 — Şablonlar ve kontrol planı:** tamamen. Ayarlar > Şablonlar, türe özel alanlar, otomatik kontrol randevuları, serbest metin tür yok.
+- [x] **Adım 4 — Fotoğraf dönem/açı/gruplama:** tamamen. Dönem+açı zorunlu, açıya göre grup, dönem çipleri, EXIF yeniden kodlamayla temizlenir.
+- [~] **Adım 5 — Karşılaştırma:** kısmen. Üç mod, seçim modu + raf, anonim paylaşım (Web Share) var; dönem şeridi, senkron zoom, çift dokunuş tam ekran yok.
+- [x] **Adım 6 — Klinik alanlar ve onam:** tamamen.
+- [~] **Adım 7 — Liste etkileşimleri ve geri al:** kısmen. Soft delete + Silinenler (30 gün) + geciken kontroller var; kaydırma aksiyonları, uzun basma sheet'i, geri al kapsülü yok (silme hâlâ onay soruyor).
+- [~] **Adım 8 — Formlar ve klavye:** çok az. inputmode/type/autocapitalize ve boşluk temizleme var; kademeli sheet, Türkçe baş harf düzeltme, Rehberden seç, pasif/aktif Kaydet, hazır mesaj şablonları yok.
+- [~] **Adım 9 — Yedek ve güvenlik:** kısmen. Şifreli yedek (birleştir/değiştir), PIN frenleme, otomatik kilit süresi, denetim kaydında paylaşım/yedek var; günlük otomatik yedek ve arka planda bulanıklaştırma yok.
+- [x] **Adım 10 — Kamera denemesi:** tamamen (web sınırlarıyla). 90 sn kabul ölçümü cihazda yapılmadı.
+- [~] **Adım 11 — Cila ve erişilebilirlik:** kısmen. Tabular rakamlar, boş durumlar, skeleton, karanlık mod token'ları var; `rem` tabanlı Dynamic Type, manifest `shortcuts`, iPad iki sütun yok.
+
+### Adım 1 alan karşılaştırması (MOBIL.md §2)
+- Ortak: `id` (UUID v4), `createdAt`, `updatedAt`, `deletedAt`, `deviceID` — var (db.js `stamp`).
+- Patient: ad, soyad, telefon, doğum tarihi, cinsiyet, yönlendiren, e-posta, alerjiler, ilaçlar (antikoagülan vurgusu), sigara, önceki ameliyatlar, kan grubu (hero'da yok), `consentStatus`, `consentDate`, onam belgesi görüntüsü, notlar — var.
+- Procedure: hasta, şablon (`templateId` + `typeName`), tarih+saat, anestezi, not, türe özel alanlar (`details`), komplikasyon (var/yok+not+tarih), `revisionOf`, `followUpSchedule` — var.
+- ProcedureTemplate: ad, kontrol dönemleri, açı seti, türe özel alan tanımları; düzenlenebilir, silinen şablon eski kayıtları bozmaz — var.
+- Photo: hasta, işlem, dosya adı, çekim tarihi, `period`, `angle`, notlar; kaydedilen dosyada EXIF yok — var.
+- Appointment: hasta, işlem, tarih-saat, tür (control/consultation/operation/other), dönem etiketi, durum (planned/attended/missed/cancelled) — var; `calendarEventID` web'de gereksiz.
+- AuditEntry: zaman, cihaz, eylem, varlık; Ayarlar'dan görünür, silinemez — var.
+- Eksik: Ayarlar'da "şema v2" göstergesi; migrasyon öncesi otomatik yedek ve geri alma (eski veri atıldığı için uygulanmadı).
+
 ## Mobil uygulama için öncelikli
 
 1. **Kamera çekim rehberi.** Yüz ön / profil / oblik, burun bazal, gövde gibi standart
@@ -55,4 +82,4 @@ gerekli olanlar yapılır.
 - [ ] HEIC dosyalarından EXIF okuma (web'de JPEG/WebP/PNG destekleniyor)
 - [ ] Fotoğraf görüntüleyicide yakınlaştırma (pinch-zoom)
 - [ ] Hasta listesinde son işleme göre sıralama ve filtre
-- [ ] Yedek dosyasını şifreleme (PIN türevi anahtarla)
+- [x] Yedek dosyasını şifreleme (parola türevi anahtarla, .htbackup)
