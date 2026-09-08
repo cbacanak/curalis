@@ -481,31 +481,26 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
   }
   const sortGroup = (list) => [...list].sort((a, b) => periodRank(a) - periodRank(b) || (a.date || '').localeCompare(b.date || ''));
 
-  function photoTile(ph, pr) {
+  function photoTile(ph, caption) {
     const sel = state.selected.before?.id === ph.id || state.selected.after?.id === ph.id;
     return `
-      <button class="photo ${state.compare ? 'selectable' : ''} ${sel ? 'selected' : ''}" type="button" data-photo="${ph.id}" aria-label="${esc(photoCaption(ph, pr))}">
+      <button class="photo ${state.compare ? 'selectable' : ''} ${sel ? 'selected' : ''}" type="button" data-photo="${ph.id}" aria-label="${esc(photoCaption(ph))}">
         <div class="photo-frame">
           <img src="${blobURL(ph.id + ':t', ph.thumb || ph.blob)}" alt="" loading="lazy" decoding="async">
           ${state.compare ? `<span class="photo-check">${sel ? icon('check') : ''}</span>` : ''}
         </div>
-        <div class="photo-caption">${esc(photoCaption(ph, pr))}</div>
+        <div class="photo-caption">${esc(caption)}</div>
       </button>`;
   }
 
+  /* §5A: dönem çipleri üstte, ızgara açıya göre gruplu (her grup dönem sırasıyla), seçim modunda accessory rafı */
   function paintPhotos(body) {
     const photos = filteredPhotos();
     const periods = PERIODS.filter((k) => data.photos.some((x) => (x.period || 'other') === k));
-    const angles = sortAngles(new Set(data.photos.map((x) => x.angle || 'custom')));
-    const byProc = new Map();
-    photos.forEach((ph) => {
-      const key = ph.procedureId && data.procById[ph.procedureId] ? ph.procedureId : '_';
-      if (!byProc.has(key)) byProc.set(key, []);
-      byProc.get(key).push(ph);
-    });
-    const groups = [];
-    data.procedures.forEach((pr) => { if (byProc.has(pr.id)) groups.push({ pr, list: byProc.get(pr.id) }); });
-    if (byProc.has('_')) groups.push({ pr: null, list: byProc.get('_') });
+    const angles = sortAngles(new Set(photos.map((x) => x.angle || 'custom')));
+    const groups = angles.map((angle) => ({ angle, list: photos.filter((x) => (x.angle || 'custom') === angle) }));
+    const multiProc = data.procedures.length > 1;
+    const tileCaption = (ph) => { const pr = ph.procedureId ? data.procById[ph.procedureId] : null; return [periodOf(ph), fmtDayMonth(ph.date), multiProc && pr ? procLabel(pr.typeName) : null].filter(Boolean).join(' · '); };
     const hasPair = data.photos.some(isPre) && data.photos.some((x) => !isPre(x));
 
     if (!data.photos.length) {
@@ -514,30 +509,32 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       return;
     }
 
+    const periodsIn = (list) => new Set(list.map((x) => x.period || 'other')).size;
     body.innerHTML = `
       <div class="chips" style="margin-top:16px">
-        ${[['all', t('common.all')], ...periods.map((k) => [`period:${k}`, periodLabel(k)]), ...angles.map((k) => [`angle:${k}`, angleLabel(k)])].map(([v, l]) =>
+        ${[['all', t('common.all')], ...periods.map((k) => [`period:${k}`, periodLabel(k)])].map(([v, l]) =>
           `<button class="chip ${state.photoFilter === v ? 'on' : ''}" type="button" data-filter="${esc(v)}">${esc(l)}</button>`).join('')}
       </div>
-      ${state.compare ? `<div class="compare-hint" id="compare-hint"></div>` : ''}
-      ${photos.length ? groups.map(({ pr, list }) => `
+      <div class="photo-toolbar">
+        <span class="t-caption">${state.compare ? esc(t('p.photo.pickHint')) : esc(t('p.photosN', { n: data.photos.length }))}</span>
+        ${state.compare
+          ? `<button class="section-link" type="button" data-act="compare-cancel">${esc(t('common.cancel'))}</button>`
+          : `<button class="section-link" type="button" data-act="compare" ${hasPair ? '' : 'disabled'}>${esc(t('p.photo.compare'))}</button>`}
+      </div>
+      ${photos.length ? groups.map(({ angle, list }) => `
         <div class="photo-group">
           <div class="photo-group-head">
-            <div class="photo-group-title">${pr ? esc(procLabel(pr.typeName)) : esc(t('p.photo.unlinked'))}</div>
-            <div class="photo-group-sub">${pr ? `${esc(fmtDate(pr.date))} · ` : ''}${esc(t('p.photosN', { n: list.length }))}</div>
+            <div class="photo-group-title">${esc(angle === 'custom' ? t('angle.custom') : angleLabel(angle))}</div>
+            <div class="photo-group-sub">${esc(t('p.photo.periodsN', { n: periodsIn(list) }))}</div>
           </div>
-          <div class="photo-grid">${sortGroup(list).map((ph) => photoTile(ph, pr)).join('')}</div>
+          <div class="photo-grid">${sortGroup(list).map((ph) => photoTile(ph, tileCaption(ph))).join('')}</div>
         </div>`).join('')
         : emptyState({ title: t('p.photo.noMatch') })}
-      <div class="action-bar sticky ${state.compare ? 'equal' : ''}">
-        ${state.compare
-          ? `<button class="btn btn-secondary" type="button" data-act="compare-cancel">${esc(t('common.cancel'))}</button>
-             <button class="btn btn-primary" type="button" data-act="compare-go" disabled>${esc(t('p.photo.show'))}</button>`
-          : `<button class="btn btn-primary" type="button" data-act="compare" ${hasPair ? '' : 'disabled'}>${esc(t('p.photo.compare'))}</button>
-             <button class="btn-outline-icon" type="button" data-act="add" aria-label="${esc(t('p.addPhoto'))}">${icon('plus')}</button>`}
+      <div class="shelf glass" id="shelf" hidden>
+        <span class="shelf-text" id="shelf-text"></span>
+        <button class="shelf-go" type="button" data-act="compare-go" disabled>${esc(t('p.photo.compare'))}</button>
       </div>`;
 
-    body.querySelectorAll('[data-act=add]').forEach((b) => { b.onclick = () => addPhoto(); });
     body.querySelectorAll('[data-filter]').forEach((b) => { b.onclick = () => { state.photoFilter = b.dataset.filter; paintTab(); }; });
     const cmp = body.querySelector('[data-act=compare]');
     if (cmp) cmp.onclick = () => { state.compare = true; presetCompare(); paintTab(); };
@@ -550,7 +547,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     });
     if (state.compare) {
       updateCompareBar(body);
-      body.querySelector('[data-act=compare-cancel]').onclick = () => { state.compare = false; paintTab(); };
+      body.querySelector('[data-act=compare-cancel]').onclick = () => { state.compare = false; state.selected = { before: null, after: null }; paintTab(); };
       body.querySelector('[data-act=compare-go]').onclick = () => openCompare();
     }
   }
@@ -578,12 +575,18 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       if (chk) chk.innerHTML = on ? icon('check') : '';
     });
   }
+  /** Accessory rafı (§5A): "2 seçili · Cephe" + Karşılaştır; seçim yokken gizli */
   function updateCompareBar(body) {
     const { before, after } = state.selected;
-    const hint = body.querySelector('#compare-hint');
-    if (hint) hint.textContent = `${before ? `${periodOf(before)} · ${fmtDayMonth(before.date)}` : t('p.photo.pickBefore')} · ${after ? `${periodOf(after)} · ${fmtDayMonth(after.date)}` : t('p.photo.pickAfter')}`;
-    const go = body.querySelector('[data-act=compare-go]');
-    if (go) go.disabled = !(before && after);
+    const picked = [before, after].filter(Boolean);
+    const shelf = body.querySelector('#shelf');
+    if (!shelf) return;
+    shelf.hidden = !picked.length;
+    root.classList.toggle('has-shelf', !!picked.length);   // raf son satırı örtmesin
+    const angle = picked[0]?.angle && picked[0].angle !== 'custom' ? angleLabel(picked[0].angle) : null;
+    const missing = !before ? t('p.photo.pickBefore') : !after ? t('p.photo.pickAfter') : null;
+    body.querySelector('#shelf-text').innerHTML = `<b>${esc(t('p.photo.selected', { n: picked.length }))}</b>${angle ? ` · ${esc(angle)}` : ''}${missing ? ` · <span class="t-secondary">${esc(missing)}</span>` : ''}`;
+    body.querySelector('[data-act=compare-go]').disabled = !(before && after);
   }
 
   /* ---------- Görüntüleyici ---------- */
@@ -729,7 +732,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       v.querySelector('.cmp-pick-sub').textContent = [fmtDate(after.date), corner(after)].filter(Boolean).join(' · ');
     }
 
-    const close = () => { document.removeEventListener('keydown', onKey); v.remove(); state.compare = false; paintTab(); };
+    const close = () => { document.removeEventListener('keydown', onKey); v.remove(); state.compare = false; state.selected = { before: null, after: null }; paintTab(); };
     const onKey = (e) => { if (e.key === 'Escape') close(); };
     v.querySelector('[data-act=close]').onclick = close;
     v.querySelectorAll('[data-mode]').forEach((b) => {
@@ -815,5 +818,5 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
   }
 
   paint();
-  return () => { releaseURLs(); root.classList.remove('has-hero'); if (heroIO) heroIO.disconnect(); };
+  return () => { releaseURLs(); root.classList.remove('has-hero', 'has-shelf'); if (heroIO) heroIO.disconnect(); };
 }
