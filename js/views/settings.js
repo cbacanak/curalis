@@ -9,8 +9,9 @@ import { hasPin, getLockDelay, setLockDelay, clearPin, setupPinFlow, requirePin,
 import { getTheme, applyTheme, THEMES } from '../theme.js';
 import { segmented, bindSegmented } from '../ui.js';
 import { t, getLang, setLang, LANGS, applyStaticText } from '../i18n.js';
+import { showViewportDebug } from '../viewport.js';
 
-export const APP_VERSION = '0.8.8';
+export const APP_VERSION = '0.8.9';
 
 export async function render(root) {
   setTopbar({ title: t('s.title') });
@@ -85,6 +86,9 @@ export async function render(root) {
     </div>`;
 
   bindSegmented(root.querySelector('.seg[data-name=theme]'), (v) => applyTheme(v));
+  // Sürüm yazısına 5 kez dokun → görünüm tanı paneli (iOS yerleşim sorunları için)
+  let taps = 0, tapAt = 0;
+  root.querySelector('.app-mark').onclick = () => { const now = Date.now(); taps = now - tapAt < 800 ? taps + 1 : 1; tapAt = now; if (taps >= 5) { taps = 0; showViewportDebug(); } };
   // Dil değişince sabit metinler ve bu ekran yeniden çizilir; diğer ekranlar açıldıklarında yeni dili kullanır
   bindSegmented(root.querySelector('.seg[data-name=lang]'), (v) => { setLang(v); applyStaticText(); render(root); });
   root.querySelector('[data-act=pin]').onclick = async () => {

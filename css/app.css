@@ -241,7 +241,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 /* ---------------- Sheet ---------------- */
 #layer { position: relative; z-index: 100; }
 .sheet-backdrop {
-  position: fixed; inset: 0; background: rgba(11, 19, 38, .45); display: flex; align-items: flex-end; justify-content: center;
+  position: fixed; inset: 0; bottom: calc(0px - var(--vv-fix, 0px)); background: rgba(11, 19, 38, .45); display: flex; align-items: flex-end; justify-content: center;
   opacity: 0; transition: opacity var(--dur) var(--ease); z-index: 180;
 }
 .sheet-backdrop.open { opacity: 1; }
@@ -297,7 +297,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 @media (min-width: 880px) { .toast { bottom: 28px; } }
 
 /* Eylem sayfası (silme onayı) — iOS action sheet */
-.action-sheet { position: fixed; inset: 0; z-index: 190; background: rgba(11, 19, 38, .45); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 0 12px calc(12px + var(--safe-b)); opacity: 0; transition: opacity var(--dur) var(--ease); }
+.action-sheet { position: fixed; inset: 0; bottom: calc(0px - var(--vv-fix, 0px)); z-index: 190; background: rgba(11, 19, 38, .45); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 0 12px calc(12px + var(--safe-b)); opacity: 0; transition: opacity var(--dur) var(--ease); }
 .action-sheet.open { opacity: 1; }
 .as-group { width: 100%; max-width: 440px; transform: translateY(24px); transition: transform var(--dur) var(--ease); }
 .open .as-group { transform: none; }
@@ -384,7 +384,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .compare-hint { font-size: var(--fs-caption); color: var(--text-secondary); margin-top: 16px; }
 
 /* Görüntüleyici ve karşılaştırma — vitrin ekranı */
-.viewer { position: fixed; inset: 0; z-index: 150; background: var(--bg-inverse); color: var(--text-on-inverse); display: flex; flex-direction: column; }
+.viewer { position: fixed; inset: 0; bottom: calc(0px - var(--vv-fix, 0px)); z-index: 150; background: var(--bg-inverse); color: var(--text-on-inverse); display: flex; flex-direction: column; }
 .viewer-head { display: flex; align-items: center; gap: 4px; padding: calc(8px + var(--safe-t)) 8px 8px; }
 .viewer-head .btn-icon { color: var(--text-on-inverse); }
 .viewer-title { flex: 1; font-size: var(--fs-small); color: var(--text-on-inverse-secondary); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -472,7 +472,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .tpl-field .rm { width: 44px; height: 44px; display: grid; place-items: center; color: var(--text-secondary); }
 .tpl-field.has-options { grid-template-columns: 1fr; }
 /* Kamera (tam ekran, lacivert; sekme çubuğunun üstünde) */
-.cam { position: fixed; inset: 0; z-index: 40; background: var(--bg-inverse); color: var(--text-on-inverse); display: flex; flex-direction: column; padding-top: var(--safe-t); }
+.cam { position: fixed; inset: 0; bottom: calc(0px - var(--vv-fix, 0px)); z-index: 40; background: var(--bg-inverse); color: var(--text-on-inverse); display: flex; flex-direction: column; padding-top: var(--safe-t); }
 .cam-head { display: flex; align-items: center; gap: 4px; padding: 6px 12px; }
 .cam-head .btn-icon { color: var(--text-on-inverse); }
 .cam-head .btn-icon.on { background: rgba(245, 244, 240, .14); border-radius: 12px; }
@@ -554,7 +554,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .notice-warn .btn-icon, .notice-danger .btn-icon { color: inherit; }
 
 /* ---------------- PIN kilidi ---------------- */
-.lock { position: fixed; inset: 0; z-index: 300; background: var(--bg-inverse); color: var(--text-on-inverse); display: flex; flex-direction: column; padding: calc(8px + var(--safe-t)) var(--page-x) calc(24px + var(--safe-b)); touch-action: none; overscroll-behavior: none; user-select: none; -webkit-user-select: none; }
+.lock { position: fixed; inset: 0; bottom: calc(0px - var(--vv-fix, 0px)); z-index: 300; background: var(--bg-inverse); color: var(--text-on-inverse); display: flex; flex-direction: column; padding: calc(8px + var(--safe-t)) var(--page-x) calc(24px + var(--safe-b)); touch-action: none; overscroll-behavior: none; user-select: none; -webkit-user-select: none; }
 .lock button { touch-action: manipulation; }
 .lock-head { display: flex; align-items: center; min-height: 44px; margin: 0 -8px; }
 .lock-head .btn-icon { color: var(--text-on-inverse); }
@@ -600,3 +600,9 @@ html.locked, body.locked { background: var(--bg-inverse); }   /* kilit ekranın�
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 @media print { .topbar, .tabbar, .sidenav { display: none !important; } }
+
+/* Görünüm tanı paneli (js/viewport.js) */
+#vv-debug { position: fixed; left: 8px; right: 8px; top: calc(8px + var(--safe-t)); z-index: 400; background: var(--bg-inverse); color: var(--text-on-inverse); border-radius: 12px; padding: 10px 12px; font: 12px/1.35 ui-monospace, Menlo, monospace; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+#vv-debug pre { margin: 0; white-space: pre-wrap; }
+.vv-debug-actions { display: flex; gap: 8px; margin-top: 8px; }
+.vv-debug-actions button { flex: 1; height: 36px; border-radius: 8px; background: rgba(245,244,240,.14); color: inherit; font: inherit; }

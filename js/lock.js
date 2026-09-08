@@ -5,7 +5,7 @@
  */
 import { Settings, clearAllData } from './db.js';
 import { el, icon, esc, toast, lockScroll, unlockScroll } from './ui.js';
-import { relayoutBars } from './viewport.js';
+import { relayoutSoon } from './viewport.js';
 import { t } from './i18n.js';
 
 const PIN_KEY = 'pin';
@@ -201,7 +201,7 @@ export async function showLock() {
     unlockScroll();
     locked = false;
     // iOS: kilit kalkınca sabit alt çubuk bir kaydırmaya kadar yanlış yerde kalabiliyor; yeniden yerleştir
-    requestAnimationFrame(relayoutBars); setTimeout(relayoutBars, 300);
+    relayoutSoon();
   }
 }
 
