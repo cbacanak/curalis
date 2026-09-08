@@ -1,4 +1,4 @@
-/* Kamera — MOBIL.md §4'ün web denemesi (GECIS.md §5 adım 4)
+/* Kamera — MOBIL.md §4'ün web denemesi (web planı adım 10)
  * getUserMedia ile canlı görüntü; üstte hasta / işlem / dönem, altta şablondan açı seçici.
  * Ghost overlay: aynı hastanın aynı açıdaki önceki fotoğrafı %35 saydam. Izgara ve seviye çizgisi.
  * Seri çekim: açı seçili → çek → sonraki açı. Fotoğraf yalnızca uygulamaya yazılır (sistem galerisine değil).

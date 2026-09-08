@@ -85,7 +85,7 @@ export function showViewportDebug() {
   box.querySelector('[data-act=close]').onclick = () => { clearInterval(timer); box.remove(); };
 }
 
-/* ---------------- iOS Dynamic Type (WEB-PLAN Adım 11) ----------------
+/* ---------------- iOS Dynamic Type (web planı adım 11) ----------------
  * Safari'de kök yazı boyutu sistem ayarını izlemez; '-apple-system-body' izler. Gizli bir ölçüm öğesiyle
  * sistem gövde boyutu okunur (varsayılan 17px) ve oran --dt olarak köke yazılır; tüm rem değerleri onunla ölçeklenir. */
 export function initDynamicType() {

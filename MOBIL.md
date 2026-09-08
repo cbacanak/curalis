@@ -1,6 +1,6 @@
 # Curalis — Native iOS Planı (MOBIL.md)
 
-Bu dosya web prototipinden native uygulamaya geçişin teknik planıdır. TASARIM.md (görsel dil) ve IKON.md (ikon) ile birlikte okunur. Uygulama adı Curalis. Tek cerrahın kişisel aracıdır; hasta fotoğrafı ve klinik kayıt tutar. Konu sağlık verisi: güvenlik ve veri bütünlüğü, hız ve özellikten önce gelir.
+Bu dosya web prototipinden native uygulamaya geçişin teknik planıdır. TASARIM.md (görsel dil, navigasyon, etkileşim, ikon) ile birlikte okunur. Uygulama adı Curalis. Tek cerrahın kişisel aracıdır; hasta fotoğrafı ve klinik kayıt tutar. Konu sağlık verisi: güvenlik ve veri bütünlüğü, hız ve özellikten önce gelir.
 
 ---
 
@@ -17,6 +17,32 @@ Bu dosya web prototipinden native uygulamaya geçişin teknik planıdır. TASARI
 | Kapsam dışı | Hasta tarafı uygulama, uzaktan fotoğraf toplama, online randevu, ödeme, fatura, CRM, e‑Nabız. |
 
 Geliştirici hesabı: **başta ücretsiz Apple ID** (7 günde bir Xcode'dan yeniden yükleme). Ücretli hesaba geçiş bölüm 9'da.
+
+### 0.1 Repo yapısı
+
+İki ayrı repo. Web ile native kod paylaşmaz; aynı repoda tutmak yalnızca karışıklık yaratır.
+
+| Repo | İçerik | Yayın |
+|---|---|---|
+| `curalis` | Web/PWA: prototip, tasarım referansı, gerçek kullanımdaki sürüm | GitHub Pages → `https://cbacanak.github.io/curalis/` |
+| `curalis-ios` | SwiftUI native uygulama (iPhone → iPad/Mac → iCloud) | Xcode → cihaz; ileride TestFlight / App Store |
+
+Ortak belgeler (TASARIM.md, MOBIL.md, ikon seti) her iki repoda da durur; kaynak `curalis-ios/docs/`, web tarafı kopya. Bir değişiklik iki yere işlenir.
+
+### 0.2 Native ne zaman başlar
+
+Web sürümü planlanan tüm adımları tamamladı (YAPILACAKLAR.md "Yapıldı"). Sıra: **4 hafta gerçek kullanım**. Her hafta "neyi 3'ten fazla kez yapmak zor geldi?" listesi tutulur, pürüzler web'de düzeltilir. Liste boşalınca §10'un web'de uygulanabilir kabul kriterleri kontrol edilir ve `curalis-ios` başlar. Tarih yok; karar kullanımla verilir.
+
+Web'de bilinçli yapılmayanlar (native bekler): iOS Data Protection, gerçek Keychain / Face ID, sistem takvimine yazma, iCloud senkron ve zamanlanmış yedek, haptic, gerçek kamera kontrolleri (zoom/flaş/otomatik deklanşör), Spotlight, widget, ekran görüntüsü tespiti.
+
+Göç yolu: veri modeli §2 ile birebir aynı alan adlarını taşır; web'in şifreli yedeği (`.htbackup` → JSON, şema 2) native'de doğrudan içe alınır. Yani geçiş = yedek al / geri yükle.
+
+### 0.3 `curalis-ios` ilk gün
+
+1. Boş repo: `curalis-ios`; içine `docs/` (TASARIM.md, MOBIL.md, ikon seti) ve Xcode `.gitignore`.
+2. Xcode: **Curalis**, SwiftUI, SwiftData, iOS 17+. Bundle ID `com.<soyad>.curalis` bir kez belirlenir. Team: ücretsiz Apple ID. Display name Curalis. `AppIcon` ← `icon-1024.png`.
+3. Sıra: §1 teknoloji → §2 veri modeli + Repository → §3 ekranlar (Kilit → Hastalar → Hasta kartı → Ajanda → Ayarlar) → §4 kamera (ayrı adım, onay sonrası) → §5 güvenlik, §6 yedek → §10 kabul kriterleri → v1.0.
+4. `CHANGELOG.md` ilk satır: `v0.1.0 — proje iskeleti, veri modeli, tema`.
 
 ---
 

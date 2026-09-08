@@ -1,4 +1,4 @@
-/* Hazır mesaj şablonları — WEB-PLAN Adım 8. Ayarlar deposunda saklanır (şema değişikliği yok).
+/* Hazır mesaj şablonları — web planı adım 8. Ayarlar deposunda saklanır (şema değişikliği yok).
  * Yer tutucular: {ad} {tarih} {saat} {kontrol} {islem}. Randevu menüsünden WhatsApp'a atlar. */
 import { Settings } from './db.js';
 import { t, procLabel, apptLabel } from './i18n.js';

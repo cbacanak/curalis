@@ -305,3 +305,15 @@ Her madde için uygulanabilirlik: **W** = web'de tam, **W~** = web'de yaklaşık
 - Gölge, gradient
 - Alfabetik bölüm başlıkları (küçük listelerde)
 - "Belirtilmedi" gibi uzun boş değer metinleri — sadece "—"
+
+## 9. İkon
+
+Uygulama simgesi: lacivert zemin (`#0B1326`) üzerinde iki fildişi halka (`#F5F4F0`), kesişim ten tonunda (`#D9BFB0`). Logo değil, uygulama simgesidir; arayüzde yalnızca iki yerde görünür: Ayarlar'ın en altındaki sürüm satırında 20px, arka plan örtüsü ve kilit ekranında 56–72px.
+
+- Tek kaynak `icons/icon.svg` (100×100 viewBox). PNG'ler ondan üretilir; değişiklik yalnızca SVG'de yapılır ve set yeniden çıkarılır.
+- Set: `apple-touch-icon.png` 180, `icon-192.png`, `icon-512.png`, `icon-maskable-192.png` / `-512.png` (Android maskable, içerik %80 güvenli alana küçültülmüş, kaynak `icon-maskable.svg`), `icon-1024.png` (App Store / native), `favicon-32.png`.
+- `index.html`: `icon` (svg + 32 png), `apple-touch-icon`, `manifest`, `theme-color #0B1326`, `apple-mobile-web-app-status-bar-style black-translucent`, `apple-mobile-web-app-title Curalis`. Yollar göreli (`icons/...`), başında `/` yok.
+- `manifest.json`: `background_color` ve `theme_color` `#0B1326` (açılış ekranı lacivert, ikon → uygulama geçişi kesintisiz); `display: standalone`; normal + maskable ikonlar.
+- iOS ana ekran ikonunu agresif önbellekler: ikon değişince service worker sürümü artırılır, telefonda eski kısayol silinip "Ana Ekrana Ekle" yeniden yapılır.
+- Kontrol: "Ana Ekrana Ekle"de yeni ikon ve Curalis adı; köşeler iOS tarafından yuvarlanmış, kenarda beyaz çizgi yok; açılış ekranı lacivert; Safari sekme ikonu halkalar.
+
