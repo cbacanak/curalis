@@ -97,13 +97,16 @@ function baseStore(name) {
     allWithDeleted: () => run(name, 'readonly', (s) => promisify(s.getAll())),
     trashed: () => run(name, 'readonly', (s) => promisify(s.getAll())).then((l) => l.filter((x) => x.deletedAt)),
     get: (id) => run(name, 'readonly', (s) => promisify(s.get(id))),
-    put: (obj) => run(name, 'readwrite', (s) => promisify(s.put(obj))).then(() => obj),
-    hardDelete: (id) => run(name, 'readwrite', (s) => promisify(s.delete(id))),
+    put: (obj) => run(name, 'readwrite', (s) => promisify(s.put(obj))).then(() => { changed(name); return obj; }),
+    hardDelete: (id) => run(name, 'readwrite', (s) => promisify(s.delete(id))).then(() => changed(name)),
     byIndex: (idx, val) => run(name, 'readonly', (s) => promisify(s.index(idx).getAll(val))).then(live),
     count: () => run(name, 'readonly', (s) => promisify(s.getAll())).then((l) => live(l).length),
     clear: () => run(name, 'readwrite', (s) => promisify(s.clear())),
   };
 }
+
+/** Veri değişti bildirimi (ekranlar dinler; iPad'de sol sütun tazelenir) */
+function changed(store) { try { window.dispatchEvent(new CustomEvent('curalis:data', { detail: { store } })); } catch { /* yok say */ } }
 
 /** Ortak alanlar (MOBIL.md §2): id, createdAt, updatedAt, deletedAt, deviceID */
 function stamp(obj) {

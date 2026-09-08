@@ -42,6 +42,23 @@ b, strong { font-weight: var(--fw-medium); }
 .app { min-height: 100dvh; display: flex; }
 .sidenav { display: none; }
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.cols { flex: 1; display: flex; min-width: 0; }
+.col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.master { display: none; }
+/* iPad ve geniş ekran (≥768px): hasta listesi sol sütun, kart sağda (TASARIM.md §5B iPad) */
+@media (min-width: 768px) {
+  body.split .master { display: block; flex: 0 0 320px; width: 320px; border-right: 1px solid var(--hairline); padding: calc(var(--safe-t) + 8px) 16px 140px; overflow-y: auto; height: 100dvh; position: sticky; top: 0; scrollbar-width: none; }
+  body.split .master::-webkit-scrollbar { display: none; }
+  body.split .master .search { display: flex; margin-bottom: 4px; }
+  body.split .master .page-head { padding: 12px 0 16px; }
+  body.split .master .page-title { font-size: var(--fs-stat); }
+  body.split .master .row.on { background: var(--bg-subtle); margin: 0 -12px; padding-left: 12px; padding-right: 12px; border-radius: 12px; }
+  body.split .view { max-width: none; }
+  body.split .navtop { left: calc(320px + 16px); }
+  body.split .navdock { left: 0; right: auto; width: 320px; padding: 0 8px; }          /* tab bar sol sütunun altında */
+  body.split .fab-dock, body.split .shelf, body.split .undo, body.split .search-dock { left: calc(320px + 16px); }
+  body.split .main::after { left: 320px; }
+}
 .view {
   flex: 1; width: 100%; max-width: var(--content-w); margin: 0 auto;
   padding: var(--safe-t) var(--page-x) calc(var(--tabbar-h) + var(--dock-b) + var(--safe-b) + 32px);
@@ -117,7 +134,7 @@ body.searching .fab-dock { opacity: 0; pointer-events: none; }
 .search-dock.open { opacity: 1; transform: none; }
 .search-glass { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 8px 0 18px; border-radius: 26px; color: var(--text-secondary); }
 .search-glass .ic { width: 18px; height: 18px; flex: 0 0 auto; }
-.search-glass input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; height: 100%; font-size: 16px; color: var(--text); }   /* 16px: iOS odakta yakınlaştırmasın */
+.search-glass input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; height: 100%; font-size: 1rem; color: var(--text); }   /* 16px: iOS odakta yakınlaştırmasın */
 .search-glass input::placeholder { color: var(--text-tertiary); }
 .search-glass input::-webkit-search-cancel-button { -webkit-appearance: none; }
 .search-cancel { height: 40px; padding: 0 12px; border-radius: 20px; color: var(--text-secondary); font-size: var(--fs-small); }
@@ -262,7 +279,7 @@ body.searching .fab-dock { opacity: 0; pointer-events: none; }
 .req { color: var(--text-tertiary); }
 .input {
   width: 100%; height: 44px; padding: 0 14px; border: 1px solid transparent; border-radius: var(--r-input);
-  background: var(--bg-subtle); outline: none; font-size: 16px; transition: border-color var(--dur-fast), background var(--dur-fast);
+  background: var(--bg-subtle); outline: none; font-size: 1rem; transition: border-color var(--dur-fast), background var(--dur-fast);
 }
 .input:focus { border-color: var(--text); background: var(--bg-elevated); }
 .input::placeholder { color: var(--text-tertiary); }
@@ -281,11 +298,11 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .check-title { font-size: var(--fs-small); }
 .check-text { font-size: var(--fs-caption); color: var(--text-secondary); margin-top: 2px; }
 .form-error { color: var(--danger); font-size: var(--fs-caption); background: var(--danger-bg); padding: 10px 14px; border-radius: var(--r-control); }
-@media (min-width: 640px) { .input { font-size: 15px; } }
+@media (min-width: 640px) { .input { font-size: .9375rem; } }
 
 .search { display: none; align-items: center; gap: 10px; height: 48px; padding: 0 16px; border-radius: var(--r-control); background: var(--bg-subtle); color: var(--text-secondary); }
 .search .ic { width: 18px; height: 18px; }
-.search input { flex: 1; border: 0; background: transparent; outline: none; height: 100%; font-size: 16px; color: var(--text); min-width: 0; }
+.search input { flex: 1; border: 0; background: transparent; outline: none; height: 100%; font-size: 1rem; color: var(--text); min-width: 0; }
 .search input::placeholder { color: var(--text-secondary); }
 .search input::-webkit-search-cancel-button { -webkit-appearance: none; }
 
@@ -308,7 +325,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .sheet-head { touch-action: none; }
 .sheet-head { display: flex; align-items: center; gap: 12px; padding: 18px var(--page-x) 4px; position: relative; }
 .sheet-grip { position: absolute; top: 8px; left: 50%; width: 36px; height: 4px; border-radius: 4px; background: var(--divider); transform: translateX(-50%); }
-.sheet-title { flex: 1; font-size: 20px; font-weight: var(--fw-medium); letter-spacing: -.01em; padding-top: 8px; }
+.sheet-title { flex: 1; font-size: 1.25rem; font-weight: var(--fw-medium); letter-spacing: -.01em; padding-top: 8px; }
 .sheet-close { margin-top: 6px; color: var(--text-secondary); font-size: var(--fs-body); height: 36px; padding: 0 4px; flex: 0 0 auto; }
 .sheet-body { padding: 12px var(--page-x) 20px; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; }
 .sheet-head, .sheet-foot, .action-sheet .menu, .action-sheet .btn { touch-action: manipulation; }
@@ -473,12 +490,12 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .cmp .viewer-title { color: var(--text-on-inverse); font-size: var(--fs-title); font-weight: var(--fw-medium); }
 .cmp-stage { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; padding: 0 12px; touch-action: none; }
 .cmp-side { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; height: min(60dvh, 100%); }
-.cmp-pane { position: relative; border-radius: 10px; overflow: hidden; background: #16213A; }
+.cmp-pane { position: relative; border-radius: 10px; overflow: hidden; background: var(--bg-inverse-key); }
 .cmp-pane img { width: 100%; height: 100%; object-fit: cover; display: block; transform-origin: center; will-change: transform; }
 .cmp-cap { position: absolute; left: 10px; bottom: 10px; font-size: var(--fs-caption); color: var(--text-on-inverse); background: rgba(11, 19, 38, .55); padding: 4px 8px; border-radius: 8px; }
 .cmp-cap.right { left: auto; right: 10px; }
 .cmp-corner { position: absolute; right: 10px; top: 10px; font-size: var(--fs-caption); color: var(--text-on-inverse); background: rgba(11, 19, 38, .55); padding: 4px 8px; border-radius: 8px; }
-.cmp-stack { position: relative; height: min(60dvh, 100%); border-radius: 10px; overflow: hidden; background: #16213A; touch-action: none; user-select: none; }
+.cmp-stack { position: relative; height: min(60dvh, 100%); border-radius: 10px; overflow: hidden; background: var(--bg-inverse-key); touch-action: none; user-select: none; }
 .cmp-stack img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; transform-origin: center; will-change: transform; }
 .cmp-handle { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--text-on-inverse); transform: translateX(-1px); pointer-events: none; }
 .cmp-handle::after { content: ''; position: absolute; top: 50%; left: 50%; width: 28px; height: 28px; border-radius: 50%; background: var(--text-on-inverse); transform: translate(-50%, -50%); }
@@ -488,7 +505,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .cmp-chip.on { background: var(--text-on-inverse); border-color: var(--text-on-inverse); color: var(--bg-inverse); font-weight: var(--fw-medium); }
 .cmp-foot { padding: 16px var(--page-x) calc(16px + var(--safe-b)); }
 .cmp-pick { display: flex; align-items: center; gap: 12px; }
-.cmp-thumb { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; background: #16213A; flex: 0 0 auto; }
+.cmp-thumb { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; background: var(--bg-inverse-key); flex: 0 0 auto; }
 .cmp-pick-main { flex: 1; min-width: 0; }
 .cmp-pick-title { font-size: var(--fs-small); font-weight: var(--fw-medium); }
 .cmp-pick-sub { font-size: var(--fs-caption); color: var(--text-on-inverse-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -560,7 +577,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .cam-hint { margin-top: 4px; font-size: var(--fs-caption); color: var(--text-on-inverse-secondary); }
 .cam-hint[hidden] { display: none; }
 @keyframes cam-attn { 0%, 100% { box-shadow: 0 0 0 0 rgba(245, 244, 240, .0); } 50% { box-shadow: 0 0 0 5px rgba(245, 244, 240, .28); } }
-.cam-stage { position: relative; flex: 1; min-height: 0; margin: 4px 12px; border-radius: 14px; overflow: hidden; background: #16213A; }
+.cam-stage { position: relative; flex: 1; min-height: 0; margin: 4px 12px; border-radius: 14px; overflow: hidden; background: var(--bg-inverse-key); }
 .cam-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .cam-ghost { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .35; pointer-events: none; }
 .cam-grid { position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(rgba(245, 244, 240, .35) 1px, transparent 1px), linear-gradient(90deg, rgba(245, 244, 240, .35) 1px, transparent 1px); background-size: 100% 33.34%, 33.34% 100%; background-position: 0 -1px, -1px 0; }
@@ -580,7 +597,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .cam-angles .chip.done .ic { display: block; }
 .cam-angles .chip.on { background: var(--text-on-inverse); color: var(--bg-inverse); border-color: var(--text-on-inverse); }
 .cam-controls { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
-.cam-thumb { grid-column: 1; width: 48px; height: 48px; border-radius: 10px; overflow: hidden; background: #16213A; justify-self: start; }
+.cam-thumb { grid-column: 1; width: 48px; height: 48px; border-radius: 10px; overflow: hidden; background: var(--bg-inverse-key); justify-self: start; }
 .cam-shutter { grid-column: 2; }
 .cam-done-wrap { grid-column: 3; justify-self: end; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .cam-done { width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid var(--border-on-inverse); display: grid; place-items: center; color: var(--text-on-inverse-tertiary); transition: color var(--dur-fast), border-color var(--dur-fast); }
@@ -640,9 +657,9 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .lock-dot { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--text-on-inverse); box-sizing: border-box; }
 .lock-dot.on { background: var(--text-on-inverse); }
 .lock-msg { min-height: 20px; font-size: var(--fs-caption); color: var(--text-on-inverse-secondary); text-align: center; margin-top: 12px; }
-.lock-msg.error { color: #E6A19B; }
+.lock-msg.error { color: var(--danger-on-inverse); }
 .lock-pad { display: grid; grid-template-columns: repeat(3, 72px); gap: 14px 24px; margin-top: 12px; }
-.lock-pad button { height: 72px; border-radius: 50%; background: var(--bg-inverse-key); color: var(--text-on-inverse); font-size: 28px; font-weight: var(--fw-regular); display: grid; place-items: center; user-select: none; transition: background var(--dur-fast), transform var(--dur-fast); }
+.lock-pad button { height: 72px; border-radius: 50%; background: var(--bg-inverse-key); color: var(--text-on-inverse); font-size: 1.75rem; font-weight: var(--fw-regular); display: grid; place-items: center; user-select: none; transition: background var(--dur-fast), transform var(--dur-fast); }
 .lock-pad button:active { background: var(--bg-inverse-key-active); transform: scale(.96); }
 .lock-pad .lock-ok { background: var(--text-on-inverse); color: var(--bg-inverse); }
 .lock-pad .lock-ok:disabled { opacity: .3; }
@@ -660,7 +677,7 @@ html.locked, body.locked, html.covered { background: var(--bg-inverse); }
 /* Arka plan örtüsü: uygulama değiştiricide içerik görünmez (Adım 9) */
 .cover { position: fixed; inset: 0; z-index: 350; background: var(--bg-inverse); display: grid; place-items: center; }
 .cover img { width: 72px; height: 72px; border-radius: 18px; }   /* kilit ekranının kapsamadığı alan da lacivert (iOS ilk açılış) */
-@media (max-height: 680px) { .lock-pad { grid-template-columns: repeat(3, 62px); gap: 10px 20px; } .lock-pad button { height: 62px; font-size: 24px; } .lock-dots { margin-top: 24px; } }
+@media (max-height: 680px) { .lock-pad { grid-template-columns: repeat(3, 62px); gap: 10px 20px; } .lock-pad button { height: 62px; font-size: 1.5rem; } .lock-dots { margin-top: 24px; } }
 
 /* ---------------- İskelet ---------------- */
 .skeleton { display: flex; flex-direction: column; gap: 14px; padding-top: 24px; }

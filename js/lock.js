@@ -207,7 +207,7 @@ export async function showLock() {
   }
 }
 
-/* ---------------- Arka plan örtüsü (WEB-PLAN Adım 9): uygulama değiştiricide içerik görünmez ---------------- */
+/* ---------------- Arka plan örtüsü (web planı adım 9): uygulama değiştiricide içerik görünmez ---------------- */
 export function showCover() {
   if (document.getElementById('cover')) return;
   const c = el('<div id="cover" class="cover" aria-hidden="true"><img src="icons/icon.svg" alt=""></div>');

@@ -4,7 +4,7 @@ import { esc, icon, initials, fmtDate, fmtDayMonth, fmtTime, parseDate, daysBetw
 import { swipeWrap, bindSwipe } from '../swipe.js';
 import { reminderHref } from '../messages.js';
 import { patientForm, appointmentForm } from '../forms.js';
-import { setTopbar, go } from '../nav.js';
+import { setTopbar, go, replacePath } from '../nav.js';
 import { setIsland, openSearch, closeSearch } from '../dock.js';
 import { t, cmp, lower, procLabel, apptLabel, isOp } from '../i18n.js';
 
@@ -13,8 +13,9 @@ const MISSED_DAYS = 60;   // 'gelmedi' kayıtları bu kadar gün geciken listesi
 let lastQuery = '';
 const UPCOMING_DAYS = 30;
 
-export async function render(root) {
-  setTopbar({ title: t('patients.title'), hidden: true });   // §5A: büyük başlık içerikle kayar, kompakt çubuk yok
+export async function render(root, { embedded = false, activeId = null, newPatient = false } = {}) {
+  const wrap = embedded ? (html) => html : swipeWrap;   // sol sütunda (iPad) kaydırma/uzun basma yok
+  if (!embedded) setTopbar({ title: t('patients.title'), hidden: true });   // §5A: büyük başlık içerikle kayar, kompakt çubuk yok
 
   async function addPatient() {
     const p = await patientForm();
@@ -45,12 +46,13 @@ export async function render(root) {
 
   root.innerHTML = `
     <div class="screen">
-    <div class="navtop" id="navtop"><button class="glass glass-btn" type="button" data-act="add" aria-label="${esc(t('patients.new'))}">${icon('plus')}</button></div>
-    <div class="page-head has-navtop">
+    ${embedded ? '' : `<div class="navtop" id="navtop"><button class="glass glass-btn" type="button" data-act="add" aria-label="${esc(t('patients.new'))}">${icon('plus')}</button></div>`}
+    <div class="page-head ${embedded ? '' : 'has-navtop'}">
       <div>
         <h1 class="page-title">${esc(t('patients.title'))}</h1>
         <div class="page-sub" id="page-sub"></div>
       </div>
+      ${embedded ? `<button class="btn-fill-icon" type="button" data-act="add" aria-label="${esc(t('patients.new'))}">${icon('plus')}</button>` : ''}
     </div>
     <div class="search">${icon('search')}<input type="search" placeholder="${esc(t('patients.search.ph'))}" value="${esc(lastQuery)}" autocomplete="off" aria-label="${esc(t('patients.search'))}"></div>
     <div id="list"></div>
@@ -86,7 +88,7 @@ export async function render(root) {
     const pr = a.procedureId ? prById[a.procedureId] : null;
     const d = parseDate(a.date);
     const sub = [isOp(a) ? t('op.row') : apptLabel(a), pr && !isOp(a) ? procLabel(pr.typeName) : null, `${fmtDayMonth(a.date)} ${fmtTime(a.date)}`].filter(Boolean).join(' · ');
-    return swipeWrap(`
+    return wrap(`
       <button class="row" type="button" data-overdue="${a.id}">
         <div class="avatar sm">${esc(initials(fullName(p)))}</div>
         <div class="row-main">
@@ -155,8 +157,8 @@ export async function render(root) {
     const sub = [a !== null ? String(a) : null, lp ? `${planned ? `${t('op.planned')} · ` : ''}${procLabel(lp.typeName)} · ${fmtDayMonth(lp.date)}` : t('patients.noProc')].filter(Boolean).join(' · ');
     // Kaydırma (§5B): sola → Ara · WhatsApp (telefon varsa), sağa → Randevu ekle
     const right = p.phone ? [{ key: 'call', icon: 'phone', label: t('swipe.call') }, { key: 'wa', icon: 'chat', label: t('swipe.whatsapp') }] : [];
-    return swipeWrap(`
-      <a class="row" href="#/patient/${p.id}">
+    return wrap(`
+      <a class="row ${p.id === activeId ? 'on' : ''}" href="#/patient/${p.id}">
         <div class="avatar">${esc(initials(fullName(p)))}</div>
         <div class="row-main">
           <div class="row-title">${hl(fullName(p), q)}</div>
@@ -194,7 +196,7 @@ export async function render(root) {
       </section>`;
     list.querySelectorAll('[data-open]').forEach((b) => { b.onclick = () => go(`/patient/${b.dataset.open}`); });
     list.querySelectorAll('[data-overdue]').forEach((b) => { b.onclick = () => overdueMenu(appointments.find((a) => a.id === b.dataset.overdue)); });
-    bindSwipe(list, {
+    if (!embedded) bindSwipe(list, {
       onAction: async (key, act) => {
         const [kind, kid] = key.split(':');
         if (kind === 'appt') { const a = appointments.find((x) => x.id === kid); if (a) setStatus(a, act); return; }
@@ -208,6 +210,8 @@ export async function render(root) {
   }
 
   input.addEventListener('input', () => { lastQuery = input.value; paint(); });
+  if (embedded) { paint(); return; }
+  if (newPatient) { replacePath('/'); addPatient(); }   // manifest kısayolu: Yeni hasta
   // Arama adası (§5A): klavye üstü kapsül; kapanınca liste eski haline döner
   setIsland(() => openSearch({
     placeholder: t('patients.search.ph'), value: lastQuery,
