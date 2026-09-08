@@ -41,7 +41,7 @@ Sürüm numaraları plandaki v0.x sayılarıyla değil, gerçek sürümle (0.8.x
 - [x] **Adım 6 — Klinik alanlar ve onam:** tamamen.
 - [x] **Adım 7 — Liste etkileşimleri ve geri al (0.10.0):** kaydırma aksiyonları (hasta: sola Ara · WhatsApp, sağa Randevu; randevu: sola Gelmedi, sağa Geldi), 400 ms uzun basma önizlemesi (Ara · Fotoğraf çek · Karşılaştır · Sil), geri al kapsülü (silme ve 'gelmedi' onay sormaz, 5 sn geri al; kalıcı silme ve yedek üzerine yazma onay sorar), soft delete + Silinenler (30 gün), geciken kontroller.
 - [~] **Adım 8 — Formlar ve klavye:** çok az. inputmode/type/autocapitalize ve boşluk temizleme var; kademeli sheet, Türkçe baş harf düzeltme, Rehberden seç, pasif/aktif Kaydet, hazır mesaj şablonları yok.
-- [~] **Adım 9 — Yedek ve güvenlik:** kısmen. Şifreli yedek (birleştir/değiştir), PIN frenleme, otomatik kilit süresi, denetim kaydında paylaşım/yedek var; günlük otomatik yedek ve arka planda bulanıklaştırma yok.
+- [x] **Adım 9 — Yedek ve güvenlik (0.10.2):** şifreli yedek al / geri yükle (birleştir / değiştir), PIN'de 5 hatada bekleme, otomatik kilit süresi, arka plan örtüsü (uygulama değiştiricide içerik gizli), denetim kaydına paylaşım/yedek, haftalık dosya yedeği hatırlatması. Günlük otomatik yedek web'de bilinçli atlandı (tarayıcı depolaması veriyle aynı yer); mobilde iCloud ile.
 - [x] **Adım 10 — Kamera denemesi:** tamamen (web sınırlarıyla). 90 sn kabul ölçümü cihazda yapılmadı.
 - [~] **Adım 11 — Cila ve erişilebilirlik:** kısmen. Tabular rakamlar, boş durumlar, skeleton, karanlık mod token'ları var; `rem` tabanlı Dynamic Type, manifest `shortcuts`, iPad iki sütun yok.
 

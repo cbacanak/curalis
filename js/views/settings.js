@@ -2,21 +2,22 @@
 import { counts, clearAllData, Templates, trashCount, Audit, SCHEMA } from '../db.js';
 import { templatesSheet, trashSheet, auditSheet } from './manage.js';
 import { TRASH_DAYS } from '../model.js';
-import { esc, icon, toast, confirmDialog, actionMenu } from '../ui.js';
+import { esc, icon, toast, confirmDialog, actionMenu, fmtDate } from '../ui.js';
 import { setTopbar } from '../nav.js';
-import { storageInfo, requestPersist, fmtBytes, downloadBackup, pickBackupFile, restoreBackup } from '../storage.js';
+import { storageInfo, requestPersist, fmtBytes, downloadBackup, pickBackupFile, restoreBackup, lastBackupAt } from '../storage.js';
 import { hasPin, getLockDelay, setLockDelay, clearPin, setupPinFlow, requirePin, LOCK_DELAYS, delayLabel as lockDelayLabel } from '../lock.js';
 import { getTheme, applyTheme, THEMES } from '../theme.js';
 import { segmented, bindSegmented } from '../ui.js';
 import { t, getLang, setLang, LANGS, applyStaticText } from '../i18n.js';
 import { showViewportDebug } from '../viewport.js';
 
-export const APP_VERSION = '0.10.1';
+export const APP_VERSION = '0.10.2';
 
 export async function render(root) {
   setTopbar({ title: t('s.title') });
   const [c, st, pinOn, lockDelay, tplCount, trashN, auditN] = await Promise.all([counts(), storageInfo(), hasPin(), getLockDelay(), Templates.all().then((l) => l.length), trashCount(), Audit.count()]);
   const delayLabel = lockDelayLabel(lockDelay);
+  const lastBackup = await lastBackupAt();
   const modeTitle = st.inApp ? t('s.mode.inApp') : st.standalone ? t('s.mode.standalone') : t('s.mode.tab');
   const modeSub = st.inApp ? t('s.mode.inAppSub') : st.ios && !st.standalone ? t('s.mode.iosSub') : '';
   const persistTitle = st.persisted === true ? t('s.persist.on') : st.persisted === false ? t('s.persist.off') : t('s.persist');
@@ -63,7 +64,7 @@ export async function render(root) {
 
     <section class="section">
       <div class="section-label">${esc(t('s.backup'))}</div>
-      ${rowBtn('backup', esc(t('s.backup.take')), '')}
+      ${rowBtn('backup', esc(t('s.backup.take')), esc(lastBackup ? t('s.backup.last', { d: fmtDate(lastBackup) }) : t('s.backup.never')))}
       ${rowBtn('restore', esc(t('s.backup.restore')), '')}
     </section>
 
@@ -124,7 +125,7 @@ export async function render(root) {
     b.disabled = true;
     try {
       const r = await downloadBackup();
-      if (r) toast(r.shared ? t('s.backup.shared') : t('s.backup.downloaded', { size: fmtBytes(r.size) }));
+      if (r) { toast(r.shared ? t('s.backup.shared') : t('s.backup.downloaded', { size: fmtBytes(r.size) })); render(root); }
     } catch (e) { toast(t('s.backup.fail', { e: e.message || e }), { kind: 'danger', duration: 5000 }); }
     b.disabled = false;
   };
