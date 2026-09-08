@@ -10,7 +10,7 @@ import { processImage, blobURL, releaseURLs } from '../photos.js';
 import { photoUploadForm, defaultPeriodFor } from '../forms.js';
 import { go, replacePath, setTopbar } from '../nav.js';
 import { t, procLabel } from '../i18n.js';
-import { PERIODS, ANGLES, periodLabel, angleLabel } from '../model.js';
+import { PERIODS, ANGLES, sortAngles, periodLabel, angleLabel } from '../model.js';
 
 
 export async function render(root, { id = null } = {}) {
@@ -39,7 +39,8 @@ export async function render(root, { id = null } = {}) {
     attn: true,      // ilk çekime (ya da seçim yapılana) kadar işlem/dönem düğmeleri vurgulu
   };
   const proc = () => procedures.find((p) => p.id === state.procId) || null;
-  const anglesFor = () => { const set = tplById[proc()?.templateId]?.angleSet; return set?.length ? set : ANGLES.filter((a) => a !== 'custom'); };
+  // Açılar şablondan gelir (Ayarlar → Şablonlar); görüntüleme sırası Fotoğraflar filtresiyle aynı
+  const anglesFor = () => { const set = tplById[proc()?.templateId]?.angleSet; return sortAngles(set?.length ? set : ANGLES.filter((a) => a !== 'custom')); };
   state.angles = anglesFor();
   const angle = () => state.angles[state.angleIdx];
 

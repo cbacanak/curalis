@@ -14,6 +14,10 @@ export const ANGLES = ['front', 'right45', 'rightProfile', 'left45', 'leftProfil
 export const FACE_ANGLES = ['front', 'right45', 'rightProfile', 'left45', 'leftProfile'];
 export const NOSE_ANGLES = ['front', 'right45', 'rightProfile', 'left45', 'leftProfile', 'bottom'];
 export const BODY_ANGLES = ['bodyFront', 'bodySide'];
+/* Görüntüleme sırası: yüz/gövde açıları, ardından Tepe ve Alt, en sonda Özel (kamera seri çekimiyle aynı düzen) */
+const ANGLE_ORDER = ['front', 'right45', 'rightProfile', 'left45', 'leftProfile', 'bodyFront', 'bodySide', 'top', 'bottom', 'custom'];
+export const angleRank = (k) => { const i = ANGLE_ORDER.indexOf(k); return i < 0 ? ANGLE_ORDER.length : i; };
+export const sortAngles = (list) => [...list].sort((a, b) => angleRank(a) - angleRank(b));
 
 /* Randevu türü ve durumu. 'operation' MOBIL.md'ye ek: işlem günü Ajanda'da ayrı görünmeli. */
 export const APPT_TYPES = ['control', 'consultation', 'operation', 'other'];

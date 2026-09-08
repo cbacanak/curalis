@@ -10,7 +10,7 @@ import {
 } from '../forms.js';
 import { setTopbar, go, replacePath } from '../nav.js';
 import { t, lower, procLabel, apptLabel, kindLabel, isOp } from '../i18n.js';
-import { PERIODS, TRASH_DAYS, periodLabel, angleLabel, consentLabel, anesthesiaLabel, fieldLabel, optionLabel } from '../model.js';
+import { PERIODS, TRASH_DAYS, sortAngles, periodLabel, angleLabel, consentLabel, anesthesiaLabel, fieldLabel, optionLabel } from '../model.js';
 import { hydrateBlob, audit } from '../db.js';
 
 const TABS = [['genel', 'p.tab.general'], ['islemler', 'p.tab.procs'], ['fotograflar', 'p.tab.photos'], ['randevular', 'p.tab.appts']];
@@ -469,7 +469,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
   function paintPhotos(body) {
     const photos = filteredPhotos();
     const periods = PERIODS.filter((k) => data.photos.some((x) => (x.period || 'other') === k));
-    const angles = [...new Set(data.photos.map((x) => x.angle || 'custom'))];
+    const angles = sortAngles(new Set(data.photos.map((x) => x.angle || 'custom')));
     const byProc = new Map();
     photos.forEach((ph) => {
       const key = ph.procedureId && data.procById[ph.procedureId] ? ph.procedureId : '_';
