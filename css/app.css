@@ -553,7 +553,8 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .notice-warn .btn-icon, .notice-danger .btn-icon { color: inherit; }
 
 /* ---------------- PIN kilidi ---------------- */
-.lock { position: fixed; inset: 0; z-index: 300; background: var(--bg-inverse); color: var(--text-on-inverse); display: flex; flex-direction: column; padding: calc(8px + var(--safe-t)) var(--page-x) calc(24px + var(--safe-b)); touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.lock { position: fixed; inset: 0; z-index: 300; background: var(--bg-inverse); color: var(--text-on-inverse); display: flex; flex-direction: column; padding: calc(8px + var(--safe-t)) var(--page-x) calc(24px + var(--safe-b)); touch-action: none; overscroll-behavior: none; user-select: none; -webkit-user-select: none; }
+.lock button { touch-action: manipulation; }
 .lock-head { display: flex; align-items: center; min-height: 44px; margin: 0 -8px; }
 .lock-head .btn-icon { color: var(--text-on-inverse); }
 .lock-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; max-width: 320px; margin: 0 auto; }
@@ -580,6 +581,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .lock-confirm .btn-primary { background: var(--danger); color: var(--text-on-inverse); }
 .lock-confirm .btn-ghost { color: var(--text-on-inverse-secondary); }
 body.locked .app { visibility: hidden; }
+html.locked, body.locked { background: var(--bg-inverse); }   /* kilit ekranının kapsamadığı alan da lacivert (iOS ilk açılış) */
 @media (max-height: 680px) { .lock-pad { grid-template-columns: repeat(3, 62px); gap: 10px 20px; } .lock-pad button { height: 62px; font-size: 24px; } .lock-dots { margin-top: 24px; } }
 
 /* ---------------- İskelet ---------------- */

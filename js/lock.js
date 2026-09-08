@@ -4,7 +4,7 @@
  * Yedek dosyasına PIN kaydı yazılmaz (db.js exportAll/importAll 'pin' anahtarını dışlar).
  */
 import { Settings, clearAllData } from './db.js';
-import { el, icon, esc, toast } from './ui.js';
+import { el, icon, esc, toast, lockScroll, unlockScroll } from './ui.js';
 import { t } from './i18n.js';
 
 const PIN_KEY = 'pin';
@@ -188,12 +188,19 @@ export async function showLock() {
   const rec = await Settings.get(PIN_KEY);
   if (!rec) return;
   locked = true;
+  // html + body: kilit ekranının dışında kalan her alan (iOS ilk açılışta alt şerit) lacivert olsun; arkadaki sayfa kaymasın
+  document.documentElement.classList.add('locked');
   document.body.classList.add('locked');
+  lockScroll();
   try {
     await pinEntry({ title: t('app.name'), sub: t('lock.enter'), length: rec.len, cancel: false, verify: verifyPin, throttle: true, forgot: true });
   } finally {
+    document.documentElement.classList.remove('locked');
     document.body.classList.remove('locked');
+    unlockScroll();
     locked = false;
+    // iOS: kilit kalkınca sabit alt çubuk bazen bir kaydırmaya kadar yanlış yerde kalıyor; küçük bir kaydırma ile yerleşimi tazele
+    requestAnimationFrame(() => { const y = window.scrollY; window.scrollTo(0, y + 1); window.scrollTo(0, y); });
   }
 }
 

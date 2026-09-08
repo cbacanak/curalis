@@ -166,13 +166,13 @@ const layer = () => document.getElementById('layer');
 /* Sheet açıkken arka plandaki sayfanın kaymasını engeller (iOS dahil) */
 let openSheets = 0;
 let savedScrollY = 0;
-function lockScroll() {
+export function lockScroll() {
   if (openSheets++ > 0) return;
   savedScrollY = window.scrollY;
   document.body.style.top = `-${savedScrollY}px`;
   document.body.classList.add('scroll-locked');
 }
-function unlockScroll() {
+export function unlockScroll() {
   if (--openSheets > 0) return;
   openSheets = 0;
   document.body.classList.remove('scroll-locked');
