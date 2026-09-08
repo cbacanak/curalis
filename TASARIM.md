@@ -1,6 +1,6 @@
 # Curalis — Tasarım Sistemi v2 ("Gece Laciverti")
 
-Bu dosya uygulamanın görsel dilini tanımlar. Repo köküne `TASARIM.md` olarak ekle ve her arayüz değişikliğinde referans al. Amaç: mevcut "şablon" görünümünden kurtulup sade, premium, klinik‑lüks bir his vermek. Uygulama şu an GitHub Pages'te PWA; ileride iOS uygulamasına dönüşecek, bu yüzden tüm değerler tek bir token dosyasından okunmalı.
+Bu dosya uygulamanın görsel dilini tanımlar; her arayüz değişikliğinde referans alınır. Amaç: mevcut "şablon" görünümünden kurtulup sade, premium, klinik‑lüks bir his vermek. Uygulama şu an GitHub Pages'te PWA; ileride iOS uygulamasına dönüşecek, bu yüzden tüm değerler tek bir token dosyasından okunmalı.
 
 ## 1. İlkeler
 
@@ -116,8 +116,8 @@ Kurallar: Cümle düzeni (sentence case), BÜYÜK HARF yok. Satır yüksekliği 
 
 ### Hero (hasta detay üst alanı)
 - Zemin `--bg-inverse`, padding 20px 24px 24px. Ekranın üstünden safe-area dahil devam eder (status bar da lacivert).
-- İçerik sırası: nav satırı (geri / düzenle / menü) → Label satırı ("Rinoplasti · 12 Ağu 2026", `--text-on-inverse-tertiary`) → Display hasta adı → meta satırı ("35 yaş · Kadın · A Rh+ · telefon", `--text-on-inverse-secondary`) → aksiyon satırı.
-- Aksiyon satırı: 1 dolu buton (İşlem ekle, zemin `--text-on-inverse`, metin `--bg-inverse`, flex:1) + 3 ikon buton (Ara, Fotoğraf, Randevu; 46×44, 1px `--border-on-inverse` kenarlık, ikon 18px). Etiket yok, ikonlar yeterli. Uzun basınca tooltip/haptic.
+- İçerik sırası: Label satırı ("Rinoplasti · 12 Ağu 2026", `--text-on-inverse-tertiary`) → Display hasta adı → meta satırı ("35 yaş · Kadın · telefon", `--text-on-inverse-secondary`). Hero yalnızca kimlik taşır.
+- Navigasyon ve aksiyonlar için bkz. 5A.
 
 ### İstatistik satırı
 - Hero'nun hemen altında, 22px üst boşluk. Üç öğe `justify-content: space-between`. Kutu, zemin, kenarlık yok.
@@ -140,7 +140,7 @@ Kurallar: Cümle düzeni (sentence case), BÜYÜK HARF yok. Satır yüksekliği 
 - Liste: alfabetik harf başlıkları kaldırılır (3–50 hasta için gereksiz). Satır: 42px gri avatar (`--bg-subtle`, baş harfler 500) + Title ad + Caption alt satır ("35 · Rinoplasti · 12 Ağu") + chevron `--text-tertiary`. Satırlar hairline ile ayrılır, kart kutusu yok.
 
 ### Tab bar
-- 3 ikon, 22px, seçili `--text`, diğerleri `#A3A6AE`. Etiket metni kaldırılır (iOS kalıbı için isteğe bağlı 10px etiket eklenebilir ama tercih ikon‑only). Üstte 1px `--divider`. Safe-area alt boşluk.
+- Navigasyon ve aksiyonlar için bkz. 5A.
 
 ### PIN ekranı
 - Zemin `--bg-inverse`, tüm metin `--text-on-inverse`. Rakam tuşları kenarlıksız, 72px daire, zemin `#16213A`, basılıyken `#22304F`. Kilit ikonu kaldırılır; sadece "Curalis" Display + Caption açıklama + 4 nokta + tuş takımı.
@@ -280,17 +280,7 @@ Her madde için uygulanabilirlik: **W** = web'de tam, **W~** = web'de yaklaşık
 - Boş durumlar: Display yerine Title başlık + bir cümle + tek primary buton. Örn. "Henüz fotoğraf yok" / "İlk öncesi fotoğrafını ekle" / [Fotoğraf ekle].
 - Native'e geçişte: haptic feedback (primary aksiyon ve PIN tuşları), safe-area insets, status bar hero rengiyle aynı.
 
-## 7. Uygulama sırası
-
-1. Token dosyası (`tokens.css` veya tek bir `theme` objesi) oluştur, tüm hex'leri oradan oku.
-2. Hasta detay ekranı — bu ekran tam kalitede yapılıp onaylanacak, sonra diğerleri.
-3. Hasta listesi.
-4. Fotoğraflar + karşılaştırma ekranı.
-5. Randevular / ajanda.
-6. PIN ekranı, ayarlar, formlar.
-7. Skeleton, boş durumlar, geçiş animasyonları.
-
-## 8. Yapılmayacaklar
+## 7. Yapılmayacaklar
 
 - Gri kenarlıklı kartlar, kart içinde kart
 - Pastel renkli avatarlar, renkli badge'ler
@@ -306,7 +296,7 @@ Her madde için uygulanabilirlik: **W** = web'de tam, **W~** = web'de yaklaşık
 - Alfabetik bölüm başlıkları (küçük listelerde)
 - "Belirtilmedi" gibi uzun boş değer metinleri — sadece "—"
 
-## 9. İkon
+## 8. İkon
 
 Uygulama simgesi: lacivert zemin (`#0B1326`) üzerinde iki fildişi halka (`#F5F4F0`), kesişim ten tonunda (`#D9BFB0`). Logo değil, uygulama simgesidir; arayüzde yalnızca iki yerde görünür: Ayarlar'ın en altındaki sürüm satırında 20px, arka plan örtüsü ve kilit ekranında 56–72px.
 
