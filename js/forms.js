@@ -276,10 +276,16 @@ export function appointmentForm({ patientId, procedures = [], existing = null, d
   const [dPart, tPart] = [dt.slice(0, 10), dt.slice(11, 16) || '10:00'];
   const procOpts = [['', t('form.appt.noProc')], ...procedures.map(procOption)];
   const types = APPT_TYPES.filter((k) => k !== 'operation' || a.type === 'operation');
+  // Yeni randevuda bağlı işlem önseçili: en son işlem (deneme bulgusu 5)
+  const latest = [...procedures].sort((x, y) => (y.date || '').localeCompare(x.date || ''))[0] || null;
+  const procId = isNew ? (latest?.id || '') : (a.procedureId || '');
+  const procById = Object.fromEntries(procedures.map((x) => [x.id, x]));
+  const periodOpts = [['', t('form.appt.period.none')], ...FOLLOWUP_PERIODS.map((k) => [k, t(`sched.short.${k}`)])];
+  const initialPeriod = a.periodLabel && FOLLOWUP_PERIODS.includes(a.periodLabel) ? a.periodLabel : (isNew && latest ? (FOLLOWUP_PERIODS.includes(defaultPeriodFor(latest)) ? defaultPeriodFor(latest) : '') : '');
   const s = sheet({
     title: isNew ? t('form.appt.new') : t('form.appt.edit'),
     footer: footer(t('form.appt.save')),
-    half: isNew,
+    half: isNew,   // §5B kademeli sheet: kısa form; yukarı çekince kalan alanlar (düğme yok)
     content: `
       <form id="sheet-form" class="form" novalidate>
         <div class="form-row">
@@ -287,22 +293,36 @@ export function appointmentForm({ patientId, procedures = [], existing = null, d
           ${field({ label: t('form.appt.time'), name: 't', type: 'time', value: tPart, required: true })}
         </div>
         ${chipField({ label: t('form.appt.kind'), name: 'type', value: a.type || 'control', options: types.map((k) => [k, apptTypeLabel(k)]), required: true })}
-        ${isNew ? '<input type="hidden" name="status" value="planned">' : segmentField({ label: t('form.appt.status'), name: 'status', value: a.status || 'planned', options: APPT_STATUSES.map((k) => [k, statusLabel(k)]), optional: false })}
-        <button type="button" class="form-expand section-link" data-act="expand">${esc(t('form.showAll'))}</button>
+        ${selectField({ label: t('form.appt.proc'), name: 'procedureId', value: procId, options: procOpts })}
+        <div id="appt-period">${chipField({ label: t('form.appt.period'), name: 'periodLabel', value: initialPeriod, options: periodOpts })}</div>
+        ${isNew ? '<input type="hidden" name="status" value="planned">' : ''}
         <div class="form-more">
+        ${isNew ? '' : segmentField({ label: t('form.appt.status'), name: 'status', value: a.status || 'planned', options: APPT_STATUSES.map((k) => [k, statusLabel(k)]), optional: false })}
         ${field({ label: t('form.appt.label'), name: 'label', value: a.label, placeholder: t('form.appt.label.ph') })}
-        ${selectField({ label: t('form.appt.proc'), name: 'procedureId', value: a.procedureId || '', options: procOpts })}
         ${textareaField({ label: t('form.appt.note'), name: 'notes', value: a.notes, rows: 2 })}
         </div>
       </form>`,
   });
+  const form0 = s.body.querySelector('form');
+  // Dönem yalnızca kontrol türünde anlamlı; işlem değişince varsayılan dönem işlem tarihine göre
+  const periodBox = form0.querySelector('#appt-period');
+  const syncPeriod = () => { periodBox.hidden = form0.querySelector('input[name=type]').value !== 'control'; };
+  form0.addEventListener('change', (e) => { if (e.target.name === 'type') syncPeriod(); });
+  form0.querySelector('[name=procedureId]').addEventListener('change', (e) => {
+    const pr = procById[e.target.value]; const k = pr ? defaultPeriodFor(pr, parseDate(form0.d.value) || new Date()) : '';
+    const v = FOLLOWUP_PERIODS.includes(k) ? k : '';
+    form0.querySelector('input[name=periodLabel]').value = v;
+    periodBox.querySelectorAll('.chip').forEach((c) => { c.classList.toggle('on', c.dataset.value === v); c.setAttribute('aria-pressed', c.dataset.value === v); });
+  });
+  syncPeriod();
   wireForm(s, async (d) => {
     if (!d.d || !d.t) throw new Error(t('form.appt.required'));
-    const label = d.label || apptTypeLabel(d.type) || t('appt.type.default');
+    const period = d.type === 'control' && d.periodLabel ? d.periodLabel : null;
+    const label = d.label || (period ? t(`sched.${period}`) : apptTypeLabel(d.type)) || t('appt.type.default');
     return Appointments.save({
       ...a, patientId, date: `${d.d}T${d.t}`, type: d.type, status: d.status, label,
       procedureId: d.procedureId || null, notes: d.notes, auto: a.auto && d.procedureId === a.procedureId ? a.auto : false,
-      periodLabel: a.periodLabel ?? null,
+      periodLabel: period,
     });
   });
   return s.result;

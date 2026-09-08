@@ -421,7 +421,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
   transition: transform var(--dur-fast);
 }
 .upcoming-card:active { transform: scale(.99); }
-.upcoming-card + .upcoming-card { margin-top: 10px; }
+.upcoming-card + .upcoming-card, .swipe + .swipe .upcoming-card { margin-top: 10px; }
 .upcoming-card .name { font-size: var(--fs-title); font-weight: var(--fw-medium); }
 .upcoming-card .sub { font-size: var(--fs-caption); color: var(--upcoming-sub); margin-top: 4px; }
 .upcoming-card .date { font-size: var(--fs-title); font-weight: var(--fw-medium); text-align: right; white-space: nowrap; }
@@ -429,7 +429,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 /* Geciken kontrol kartı (§5A Ajanda): uyarı zemini, tek istisna renkli kart */
 .overdue-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; text-align: left; background: var(--warning-bg); color: var(--text); border-radius: var(--r-card); padding: 16px 20px; transition: transform var(--dur-fast); }
 .overdue-card:active { transform: scale(.99); }
-.overdue-card + .overdue-card { margin-top: 10px; }
+.overdue-card + .overdue-card, .swipe + .swipe .overdue-card { margin-top: 10px; }
 .overdue-card .name { font-size: var(--fs-title); font-weight: var(--fw-medium); }
 .overdue-card .sub { font-size: var(--fs-caption); color: var(--warning); margin-top: 4px; }
 .overdue-card .date { font-size: var(--fs-title); font-weight: var(--fw-medium); text-align: right; white-space: nowrap; }
@@ -751,3 +751,12 @@ body.has-undo .toast { margin-top: -58px; }   /* bildirim, geri al kapsülünün
 .cmp.full .cmp-stage { padding: 0; }
 .cmp.full .cmp-side, .cmp.full .cmp-stack { height: 100%; border-radius: 0; }
 .cmp.full .cmp-pane { border-radius: 0; }
+
+/* Hasta seçici (picker.js): sheet içinde arama */
+.pick-search { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px; border-radius: var(--r-control); background: var(--bg-subtle); color: var(--text-secondary); margin-top: 4px; }
+.pick-search .ic { width: 18px; height: 18px; flex: 0 0 auto; }
+.pick-search input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; height: 100%; font-size: 1rem; color: var(--text); }
+.pick-search input::placeholder { color: var(--text-tertiary); }
+.pick-search input::-webkit-search-cancel-button { -webkit-appearance: none; }
+#pick-list .section { margin-top: 20px; }
+#pick-list .row .ic { color: var(--text-tertiary); width: 18px; height: 18px; }

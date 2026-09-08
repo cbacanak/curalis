@@ -162,11 +162,16 @@ export function phoneHref(phone) {
   return 'tel:' + (phone || '').replace(/[^\d+]/g, '');
 }
 /** WhatsApp bağlantısı: 05xx → 905xx; +90… → 90… */
-export function waHref(phone) {
+/** E.164 (artı işaretsiz): 0532… → 90532…, +90… → 90…, 0090… → 90…, 532… → 90532… */
+export function e164(phone) {
   let d = (phone || '').replace(/\D/g, '');
-  if (d.startsWith('0')) d = '90' + d.slice(1);
+  if (d.startsWith('00')) d = d.slice(2);
+  else if (d.startsWith('0')) d = '90' + d.slice(1);
   else if (d.length === 10 && d.startsWith('5')) d = '90' + d;
-  return 'https://wa.me/' + d;
+  return d;
+}
+export function waHref(phone, text = '') {
+  return 'https://wa.me/' + e164(phone) + (text ? '?text=' + encodeURIComponent(text) : '');
 }
 
 /* ---------------- Katman: sheet / confirm / toast ---------------- */
@@ -259,7 +264,7 @@ function enableSwipeToClose(root, sheetEl, body, close) {
     if (sy === null) return;
     const x = e.touches[0].clientX - sx, y = e.touches[0].clientY - sy;
     if (!active) {
-      if (!fromBody && y < -16 && sheetEl.classList.contains('sheet-half')) { sheetEl.classList.remove('sheet-half'); sx = sy = null; return; }   // yarı sheet: yukarı çekince tam
+      if (y < -16 && sheetEl.classList.contains('sheet-half') && (!fromBody || body.scrollTop === 0)) { sheetEl.classList.remove('sheet-half'); sx = sy = null; return; }   // yarı sheet: başlıktan ya da gövdeden yukarı çekince tam
       if (Math.abs(x) > Math.abs(y) || (fromBody && y < 0)) { sx = sy = null; return; }   // yatay ya da yukarı: bırak
       if (y < 8) return;
       active = true; sheetEl.classList.add('dragging');

@@ -1,8 +1,9 @@
 /* Ajanda — liste (geciken + yaklaşan) ve aylık takvim; TASARIM.md §5A: segment kontrol, geciken uyarı kartları, arama adası, sabit cam (+) */
 import { Appointments, Patients, Procedures, fullName } from '../db.js';
 import { esc, icon, initials, fmtTime, fmtDateLong, fmtDayMonth, weekdayShort, parseDate, daysBetween, statusText, emptyState, toast, undoToast, actionMenu, segmented, bindSegmented } from '../ui.js';
-import { swipeWrap, bindSwipe } from '../swipe.js';
-import { reminderHref } from '../messages.js';
+import { swipeWrap, bindSwipe, apptActions } from '../swipe.js';
+import { openReminder } from '../messages.js';
+import { pickPatientSheet } from '../picker.js';
 import { appointmentForm, procedureForm } from '../forms.js';
 import { setTopbar, go } from '../nav.js';
 import { setIsland, openSearch, closeSearch, isMobile } from '../dock.js';
@@ -43,7 +44,7 @@ export async function render(root) {
     const sub = isOp(a)
       ? [withDate ? fmtDayMonth(a.date) : null, fmtTime(a.date), t('op.row'), apptLabel(a), a.notes || null].filter(Boolean).join(' · ')
       : [withDate ? fmtDayMonth(a.date) : null, fmtTime(a.date), lower(apptLabel(a)), pr ? procLabel(pr.typeName) : (kindLabel(a.type) !== apptLabel(a) ? kindLabel(a.type) : null), a.notes || null].filter(Boolean).join(' · ');
-    const swipe = a.status === 'planned' && !isOp(a) ? { left: [{ key: 'attended', icon: 'check', label: t('swipe.attended') }], right: [{ key: 'missed', icon: 'alert', label: t('swipe.missed'), danger: true }] } : {};
+    const swipe = apptActions(a, { overdue });
     return swipeWrap(`
       <button class="row ${a.status === 'attended' || a.status === 'cancelled' ? 'muted' : ''} ${isOp(a) ? 'op' : ''}" type="button" data-appt="${a.id}">
         <div class="avatar sm">${esc(initials(p ? fullName(p) : '?'))}</div>
@@ -62,7 +63,7 @@ export async function render(root) {
     const pr = a.procedureId ? prById[a.procedureId] : null;
     const d = parseDate(a.date);
     const sub = (isOp(a) ? [apptLabel(a), lower(t('op.row'))] : [pr ? procLabel(pr.typeName) : null, lower(apptLabel(a))]).concat(a.status === 'missed' ? [lower(t('status.missed'))] : []).filter(Boolean);
-    return `
+    return swipeWrap(`
       <button class="overdue-card" type="button" data-appt="${a.id}">
         <div>
           <div class="name">${esc(p ? fullName(p) : t('cal.deletedPatient'))}</div>
@@ -72,12 +73,12 @@ export async function render(root) {
           <div class="date">${esc(fmtDayMonth(a.date))}</div>
           <div class="rel">${esc(t('days.n', { n: daysBetween(d, today) }))}</div>
         </div>
-      </button>`;
+      </button>`, a.id, apptActions(a, { overdue: true }));
   };
   const upcomingCard = (a) => {
     const p = pById[a.patientId];
     const pr = a.procedureId ? prById[a.procedureId] : null;
-    return `
+    return swipeWrap(`
       <button class="upcoming-card" type="button" data-appt="${a.id}">
         <div>
           <div class="name">${esc(p ? fullName(p) : t('cal.deletedPatient'))}</div>
@@ -87,7 +88,7 @@ export async function render(root) {
           <div class="date">${esc(fmtDayMonth(a.date))}</div>
           <div class="rel">${esc(lower(daysLeft(parseDate(a.date))))}</div>
         </div>
-      </button>`;
+      </button>`, a.id, apptActions(a));
   };
 
   root.innerHTML = `
@@ -113,7 +114,7 @@ export async function render(root) {
   /** Randevu ekle: hasta seç → form (varsayılan gün) */
   async function addAppt(defaultDay = todayKey) {
     if (!patients.length) { toast(t('cal.addPatientFirst')); return; }
-    const pick = await actionMenu(t('cal.whichPatient'), patients.map((p) => ({ label: fullName(p), value: p.id })));
+    const pick = await pickPatientSheet({ title: t('cal.whichPatient') });
     if (!pick) return;
     const r = await appointmentForm({ patientId: pick, procedures: procedures.filter((x) => x.patientId === pick), defaultDate: `${defaultDay}T10:00` });
     if (r) { toast(t('cal.added')); refresh(); }
@@ -263,7 +264,7 @@ export async function render(root) {
         if (isOp(a)) items.push({ label: t('op.editProc'), icon: 'edit', value: 'editProc' });
         else { items.push({ label: t('common.edit'), icon: 'edit', value: 'edit' }); items.push({ label: t('common.delete'), icon: 'trash', value: 'delete', danger: true }); }
         const v = await actionMenu(`${p ? fullName(p) : ''} · ${apptLabel(a)}`, items);
-        if (v === 'remind') { window.open(await reminderHref(a.status === 'missed' ? 'missed' : 'reminder', { patient: p, a, pr: prById[a.procedureId] }), '_blank', 'noopener'); return; }
+        if (v === 'remind') { openReminder(a.status === 'missed' ? 'missed' : 'reminder', { patient: p, a, pr: prById[a.procedureId] }); return; }
         if (v === 'open') go(`/patient/${a.patientId}/${isOp(a) ? 'islemler' : 'randevular'}`);
         else if (['attended', 'missed', 'planned'].includes(v)) setStatus(a, v);
         else if (v === 'editProc') { const pr = prById[a.procedureId]; if (!pr) return; const r = await procedureForm({ patientId: a.patientId, existing: pr }); if (r) { toast(r.shiftedControls ? t('form.proc.shifted', { n: r.shiftedControls }) : t('p.proc.updated')); refresh(); } }
@@ -271,7 +272,13 @@ export async function render(root) {
         else if (v === 'delete') { await Appointments.remove(a.id); refresh(); undoToast(t('undo.apptDeleted'), async () => { await Appointments.restore(a.id); toast(t('undo.restored')); refresh(); }); }
       };
     });
-    bindSwipe(body, { onAction: (key, act) => { const a = appointments.find((x) => x.id === key); if (a) setStatus(a, act); } });
+    bindSwipe(body, { onAction: (key, act) => { const a = appointments.find((x) => x.id === key); if (a) apptAction(a, act); } });
+  }
+  /** Kaydırma aksiyonu: durum / yeniden planla / işlem tarihini değiştir */
+  async function apptAction(a, act) {
+    if (act === 'attended' || act === 'missed') { setStatus(a, act); return; }
+    if (act === 'reschedule') { const r = await appointmentForm({ patientId: a.patientId, procedures: procedures.filter((x) => x.patientId === a.patientId), existing: { ...a, status: 'planned' } }); if (r) { toast(t('overdue.rescheduled')); refresh(); } }
+    if (act === 'redate') { const pr = prById[a.procedureId]; if (!pr) return; const r = await procedureForm({ patientId: a.patientId, existing: pr }); if (r) { toast(r.shiftedControls ? t('form.proc.shifted', { n: r.shiftedControls }) : t('p.proc.updated')); refresh(); } }
   }
   /** 'gelmedi' onay sormaz; geri al kapsülü önceki durumu döndürür (§5B) */
   async function setStatus(a, v) {
