@@ -172,7 +172,7 @@ export async function render(root, { id = null } = {}) {
       const r = await photoUploadForm({ patientId: id, procedures, defaultProcedureId: state.procId, defaultPeriod: state.period, defaultAngle: angle() });
       if (r?.length) go(`/patient/${id}/fotograflar`);
     };
-    el('[data-act=shoot]').disabled = true;
+    const shootBtn = el('[data-act=shoot]'); if (shootBtn) shootBtn.disabled = true;   // görünüm kapandıysa öğe yok
   }
 
   /* ---------- Çekim ---------- */
