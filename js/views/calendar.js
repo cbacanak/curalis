@@ -1,8 +1,9 @@
-/* Ajanda — liste (gecikmiş + yaklaşan) ve aylık takvim; TASARIM.md metin sekmeleri, hairline liste, kutusuz takvim */
+/* Ajanda — liste (geciken + yaklaşan) ve aylık takvim; TASARIM.md §5A: segment kontrol, geciken uyarı kartları, arama adası, sabit cam (+) */
 import { Appointments, Patients, Procedures, fullName } from '../db.js';
-import { esc, icon, initials, fmtTime, fmtDateLong, fmtDayMonth, weekdayShort, parseDate, daysBetween, statusText, emptyState, toast, actionMenu, confirmDialog } from '../ui.js';
+import { esc, icon, initials, fmtTime, fmtDateLong, fmtDayMonth, weekdayShort, parseDate, daysBetween, statusText, emptyState, toast, actionMenu, confirmDialog, segmented, bindSegmented } from '../ui.js';
 import { appointmentForm, procedureForm } from '../forms.js';
 import { setTopbar, go } from '../nav.js';
+import { setIsland, openSearch, closeSearch, isMobile } from '../dock.js';
 import { t, lower, locale, procLabel, apptLabel, kindLabel, isOp } from '../i18n.js';
 
 const VIEW_KEY = 'ajanda-view';
@@ -12,12 +13,13 @@ let viewMode = (() => { try { return localStorage.getItem(VIEW_KEY) || 'list'; }
 let calMonth = null;      // görüntülenen ay (Date, ayın 1'i)
 let selectedDay = null;   // "YYYY-MM-DD"; null → ayın tamamı listelenir
 let keepState = false;    // ekran içi yenilemede (düzenleme sonrası) ay/gün korunur
+let query = '';           // arama adası: hasta adına göre süzme (liste görünümü)
 
 const pad = (n) => String(n).padStart(2, '0');
 const keyOf = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
 export async function render(root) {
-  setTopbar({ title: t('cal.title') });
+  setTopbar({ title: t('cal.title'), hidden: isMobile() });   // §5A: büyük başlık kayar, sabit cam (+)
   const [appointments, patients, procedures] = await Promise.all([Appointments.allSorted(), Patients.all(), Procedures.all()]);
   const pById = Object.fromEntries(patients.map((p) => [p.id, p]));
   const prById = Object.fromEntries(procedures.map((p) => [p.id, p]));
@@ -51,6 +53,24 @@ export async function render(root) {
   };
   /** Planlı randevular için "Bugün", "Yarın", "6 gün" */
   const daysLeft = (d) => { const n = daysBetween(today, d); return n === 0 ? t('common.today') : n === 1 ? t('common.tomorrow') : t('days.n', { n }); };
+  /** Geciken kontrol kartı (§5A): uyarı zemini; sol ad + 'işlem · kontrol · gelmedi', sağ tarih + 'N gün' */
+  const overdueCard = (a) => {
+    const p = pById[a.patientId];
+    const pr = a.procedureId ? prById[a.procedureId] : null;
+    const d = parseDate(a.date);
+    const sub = (isOp(a) ? [apptLabel(a), lower(t('op.row'))] : [pr ? procLabel(pr.typeName) : null, lower(apptLabel(a))]).concat(a.status === 'missed' ? [lower(t('status.missed'))] : []).filter(Boolean);
+    return `
+      <button class="overdue-card" type="button" data-appt="${a.id}">
+        <div>
+          <div class="name">${esc(p ? fullName(p) : t('cal.deletedPatient'))}</div>
+          <div class="sub">${sub.map(esc).join(' · ')}</div>
+        </div>
+        <div>
+          <div class="date">${esc(fmtDayMonth(a.date))}</div>
+          <div class="rel">${esc(t('days.n', { n: daysBetween(d, today) }))}</div>
+        </div>
+      </button>`;
+  };
   const upcomingCard = (a) => {
     const p = pById[a.patientId];
     const pr = a.procedureId ? prById[a.procedureId] : null;
@@ -69,39 +89,56 @@ export async function render(root) {
 
   root.innerHTML = `
     <div class="screen">
-    <div class="page-head">
+    <div class="navtop" id="navtop"><button class="glass glass-btn" type="button" data-act="add-top" aria-label="${esc(t('cal.add'))}">${icon('plus')}</button></div>
+    <div class="page-head has-navtop">
       <div>
         <h1 class="page-title">${esc(t('cal.title'))}</h1>
-        <div class="page-sub">${esc(fmtDateLong(new Date()))}${todayCount ? ` · ${esc(t('cal.todayCount', { n: todayCount }))}` : ''}</div>
+        <div class="page-sub" id="page-sub">${esc(fmtDateLong(new Date()))}${todayCount ? ` · ${esc(t('cal.todayCount', { n: todayCount }))}` : ''}</div>
       </div>
     </div>
-    <div class="tabs" role="tablist">
-      <button class="tab-btn ${viewMode === 'list' ? 'on' : ''}" type="button" role="tab" data-view="list">${esc(t('cal.list'))}</button>
-      <button class="tab-btn ${viewMode === 'month' ? 'on' : ''}" type="button" role="tab" data-view="month">${esc(t('cal.month'))}</button>
-    </div>
+    ${segmented({ name: 'view', value: viewMode, options: [['list', esc(t('cal.list'))], ['month', esc(t('cal.month'))]], cls: 'seg-soft' })}
     <div id="ajanda-body"></div>
     </div>`;
-  root.querySelectorAll('[data-view]').forEach((b) => {
-    b.onclick = () => {
-      viewMode = b.dataset.view;
-      try { localStorage.setItem(VIEW_KEY, viewMode); } catch { /* yok say */ }
-      if (viewMode === 'month') resetMonth();   // liste → takvim geçişinde mevcut aya dön
-      root.querySelectorAll('[data-view]').forEach((x) => x.classList.toggle('on', x === b));
-      paint();
-    };
+  const subDefault = root.querySelector('#page-sub').innerHTML;
+  bindSegmented(root.querySelector('.seg[data-name=view]'), (v) => {
+    viewMode = v;
+    try { localStorage.setItem(VIEW_KEY, viewMode); } catch { /* yok say */ }
+    if (viewMode === 'month') resetMonth();   // liste → takvim geçişinde mevcut aya dön
+    closeSearch();
+    paint();
   });
+  /** Randevu ekle: hasta seç → form (varsayılan gün) */
+  async function addAppt(defaultDay = todayKey) {
+    if (!patients.length) { toast(t('cal.addPatientFirst')); return; }
+    const pick = await actionMenu(t('cal.whichPatient'), patients.map((p) => ({ label: fullName(p), value: p.id })));
+    if (!pick) return;
+    const r = await appointmentForm({ patientId: pick, procedures: procedures.filter((x) => x.patientId === pick), defaultDate: `${defaultDay}T10:00` });
+    if (r) { toast(t('cal.added')); refresh(); }
+  }
+  root.querySelector('[data-act=add-top]').onclick = () => addAppt(viewMode === 'month' && selectedDay ? selectedDay : todayKey);
 
   const body = root.querySelector('#ajanda-body');
-  function paint() { (viewMode === 'month' ? paintMonth : paintList)(); }
+  const matches = (a) => { if (!query) return true; const p = pById[a.patientId]; return !!p && lower(fullName(p)).includes(lower(query)); };
+  function paint() {
+    (viewMode === 'month' ? paintMonth : paintList)();
+    // Arama adası yalnızca liste görünümünde (§5A)
+    setIsland(viewMode === 'list' ? () => openSearch({
+      placeholder: t('patients.search.ph'), value: query,
+      onInput: (v) => { query = v.trim(); paintList(); },
+      onClose: () => { if (query) { query = ''; paintList(); } },
+    }) : null);
+  }
 
   /* ---------- Liste ---------- */
   function paintList() {
     const horizon = new Date(today); horizon.setDate(horizon.getDate() + LIST_DAYS);
     const missedCutoff = new Date(today); missedCutoff.setDate(missedCutoff.getDate() - MISSED_DAYS);
     // Gecikmiş: tarihi geçmiş planlı + son MISSED_DAYS günde gelmedi (yeniden planlanması gerekenler)
-    const overdue = appointments.filter((a) => { const d = parseDate(a.date); return (a.status === 'planned' && d < today) || (a.status === 'missed' && d >= missedCutoff && d < today); });
-    const upcoming = appointments.filter((a) => parseDate(a.date) >= today && parseDate(a.date) <= horizon && a.status !== 'cancelled');
-    const later = appointments.filter((a) => parseDate(a.date) > horizon && a.status === 'planned');
+    const pool = appointments.filter(matches);
+    const overdue = pool.filter((a) => { const d = parseDate(a.date); return (a.status === 'planned' && d < today) || (a.status === 'missed' && d >= missedCutoff && d < today); });
+    const upcoming = pool.filter((a) => parseDate(a.date) >= today && parseDate(a.date) <= horizon && a.status !== 'cancelled');
+    const later = pool.filter((a) => parseDate(a.date) > horizon && a.status === 'planned');
+    root.querySelector('#page-sub').innerHTML = query ? esc(t('patients.searchCount', { q: query, n: overdue.length + upcoming.length })) : subDefault;
     // En yakın planlı randevu lacivert kart olarak öne çıkar; kalanlar güne göre listelenir
     const next = upcoming.find((a) => a.status === 'planned') || null;
     const rest = upcoming.filter((a) => a !== next);
@@ -109,13 +146,13 @@ export async function render(root) {
     rest.forEach((a) => { const k = a.date.slice(0, 10); if (!byDay.has(k)) byDay.set(k, []); byDay.get(k).push(a); });
 
     body.innerHTML = `
-      ${overdue.length ? `<section class="section"><div class="section-label t-danger">${esc(t('cal.overdue', { n: overdue.length }))}</div><div class="list">${overdue.map((a) => row(a, { withDate: true })).join('')}</div></section>` : ''}
+      ${overdue.length ? `<section class="section"><div class="section-label t-warning">${esc(t('cal.overdue', { n: overdue.length }))}</div>${overdue.map(overdueCard).join('')}</section>` : ''}
       ${next ? `<section class="section"><div class="section-label">${esc(t(isOp(next) ? 'cal.upcomingOp' : 'cal.upcoming'))}</div>${upcomingCard(next)}</section>` : ''}
       ${byDay.size ? [...byDay.entries()].map(([k, list]) => {
         const n = daysBetween(today, parseDate(k));
         const title = n === 0 ? t('common.today') : n === 1 ? t('common.tomorrow') : `${weekdayShort(k)} · ${fmtDayMonth(k)}`;
         return `<section class="section"><div class="section-label">${esc(title)}</div><div class="list">${list.map((a) => row(a)).join('')}</div></section>`;
-      }).join('') : (overdue.length || next ? '' : emptyState({ title: t('cal.emptyList', { n: LIST_DAYS }), text: t('cal.emptyListText') }))}
+      }).join('') : (overdue.length || next ? '' : (query ? emptyState({ title: t('patients.noResult'), text: t('patients.noMatch', { q: query }) }) : emptyState({ title: t('cal.emptyList', { n: LIST_DAYS }), text: t('cal.emptyListText') })))}
       ${later.length ? `<p class="t-caption section">${esc(t('cal.later', { days: LIST_DAYS, n: later.length }))}</p>` : ''}`;
     bindRows();
   }
@@ -204,13 +241,7 @@ export async function render(root) {
         <button class="section-link" type="button" data-act="add">${esc(t('cal.add'))}</button>
       </div>
       ${content}`;
-    box.querySelector('[data-act=add]').onclick = async () => {
-      if (!patients.length) { toast(t('cal.addPatientFirst')); return; }
-      const pick = await actionMenu(t('cal.whichPatient'), patients.map((p) => ({ label: fullName(p), value: p.id })));
-      if (!pick) return;
-      const r = await appointmentForm({ patientId: pick, procedures: procedures.filter((x) => x.patientId === pick), defaultDate: `${defaultDay}T10:00` });
-      if (r) { toast(t('cal.added')); refresh(); }
-    };
+    box.querySelector('[data-act=add]').onclick = () => addAppt(defaultDay);
     bindRows();
   }
 
@@ -238,4 +269,5 @@ export async function render(root) {
   }
 
   paint();
+  return () => closeSearch();
 }
