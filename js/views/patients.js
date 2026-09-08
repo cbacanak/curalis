@@ -14,6 +14,7 @@ let lastQuery = '';
 const UPCOMING_DAYS = 30;
 
 export async function render(root, { embedded = false, activeId = null, newPatient = false } = {}) {
+  const wrap = embedded ? (html) => html : swipeWrap;   // sol sütunda (iPad) kaydırma/uzun basma yok
   if (!embedded) setTopbar({ title: t('patients.title'), hidden: true });   // §5A: büyük başlık içerikle kayar, kompakt çubuk yok
 
   async function addPatient() {
@@ -87,7 +88,7 @@ export async function render(root, { embedded = false, activeId = null, newPatie
     const pr = a.procedureId ? prById[a.procedureId] : null;
     const d = parseDate(a.date);
     const sub = [isOp(a) ? t('op.row') : apptLabel(a), pr && !isOp(a) ? procLabel(pr.typeName) : null, `${fmtDayMonth(a.date)} ${fmtTime(a.date)}`].filter(Boolean).join(' · ');
-    return swipeWrap(`
+    return wrap(`
       <button class="row" type="button" data-overdue="${a.id}">
         <div class="avatar sm">${esc(initials(fullName(p)))}</div>
         <div class="row-main">
@@ -156,7 +157,7 @@ export async function render(root, { embedded = false, activeId = null, newPatie
     const sub = [a !== null ? String(a) : null, lp ? `${planned ? `${t('op.planned')} · ` : ''}${procLabel(lp.typeName)} · ${fmtDayMonth(lp.date)}` : t('patients.noProc')].filter(Boolean).join(' · ');
     // Kaydırma (§5B): sola → Ara · WhatsApp (telefon varsa), sağa → Randevu ekle
     const right = p.phone ? [{ key: 'call', icon: 'phone', label: t('swipe.call') }, { key: 'wa', icon: 'chat', label: t('swipe.whatsapp') }] : [];
-    return swipeWrap(`
+    return wrap(`
       <a class="row ${p.id === activeId ? 'on' : ''}" href="#/patient/${p.id}">
         <div class="avatar">${esc(initials(fullName(p)))}</div>
         <div class="row-main">
@@ -195,7 +196,7 @@ export async function render(root, { embedded = false, activeId = null, newPatie
       </section>`;
     list.querySelectorAll('[data-open]').forEach((b) => { b.onclick = () => go(`/patient/${b.dataset.open}`); });
     list.querySelectorAll('[data-overdue]').forEach((b) => { b.onclick = () => overdueMenu(appointments.find((a) => a.id === b.dataset.overdue)); });
-    bindSwipe(list, {
+    if (!embedded) bindSwipe(list, {
       onAction: async (key, act) => {
         const [kind, kid] = key.split(':');
         if (kind === 'appt') { const a = appointments.find((x) => x.id === kid); if (a) setStatus(a, act); return; }

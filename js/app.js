@@ -52,6 +52,7 @@ async function route() {
     setActiveNav(r.nav);
     window.scrollTo(0, 0);
     root.classList.remove('has-hero');
+    document.getElementById('notice').hidden = !(r.nav === 'patients' && !m[1]);   // bildirimler yalnızca Hastalar listesinde (sabit nav düğmeleriyle çakışmasın)
     // iPad / geniş ekran: hasta listesi sol sütunda, kart sağda (§5B)
     const split = wideQuery.matches && r.nav === 'patients' && !m[0].startsWith('/patients/new');
     document.body.classList.toggle('split', split);
