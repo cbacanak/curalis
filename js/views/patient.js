@@ -11,6 +11,7 @@ import {
 import { setTopbar, go, replacePath, rerender } from '../nav.js';
 import { setDock, isMobile } from '../dock.js';
 import { swipeWrap, bindSwipe } from '../swipe.js';
+import { reminderHref } from '../messages.js';
 import { t, lower, procLabel, apptLabel, kindLabel, isOp } from '../i18n.js';
 import { PERIODS, TRASH_DAYS, sortAngles, periodLabel, angleLabel, consentLabel, anesthesiaLabel, fieldLabel, optionLabel } from '../model.js';
 import { hydrateBlob, audit } from '../db.js';
@@ -451,9 +452,11 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     if (isOp(a)) items.push({ label: t('op.editProc'), icon: 'edit', value: 'editProc' });
     else items.push({ label: t('appt.editDate'), icon: 'edit', value: 'edit' });
     if (pr) items.push({ label: t('appt.openProc', { p: procLabel(pr.typeName) }), icon: 'activity', value: 'proc' });
+    if (data.patient.phone) items.push({ label: t('appt.remind'), icon: 'chat', value: 'remind' });
     if (!isOp(a)) items.push({ label: t('appt.delete'), icon: 'trash', value: 'delete', danger: true });
     const v = await actionMenu(title, items);
     if (!v) return;
+    if (v === 'remind') { window.open(await reminderHref(a.status === 'missed' ? 'missed' : 'reminder', { patient: data.patient, a, pr }), '_blank', 'noopener'); return; }
     if (['attended', 'missed', 'planned'].includes(v)) {
       await setStatus(a, v);
     } else if (v === 'edit') {

@@ -26,7 +26,7 @@ gerekli olanlar yapılır.
 - [x] İsim Curalis (GECIS.md §2): repo, manifest, başlıklar, yedek dosyası; localStorage anahtarları taşındı; eski yedekler açılmaya devam eder
 - [x] İşlem planlama: ileri tarihli ameliyat / işlem (tarih + saat) Ajanda'ya, hasta listesine ve hasta kartına düşer; tarih değişince planlı kontroller kayar; eski kayıtlar için işlem günü kaydı otomatik üretilir
 - [x] Alt sayfalar aşağı kaydırarak kapanır (başlıktan her zaman, gövdeden en üstteyken; eşik altında yerine döner)
-- [x] İngilizce dil desteği (`js/i18n.js`): Ayarlar > Dil; tarih biçimi dile göre; kayıtlı veri Türkçe kanonik kalır, görüntüde çevrilir
+- [x] İngilizce dil desteği (`js/i18n.js`): Ayarlar > Dil; tarih biçimi dile göre; kayıtlı veri Türkçe kanonik kalır, görüntüde çevrilir. Not: WEB-PLAN dışı yapıldı. Kural (8 Eyl 2026): plan dışı bir özellik gerekirse önce sorulur, dosyaya girer, sonra kod yazılır.
 
 ## WEB-PLAN.md durumu (8 Eyl 2026, sürüm 0.9.3)
 
@@ -40,7 +40,7 @@ Sürüm numaraları plandaki v0.x sayılarıyla değil, gerçek sürümle (0.8.x
 - [~] **Adım 5 — Karşılaştırma:** kısmen. Üç mod, seçim modu + raf, anonim paylaşım (Web Share) var; dönem şeridi, senkron zoom, çift dokunuş tam ekran yok.
 - [x] **Adım 6 — Klinik alanlar ve onam:** tamamen.
 - [x] **Adım 7 — Liste etkileşimleri ve geri al (0.10.0):** kaydırma aksiyonları (hasta: sola Ara · WhatsApp, sağa Randevu; randevu: sola Gelmedi, sağa Geldi), 400 ms uzun basma önizlemesi (Ara · Fotoğraf çek · Karşılaştır · Sil), geri al kapsülü (silme ve 'gelmedi' onay sormaz, 5 sn geri al; kalıcı silme ve yedek üzerine yazma onay sorar), soft delete + Silinenler (30 gün), geciken kontroller.
-- [~] **Adım 8 — Formlar ve klavye:** çok az. inputmode/type/autocapitalize ve boşluk temizleme var; kademeli sheet, Türkçe baş harf düzeltme, Rehberden seç, pasif/aktif Kaydet, hazır mesaj şablonları yok.
+- [x] **Adım 8 — Formlar ve klavye (0.11.0):** kademeli sheet (yeni hasta / randevu yarı → tam), inputmode/type/autocapitalize/enterkeyhint, Türkçe ad düzeltme, Rehberden seç (Contact Picker), Kaydet zorunlu alanlar dolana dek pasif, hazır mesaj şablonları (Ayarlar) → randevu menüsünden WhatsApp'a atlama.
 - [x] **Adım 9 — Yedek ve güvenlik (0.10.2):** şifreli yedek al / geri yükle (birleştir / değiştir), PIN'de 5 hatada bekleme, otomatik kilit süresi, arka plan örtüsü (uygulama değiştiricide içerik gizli), denetim kaydına paylaşım/yedek, haftalık dosya yedeği hatırlatması. Günlük otomatik yedek web'de bilinçli atlandı (tarayıcı depolaması veriyle aynı yer); mobilde iCloud ile.
 - [x] **Adım 10 — Kamera denemesi:** tamamen (web sınırlarıyla). 90 sn kabul ölçümü cihazda yapılmadı.
 - [~] **Adım 11 — Cila ve erişilebilirlik:** kısmen. Tabular rakamlar, boş durumlar, skeleton, karanlık mod token'ları var; `rem` tabanlı Dynamic Type, manifest `shortcuts`, iPad iki sütun yok.
@@ -55,21 +55,7 @@ Sürüm numaraları plandaki v0.x sayılarıyla değil, gerçek sürümle (0.8.x
 - AuditEntry: zaman, cihaz, eylem, varlık; Ayarlar'dan görünür, silinemez — var.
 - "şema v2" göstergesi Ayarlar'da (0.10.0). Migrasyon öncesi otomatik yedek ve geri alma eski veri atıldığı için uygulanmadı; sonraki şema değişikliklerinde zorunlu.
 
-## Mobil uygulama için öncelikli
-
-1. **Kamera çekim rehberi.** Yüz ön / profil / oblik, burun bazal, gövde gibi standart
-   pozlar için yarı saydam hayalet şablon; önceki fotoğrafın silüetiyle hizalama.
-   Öncesi/sonrası karşılaştırmasının değerini belirleyen özellik.
-2. **Biyometrik kilit.** Face ID / parmak izi ile açma; PIN yedek yöntem olarak kalır.
-3. **Otomatik yedek.** iCloud / Google Drive'a zamanlanmış yedek; son yedek tarihinin
-   Ayarlar'da görünmesi ve haftalık hatırlatma.
-4. **Bulut eşitleme.** Hesap, sunucu, uçtan uca şifreleme; telefon, tablet ve
-   bilgisayardan aynı veri. Cihaz kaybında veri kaybını bitirir. Ayrı proje ölçeği.
-5. **Onam formları.** İşlem başına dijital onam, hasta imzası, PDF çıktı ve hastaya gönderim.
-6. **Randevu hatırlatma.** SMS / WhatsApp ile hatırlatma; hekim müsaitlik takvimi;
-   isteğe bağlı çevrimiçi randevu alma.
-7. **Klinik kayıt derinliği.** İlaç ve alerji listesi, ameliyat notu şablonları,
-   ölçüm ve implant kaydı, işlem başına fiyat/ödeme takibi.
+Native kapsam ve sürüm planı: MOBIL.md §7
 
 ## Tasarım (TASARIM.md kalanlar)
 

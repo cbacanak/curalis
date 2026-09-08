@@ -196,11 +196,11 @@ export function unlockScroll() {
  * Alt sayfa (mobil) / diyalog (masaüstü). content: HTML string veya element.
  * Döner: { el, body, close(result) , result: Promise }
  */
-export function sheet({ title, content, footer = '', size = 'md', onClose, closeText = null } = {}) {
+export function sheet({ title, content, footer = '', size = 'md', onClose, closeText = null, half = false } = {}) {
   closeText = closeText ?? t('common.cancel');
   const root = el(`
     <div class="sheet-backdrop" role="presentation">
-      <div class="sheet sheet-${size}" role="dialog" aria-modal="true" aria-label="${esc(title || '')}">
+      <div class="sheet sheet-${size} ${half ? 'sheet-half' : ''}" role="dialog" aria-modal="true" aria-label="${esc(title || '')}">
         <div class="sheet-head">
           <div class="sheet-grip" aria-hidden="true"></div>
           <h2 class="sheet-title">${esc(title || '')}</h2>
@@ -234,7 +234,10 @@ export function sheet({ title, content, footer = '', size = 'md', onClose, close
   setTimeout(() => root.classList.add('open'), 10);
   const first = body.querySelector('input:not([type=hidden]),select,textarea,button');
   if (first && window.matchMedia('(min-width: 880px)').matches) setTimeout(() => first.focus(), 200);
-  return { el: root, body, close, result };
+  /** Kademeli sheet (§5B): yarıdan tam yüksekliğe */
+  const expand = () => { root.querySelector('.sheet').classList.remove('sheet-half'); };
+  root.querySelectorAll('[data-act=expand]').forEach((b) => { b.onclick = expand; });
+  return { el: root, body, close, result, expand };
 }
 
 /*
@@ -256,6 +259,7 @@ function enableSwipeToClose(root, sheetEl, body, close) {
     if (sy === null) return;
     const x = e.touches[0].clientX - sx, y = e.touches[0].clientY - sy;
     if (!active) {
+      if (!fromBody && y < -16 && sheetEl.classList.contains('sheet-half')) { sheetEl.classList.remove('sheet-half'); sx = sy = null; return; }   // yarı sheet: yukarı çekince tam
       if (Math.abs(x) > Math.abs(y) || (fromBody && y < 0)) { sx = sy = null; return; }   // yatay ya da yukarı: bırak
       if (y < 8) return;
       active = true; sheetEl.classList.add('dragging');
@@ -445,7 +449,7 @@ export function chipField({ label, name, value = '', options = [], multiple = fa
 export function bindChoiceFields(form) {
   form.querySelectorAll('.seg-field').forEach((seg) => {
     const hidden = form.querySelector(`input[type=hidden][name="${seg.dataset.name}"]`);
-    bindSegmented(seg, (v) => { if (hidden) hidden.value = v; });
+    bindSegmented(seg, (v) => { if (hidden) { hidden.value = v; hidden.dispatchEvent(new Event('change', { bubbles: true })); } });
   });
   form.querySelectorAll('[data-chips]').forEach((group) => {
     const hidden = form.querySelector(`input[type=hidden][name="${group.dataset.chips}"]`);
@@ -462,6 +466,7 @@ export function bindChoiceFields(form) {
           group.querySelectorAll('.chip').forEach((x) => x.classList.toggle('on', x === b));
           hidden.value = b.dataset.value;
         }
+        hidden.dispatchEvent(new Event('change', { bubbles: true }));
         group.querySelectorAll('.chip').forEach((x) => x.setAttribute('aria-pressed', x.classList.contains('on')));
       });
     });

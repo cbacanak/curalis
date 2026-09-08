@@ -127,6 +127,16 @@ export const Audit = {
   count: () => _audit.allWithDeleted().then((l) => l.length),
 };
 
+/** Türkçe ad düzeltme (§5B): baştaki/sondaki boşluk temizlenir, her sözcüğün baş harfi İ/ı, Ş/ş kurallarıyla büyür;
+ *  tamamen BÜYÜK yazılmışsa kalanı küçülür ("ELİF" → "Elif"), karışık yazım ("McDonald") korunur. */
+export function tidyName(s) {
+  return String(s || '').trim().replace(/\s+/g, ' ').split(' ').map((w) => w.split('-').map((p) => {
+    if (!p) return p;
+    const rest = p.length > 1 && p === p.toLocaleUpperCase('tr') ? p.slice(1).toLocaleLowerCase('tr') : p.slice(1);
+    return p[0].toLocaleUpperCase('tr') + rest;
+  }).join('-')).join(' ');
+}
+
 /* ---------------- Hastalar ---------------- */
 const _patients = baseStore('patients');
 export const Patients = {
@@ -134,8 +144,8 @@ export const Patients = {
   async save(p) {
     const isNew = !p.id;
     const obj = stamp(p);
-    obj.firstName = (obj.firstName || '').trim();
-    obj.lastName = (obj.lastName || '').trim();
+    obj.firstName = tidyName(obj.firstName);
+    obj.lastName = tidyName(obj.lastName);
     await _patients.put(obj);
     audit(isNew ? 'create' : 'update', 'patient', obj.id, fullName(obj));
     return obj;

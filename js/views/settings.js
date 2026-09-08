@@ -1,6 +1,6 @@
 /* Ayarlar — bölüm etiketi + hairline satırlar; yıkıcı eylem yalnızca kırmızı metin */
 import { counts, clearAllData, Templates, trashCount, Audit, SCHEMA } from '../db.js';
-import { templatesSheet, trashSheet, auditSheet } from './manage.js';
+import { templatesSheet, trashSheet, auditSheet, messagesSheet } from './manage.js';
 import { TRASH_DAYS } from '../model.js';
 import { esc, icon, toast, confirmDialog, actionMenu, fmtDate } from '../ui.js';
 import { setTopbar } from '../nav.js';
@@ -11,7 +11,7 @@ import { segmented, bindSegmented } from '../ui.js';
 import { t, getLang, setLang, LANGS, applyStaticText } from '../i18n.js';
 import { showViewportDebug } from '../viewport.js';
 
-export const APP_VERSION = '0.10.2';
+export const APP_VERSION = '0.11.0';
 
 export async function render(root) {
   setTopbar({ title: t('s.title') });
@@ -60,6 +60,7 @@ export async function render(root) {
     <section class="section">
       <div class="section-label">${esc(t('s.templates'))}</div>
       ${rowBtn('templates', esc(t('s.templates')), esc(t('s.templates.sub', { n: tplCount })))}
+      ${rowBtn('messages', esc(t('s.messages')), esc(t('s.messages.sub')))}
     </section>
 
     <section class="section">
@@ -118,6 +119,7 @@ export async function render(root) {
     }
   };
   root.querySelector('[data-act=templates]').onclick = async () => { await templatesSheet(); render(root); };
+  root.querySelector('[data-act=messages]').onclick = async () => { await messagesSheet(); };
   root.querySelector('[data-act=trash]').onclick = async () => { await trashSheet(); render(root); };
   root.querySelector('[data-act=audit]').onclick = () => auditSheet();
   root.querySelector('[data-act=backup]').onclick = async () => {

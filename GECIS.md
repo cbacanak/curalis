@@ -28,7 +28,7 @@ Ortak dosyalar (TASARIM.md, IKON.md, MOBIL.md, ikon SVG/PNG) **her iki repoda da
    - PIN ekranı başlığı, Ayarlar > Hakkında satırı
 4. IKON.md'yi uygula (ikon klasörü, `<head>`, manifest). Eski turkuaz "+" ikonu tamamen kaldır.
 5. Yayın sonrası kontrol: yeni adres açılıyor, "Ana Ekrana Ekle"de isim **Curalis** ve yeni ikon görünüyor, eski adres yönlendiriyor.
-6. `README.md`: tek paragraf — "Curalis web prototipi. Tasarım referansı; aktif geliştirme `curalis-ios` reposunda."
+6. `README.md`: tek paragraf — "Curalis web prototipi. Tasarım referansı; aktif geliştirme bu repoda; native plan MOBIL.md, sırası WEB-PLAN.md."
 7. **Aktif geliştirme şimdilik bu repoda devam eder.** Native'e geçiş uygulama olgunlaşınca; tarih yok. Web'de olgunlaştırılacaklar MOBIL.md'den alınır, aşağıdaki kurala göre:
    - **Web'de yapılır** (native'e birebir taşınır): veri modeli (§2 — UUID, updatedAt, deletedAt, dönem/açı, onam, klinik uyarı, işlem şablonları, denetim kaydı), ekran akışları (§3), kontrol planı → otomatik randevu, geciken kontroller, karşılaştırma ekranı (3 mod), anonim paylaşım, şifreli yedek (§6), soft delete + 30 gün, arama/filtre, WhatsApp/arama kısayolları, boş durumlar.
    - **Web'de sınırlı yapılır** (native'de yeniden yazılır): kamera — `getUserMedia` ile ghost overlay ve açı seçici denenebilir, iOS Safari'de zoom/flaş kontrolü yok; Face ID — WebAuthn ile kaba bir sürüm; arka planda bulanıklaştırma — `visibilitychange` ile yaklaşık.
