@@ -26,7 +26,7 @@ gerekli olanlar yapılır.
 - [x] İsim Curalis (GECIS.md §2): repo, manifest, başlıklar, yedek dosyası; localStorage anahtarları taşındı; eski yedekler açılmaya devam eder
 - [x] İşlem planlama: ileri tarihli ameliyat / işlem (tarih + saat) Ajanda'ya, hasta listesine ve hasta kartına düşer; tarih değişince planlı kontroller kayar; eski kayıtlar için işlem günü kaydı otomatik üretilir
 - [x] Alt sayfalar aşağı kaydırarak kapanır (başlıktan her zaman, gövdeden en üstteyken; eşik altında yerine döner)
-- [x] İngilizce dil desteği (`js/i18n.js`): Ayarlar > Dil; tarih biçimi dile göre; kayıtlı veri Türkçe kanonik kalır, görüntüde çevrilir
+- [x] İngilizce dil desteği (`js/i18n.js`): Ayarlar > Dil; tarih biçimi dile göre; kayıtlı veri Türkçe kanonik kalır, görüntüde çevrilir. Not: WEB-PLAN dışı yapıldı. Kural (8 Eyl 2026): plan dışı bir özellik gerekirse önce sorulur, dosyaya girer, sonra kod yazılır.
 
 ## WEB-PLAN.md durumu (8 Eyl 2026, sürüm 0.9.3)
 
@@ -55,21 +55,7 @@ Sürüm numaraları plandaki v0.x sayılarıyla değil, gerçek sürümle (0.8.x
 - AuditEntry: zaman, cihaz, eylem, varlık; Ayarlar'dan görünür, silinemez — var.
 - "şema v2" göstergesi Ayarlar'da (0.10.0). Migrasyon öncesi otomatik yedek ve geri alma eski veri atıldığı için uygulanmadı; sonraki şema değişikliklerinde zorunlu.
 
-## Mobil uygulama için öncelikli
-
-1. **Kamera çekim rehberi.** Yüz ön / profil / oblik, burun bazal, gövde gibi standart
-   pozlar için yarı saydam hayalet şablon; önceki fotoğrafın silüetiyle hizalama.
-   Öncesi/sonrası karşılaştırmasının değerini belirleyen özellik.
-2. **Biyometrik kilit.** Face ID / parmak izi ile açma; PIN yedek yöntem olarak kalır.
-3. **Otomatik yedek.** iCloud / Google Drive'a zamanlanmış yedek; son yedek tarihinin
-   Ayarlar'da görünmesi ve haftalık hatırlatma.
-4. **Bulut eşitleme.** Hesap, sunucu, uçtan uca şifreleme; telefon, tablet ve
-   bilgisayardan aynı veri. Cihaz kaybında veri kaybını bitirir. Ayrı proje ölçeği.
-5. **Onam formları.** İşlem başına dijital onam, hasta imzası, PDF çıktı ve hastaya gönderim.
-6. **Randevu hatırlatma.** SMS / WhatsApp ile hatırlatma; hekim müsaitlik takvimi;
-   isteğe bağlı çevrimiçi randevu alma.
-7. **Klinik kayıt derinliği.** İlaç ve alerji listesi, ameliyat notu şablonları,
-   ölçüm ve implant kaydı, işlem başına fiyat/ödeme takibi.
+Native kapsam ve sürüm planı: MOBIL.md §7
 
 ## Tasarım (TASARIM.md kalanlar)
 
