@@ -5,7 +5,7 @@ import { processImage, readExifDate, blobURL } from './photos.js';
 import { sheet, field, selectField, textareaField, segmentField, chipField, bindChoiceFields, segmented, bindSegmented, formData, esc, icon, toast, fmtDate, parseDate, daysBetween } from './ui.js';
 import { t, cmp, procLabel } from './i18n.js';
 import {
-  PERIODS, FOLLOWUP_PERIODS, DEFAULT_FOLLOWUPS, ANGLES, APPT_TYPES, APPT_STATUSES, CONSENT_STATUSES, ANESTHESIA, DEFAULT_ANESTHESIA,
+  PERIODS, FOLLOWUP_PERIODS, DEFAULT_FOLLOWUPS, ANGLES, sortAngles, APPT_TYPES, APPT_STATUSES, CONSENT_STATUSES, ANESTHESIA, DEFAULT_ANESTHESIA,
   periodLabel, angleLabel, apptTypeLabel, statusLabel, consentLabel, anesthesiaLabel, fieldLabel, optionLabel, periodFromDays,
 } from './model.js';
 
@@ -292,12 +292,16 @@ export function defaultPeriodFor(procedure, at = new Date()) {
   if (!procedure) return 'other';
   return periodFromDays(daysBetween(parseDate(procedure.date), at));
 }
-/** Açı seçenekleri: bağlı işlemin şablon açıları önce, sonra kalanlar */
-function angleOptions(templateAngles = []) {
-  const first = templateAngles.filter((a) => ANGLES.includes(a));
-  return [...first, ...ANGLES.filter((a) => !first.includes(a))].map((a) => [a, angleLabel(a)]);
+/** Açı seçenekleri: kamerayla aynı kural — bağlı işlemin şablon açıları, sabit sırada. İşlem yoksa tüm açılar.
+ *  keep: mevcut fotoğrafın açısı şablonda yoksa da listede kalır (düzenlemede kayıt bozulmasın). */
+function angleOptions(templateAngles = [], keep = null) {
+  const set = templateAngles.filter((a) => ANGLES.includes(a));
+  const list = set.length ? set : ANGLES;
+  return sortAngles(new Set(keep ? [...list, keep] : list)).map((a) => [a, angleLabel(a)]);
 }
 const periodOptions = () => PERIODS.map((k) => [k, periodLabel(k)]);
+/* Seçili açı listede yoksa ilk seçeneğe düşer */
+const pickAngle = (opts, cur) => (opts.some(([v]) => v === cur) ? cur : opts[0][0]);
 
 export async function photoUploadForm({ patientId, procedures = [], defaultProcedureId = '', defaultPeriod = null, defaultAngle = 'front' }) {
   const procOpts = [['', t('form.appt.noProc')], ...procedures.map(procOption)];
@@ -323,7 +327,7 @@ export async function photoUploadForm({ patientId, procedures = [], defaultProce
           ${selectField({ label: t('form.appt.proc'), name: 'procedureId', value: defaultProcedureId, options: procOpts })}
         </div>
         ${chipField({ label: t('form.photo.period'), name: 'period', value: defaultPeriod || defaultPeriodFor(procById[defaultProcedureId]), options: periodOptions(), required: true })}
-        <div id="angles">${chipField({ label: t('form.photo.angle'), name: 'angle', value: defaultAngle, options: angleOptions(tplAngles(defaultProcedureId)), required: true })}</div>
+        <div id="angles">${chipField({ label: t('form.photo.angle'), name: 'angle', value: pickAngle(angleOptions(tplAngles(defaultProcedureId)), defaultAngle), options: angleOptions(tplAngles(defaultProcedureId)), required: true })}</div>
         ${field({ label: t('form.photo.notes'), name: 'notes', placeholder: t('form.photo.notes.ph') })}
       </form>`,
   });
@@ -342,8 +346,8 @@ export async function photoUploadForm({ patientId, procedures = [], defaultProce
   dateInput.addEventListener('input', () => { dateTouched = true; syncDate(); });
   // Bağlı işlem değişince açı sırası şablona göre, dönem işlem tarihine göre yenilenir
   procSelect.addEventListener('change', () => {
-    const cur = form.querySelector('input[name=angle]').value;
-    form.querySelector('#angles').innerHTML = chipField({ label: t('form.photo.angle'), name: 'angle', value: cur, options: angleOptions(tplAngles(procSelect.value)), required: true });
+    const opts = angleOptions(tplAngles(procSelect.value));
+    form.querySelector('#angles').innerHTML = chipField({ label: t('form.photo.angle'), name: 'angle', value: pickAngle(opts, form.querySelector('input[name=angle]').value), options: opts, required: true });
     bindChoiceFields(form.querySelector('#angles'));
     const per = defaultPeriodFor(procById[procSelect.value], parseDate(dateInput.value) || new Date());
     form.querySelector('input[name=period]').value = per;
@@ -425,9 +429,16 @@ export async function photoEditForm(photo, procedures = []) {
           ${selectField({ label: t('form.appt.proc'), name: 'procedureId', value: photo.procedureId || '', options: procOpts })}
         </div>
         ${chipField({ label: t('form.photo.period'), name: 'period', value: photo.period || 'other', options: periodOptions(), required: true })}
-        ${chipField({ label: t('form.photo.angle'), name: 'angle', value: photo.angle || 'custom', options: angleOptions(templates[pr?.templateId]?.angleSet || []), required: true })}
+        <div id="angles">${chipField({ label: t('form.photo.angle'), name: 'angle', value: photo.angle || 'custom', options: angleOptions(templates[pr?.templateId]?.angleSet || [], photo.angle), required: true })}</div>
         ${field({ label: t('form.photo.notes'), name: 'notes', value: photo.notes || '', placeholder: t('form.photo.notes.ph') })}
       </form>`,
+  });
+  const eform = s.body.querySelector('form');
+  eform.querySelector('[name=procedureId]').addEventListener('change', (e) => {
+    const p2 = procedures.find((x) => x.id === e.target.value);
+    const opts = angleOptions(templates[p2?.templateId]?.angleSet || [], photo.angle);
+    eform.querySelector('#angles').innerHTML = chipField({ label: t('form.photo.angle'), name: 'angle', value: pickAngle(opts, eform.querySelector('input[name=angle]').value), options: opts, required: true });
+    bindChoiceFields(eform.querySelector('#angles'));
   });
   wireForm(s, async (d) => Photos.save({ ...photo, date: d.date, procedureId: d.procedureId || null, period: d.period, angle: d.angle, notes: d.notes || '' }));
   return s.result;
