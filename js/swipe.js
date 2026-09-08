@@ -43,6 +43,14 @@ export function bindSwipe(scope, { onAction, onLongPress } = {}) {
     let x0 = 0, y0 = 0, dx = 0, dragging = false, decided = false, base = 0, timer = null, suppress = false, pid = null;
     const setX = (x, animate) => { body.style.transition = animate ? 'transform 200ms cubic-bezier(.2,.8,.2,1)' : 'none'; body.style.transform = x ? `translateX(${x}px)` : ''; };
     const clearLP = () => { if (timer) { clearTimeout(timer); timer = null; } };
+    // Sıfırlama: yarım kalan jest (uygulama değiştirme, arama, WhatsApp dönüşü) sonraki kaydırmayı bozmasın
+    const reset = () => {
+      clearLP();
+      if (pid !== null) { try { body.releasePointerCapture(pid); } catch { /* yok say */ } }
+      pid = null; dragging = false; decided = false; dx = 0; suppress = false;
+      setX(0, false); row.classList.remove('open'); if (openRow === row) openRow = null;
+    };
+    row.__swipeReset = reset;
     const finish = (x) => {
       // Eşik: aksiyon genişliğinin yarısı → açık kal; değilse kapan
       if (x > 0 && leftW && x > leftW / 2) { setX(leftW, true); row.classList.add('open'); openRow = row; }
@@ -82,7 +90,7 @@ export function bindSwipe(scope, { onAction, onLongPress } = {}) {
       finish(dx);
     };
     body.addEventListener('pointerup', end);
-    body.addEventListener('pointercancel', end);
+    body.addEventListener('pointercancel', () => reset());   // iptal edilen jest: yarım konumda kalma, sıfırla
     // Kaydırma / uzun basma sonrası tık yutulur; açık satırda tık kapatır
     body.addEventListener('click', (e) => {
       if (suppress) { e.preventDefault(); e.stopPropagation(); return; }
@@ -99,4 +107,21 @@ export function bindSwipe(scope, { onAction, onLongPress } = {}) {
     scope.__swipeOutside = true;
     document.addEventListener('pointerdown', (e) => { if (openRow && !openRow.contains(e.target)) closeOpenRow(); }, { passive: true });
   }
+  installGlobalReset();
+}
+
+/** Uygulama arka plana geçince / sayfa gizlenince / dokunma iptal olunca tüm satırlar sıfırlanır (deneme bulgusu 3) */
+let globalInstalled = false;
+export function resetAllSwipes() {
+  document.querySelectorAll('.swipe').forEach((r) => r.__swipeReset?.());
+  openRow = null;
+}
+function installGlobalReset() {
+  if (globalInstalled) return;
+  globalInstalled = true;
+  document.addEventListener('visibilitychange', () => { if (document.hidden) resetAllSwipes(); });
+  window.addEventListener('pagehide', resetAllSwipes);
+  window.addEventListener('pageshow', resetAllSwipes);
+  window.addEventListener('blur', resetAllSwipes);
+  document.addEventListener('touchcancel', resetAllSwipes, { passive: true });
 }
