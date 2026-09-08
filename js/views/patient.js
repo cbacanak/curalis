@@ -9,6 +9,7 @@ import {
   patientForm, procedureForm, appointmentForm, photoUploadForm, photoEditForm, regenerateControls, defaultPeriodFor,
 } from '../forms.js';
 import { setTopbar, go, replacePath } from '../nav.js';
+import { setDock, isMobile } from '../dock.js';
 import { t, lower, procLabel, apptLabel, kindLabel, isOp } from '../i18n.js';
 import { PERIODS, TRASH_DAYS, sortAngles, periodLabel, angleLabel, consentLabel, anesthesiaLabel, fieldLabel, optionLabel } from '../model.js';
 import { hydrateBlob, audit } from '../db.js';
@@ -133,15 +134,29 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const lastProc = data.procedures[0];
 
     setTopbar({
-      title: name, back: '/', center: true, anchor: '.hero-name', tone: 'inverse',
+      title: name, back: '/', center: true, anchor: '.hero-name', tone: 'inverse', hidden: isMobile(),   // §5A: mobilde sabit cam nav düğmeleri, kompakt çubuk yok
       actions: [{ icon: 'edit', label: t('common.edit'), onClick: editPatient }, { icon: 'more', label: t('common.more'), onClick: patientMenu }],
     });
     root.classList.add('has-hero');
+    setDock(false);   // hasta kartı alt ekran: tab bar yerine yüzen aksiyonlar
 
     root.innerHTML = `
       <div class="screen">
+      <div class="navtop split on-dark" id="navtop">
+        <button class="glass glass-btn sm" type="button" data-act="back" aria-label="${esc(t('common.back'))}">${icon('back')}</button>
+        <div class="glass glass-group">
+          ${p.phone ? `<a class="glass-btn sm" href="${phoneHref(p.phone)}" aria-label="${esc(t('p.call'))}" title="${esc(t('p.call'))}">${icon('phone')}</a>` : ''}
+          <button class="glass-btn sm" type="button" data-act="edit" aria-label="${esc(t('common.edit'))}">${icon('edit')}</button>
+          <button class="glass-btn sm" type="button" data-act="more" aria-label="${esc(t('common.more'))}">${icon('more')}</button>
+        </div>
+      </div>
+      <div class="fab-dock" id="fab-dock">
+        <button class="fab-primary" type="button" data-act="add-proc">${esc(t('p.addProc'))}</button>
+        <button class="glass fab-round" type="button" data-act="add-photo" aria-label="${esc(t('cam.title'))}" title="${esc(t('cam.title'))}">${icon('camera')}</button>
+        <button class="glass fab-round" type="button" data-act="add-appt" aria-label="${esc(t('p.addAppt'))}" title="${esc(t('p.addAppt'))}">${icon('calendar')}</button>
+      </div>
       <section class="hero">
-        <div class="hero-nav">
+        <div class="hero-nav desktop-only">
           <button class="btn-icon" type="button" data-act="back" aria-label="${esc(t('common.back'))}">${icon('back')}</button>
           <span class="spacer"></span>
           <button class="btn-icon" type="button" data-act="edit" aria-label="${esc(t('common.edit'))}">${icon('edit')}</button>
@@ -150,7 +165,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
         <div class="hero-label">${lastProc ? `${isPlannedProc(lastProc) ? `${esc(t('op.planned'))} · ` : ''}${esc(procLabel(lastProc.typeName))} · ${esc(fmtDate(lastProc.date))}` : esc(t('p.noProc'))}</div>
         <h1 class="hero-name">${esc(name)}</h1>
         <div class="hero-meta">${[a !== null ? esc(t('age', { n: a })) : null, genderLabel ? esc(genderLabel) : null, p.phone ? `<a href="${phoneHref(p.phone)}" class="num">${esc(p.phone)}</a>` : null].filter(Boolean).join(' · ') || `<span class="t-tertiary">${esc(t('p.noInfo'))}</span>`}</div>
-        <div class="hero-actions">
+        <div class="hero-actions desktop-only">
           <button class="btn btn-primary" type="button" data-act="add-proc">${esc(t('p.addProc'))}</button>
           ${p.phone ? `<a class="btn-outline-icon" href="${phoneHref(p.phone)}" aria-label="${esc(t('p.call'))}" title="${esc(t('p.call'))}">${icon('phone')}</a>` : ''}
           <button class="btn-outline-icon" type="button" data-act="add-photo" aria-label="${esc(t('cam.title'))}" title="${esc(t('cam.title'))}">${icon('camera')}</button>
@@ -180,14 +195,26 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       <div id="tab-body"></div>
       </div>`;
 
-    root.querySelector('[data-act=back]').onclick = () => go('/');
-    root.querySelector('[data-act=edit]').onclick = editPatient;
-    root.querySelector('[data-act=more]').onclick = patientMenu;
-    root.querySelector('[data-act=add-proc]').onclick = addProcedure;
-    root.querySelector('[data-act=add-photo]').onclick = () => addPhoto();   // her giriş noktası aynı: Kamera ile çek / Galeriden seç
-    root.querySelector('[data-act=add-appt]').onclick = () => addAppointment();
+    root.querySelectorAll('[data-act=back]').forEach((b) => { b.onclick = () => go('/'); });
+    root.querySelectorAll('[data-act=edit]').forEach((b) => { b.onclick = editPatient; });
+    root.querySelectorAll('[data-act=more]').forEach((b) => { b.onclick = patientMenu; });
+    root.querySelectorAll('[data-act=add-proc]').forEach((b) => { b.onclick = addProcedure; });
+    root.querySelectorAll('[data-act=add-photo]').forEach((b) => { b.onclick = () => addPhoto(); });   // her giriş noktası aynı: Kamera ile çek / Galeriden seç
+    root.querySelectorAll('[data-act=add-appt]').forEach((b) => { b.onclick = () => addAppointment(); });
+    watchHero();
     root.querySelectorAll('[data-tab]').forEach((b) => { b.onclick = () => { setTab(b.dataset.tab); syncTabs(); paintTab(); }; });
     paintTab();
+  }
+
+  /** Nav düğmelerinin cam tonu: hero altlarındayken koyu, hero kaydırılıp çıkınca açık (§5A) */
+  let heroIO = null;
+  function watchHero() {
+    if (heroIO) { heroIO.disconnect(); heroIO = null; }
+    const hero = root.querySelector('.hero'); const nav = root.querySelector('#navtop');
+    if (!hero || !nav || !('IntersectionObserver' in window)) return;
+    const navBottom = Math.round(nav.getBoundingClientRect().bottom);
+    heroIO = new IntersectionObserver(([e]) => { nav.classList.toggle('on-dark', e.isIntersecting); }, { rootMargin: `-${navBottom}px 0px -${Math.max(0, innerHeight - navBottom - 1)}px 0px`, threshold: 0 });
+    heroIO.observe(hero);
   }
 
   function syncTabs() {
@@ -788,5 +815,5 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
   }
 
   paint();
-  return () => { releaseURLs(); root.classList.remove('has-hero'); };
+  return () => { releaseURLs(); root.classList.remove('has-hero'); if (heroIO) heroIO.disconnect(); };
 }

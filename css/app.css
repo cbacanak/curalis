@@ -93,6 +93,25 @@ body.searching .navdock { opacity: 0; transform: translateY(12px); pointer-event
 .navtop .glass-btn { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; color: var(--text); transition: transform var(--dur-fast); }
 .navtop .glass-btn:active { transform: scale(.96); }
 .navtop .glass-btn .ic { width: 22px; height: 22px; }
+.navtop.split { left: 16px; right: 16px; justify-content: space-between; align-items: center; }
+.navtop .glass-btn.sm { width: 40px; height: 40px; }
+.navtop .glass-btn.sm .ic { width: 20px; height: 20px; }
+.navtop .glass-group { display: flex; height: 40px; border-radius: 20px; padding: 0 2px; }   /* Ara · Düzenle · Menü tek kapsülde */
+.navtop .glass-group .glass-btn { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: var(--text); }
+.navtop .glass-group .glass-btn .ic { width: 20px; height: 20px; }
+/* Lacivert hero üstünde koyu cam */
+.navtop.on-dark .glass { background: var(--glass-bg-dark); border-color: var(--glass-border-dark); box-shadow: none; }
+.navtop.on-dark .glass-btn { color: var(--text-on-inverse); }
+/* Yüzen aksiyonlar (hasta kartı): tab bar yerine primary kapsül + cam daireler */
+.fab-dock { position: fixed; left: 16px; right: 16px; top: calc(var(--vv-h, 100vh) - var(--tabbar-h) - var(--dock-b) - var(--safe-b)); z-index: 30; display: flex; gap: 10px; align-items: center; }
+.fab-primary { flex: 1; height: 56px; border-radius: 28px; background: var(--primary-bg); color: var(--primary-text); font-size: var(--fs-small); font-weight: var(--fw-medium); box-shadow: var(--glass-shadow); transition: transform var(--dur-fast); }
+.fab-primary:active { transform: scale(.98); }
+.fab-round { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; color: var(--text); flex: 0 0 auto; transition: transform var(--dur-fast); }
+.fab-round:active { transform: scale(.96); }
+.fab-round .ic { width: 22px; height: 22px; }
+body.no-dock .navdock { display: none; }
+body.searching .fab-dock { opacity: 0; pointer-events: none; }
+.desktop-only { display: none !important; }
 /* Klavye üstü arama kapsülü */
 .search-dock { position: fixed; left: 16px; right: 16px; z-index: 120; top: calc(var(--vv-h, 100vh) - 52px - var(--edge-pad, 16px)); opacity: 0; transform: translateY(8px); transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease); }
 .search-dock.open { opacity: 1; transform: none; }
@@ -105,7 +124,8 @@ body.searching .navdock { opacity: 0; transform: translateY(12px); pointer-event
 .hl { text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
 
 @media (min-width: 880px) {
-  .navdock, .main::after, .navtop { display: none; }
+  .navdock, .main::after, .navtop, .fab-dock { display: none; }
+  .desktop-only { display: flex !important; }
   .view .search { display: flex; }
   .sidenav {
     display: flex; flex-direction: column; width: var(--sidenav-w); flex: 0 0 auto;
@@ -222,6 +242,11 @@ body.searching .navdock { opacity: 0; transform: translateY(12px); pointer-event
 .tab-btn.on { color: var(--text); font-weight: var(--fw-medium); }
 .tab-btn.on::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--text); }
 .tabs.sticky { position: sticky; top: var(--safe-t); z-index: 5; background: var(--bg); }
+/* Mobilde sekmeler sabit nav düğmelerinin altına yapışır; üstündeki bant zemin rengiyle dolar (düğmeler içerik üstünde yüzmez) */
+@media (max-width: 879px) {
+  .tabs.sticky { top: calc(var(--safe-t) + 60px); }
+  .tabs.sticky::before { content: ''; position: absolute; left: calc(-1 * var(--page-x)); right: calc(-1 * var(--page-x)); bottom: 100%; height: calc(var(--safe-t) + 60px); background: var(--bg); }
+}
 
 /* İkili seçim (Öncesi / Sonrası) */
 .seg { display: flex; background: var(--bg-subtle); border-radius: var(--r-control); padding: 4px; gap: 4px; }
@@ -350,6 +375,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
   background: var(--bg-inverse); color: var(--text-on-inverse);
   margin: 0 calc(-1 * var(--page-x)); padding: calc(8px + var(--safe-t)) var(--page-x) 24px;
 }
+@media (max-width: 879px) { .hero { padding-top: calc(var(--safe-t) + 12px + 40px + 20px); } }
 .hero-nav { display: flex; align-items: center; height: 44px; margin: 0 -8px 12px; }
 .hero-nav .btn-icon { color: var(--text-on-inverse); }
 .hero-nav .spacer { flex: 1; }
