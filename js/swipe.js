@@ -3,6 +3,7 @@
  * Dikey kaydırma tarayıcıya bırakılır (touch-action: pan-y); yatay hareket satırı kaydırır.
  * Uzun basma (400ms, hareketsiz) ayrı bir eylem tetikler; ardından gelen tık yutulur. */
 import { esc, icon } from './ui.js';
+import { t, isOp } from './i18n.js';
 
 const ACTION_W = 72;
 const LONG_PRESS = 400;
@@ -12,6 +13,15 @@ let openRow = null;
 export function swipeWrap(rowHtml, key, { left = [], right = [] } = {}) {
   const acts = (list, side) => list.length ? `<div class="swipe-actions ${side}">${list.map((a) => `<button type="button" class="swipe-act ${a.danger ? 'danger' : ''}" data-swipe-act="${esc(a.key)}" aria-label="${esc(a.label)}">${icon(a.icon)}<span>${esc(a.label)}</span></button>`).join('')}</div>` : '';
   return `<div class="swipe" data-swipe="${esc(key)}" data-left="${left.length}" data-right="${right.length}">${acts(left, 'left')}${acts(right, 'right')}<div class="swipe-body">${rowHtml}</div></div>`;
+}
+
+/** Randevu satırı aksiyonları — her ekranda aynı (deneme bulgusu 1).
+ *  planlı kontrol: sağa Geldi · sola Gelmedi; geciken: sağa Geldi · sola Yeniden planla; planlı işlem: sağa Yapıldı · sola Tarihi değiştir. */
+export function apptActions(a, { overdue = false } = {}) {
+  if (isOp(a)) return a.status === 'planned' ? { left: [{ key: 'attended', icon: 'check', label: t('swipe.done') }], right: [{ key: 'redate', icon: 'calendar', label: t('swipe.redate') }] } : {};
+  if (overdue || a.status === 'missed') return { left: [{ key: 'attended', icon: 'check', label: t('swipe.attended') }], right: [{ key: 'reschedule', icon: 'clock', label: t('swipe.reschedule') }] };
+  if (a.status === 'planned') return { left: [{ key: 'attended', icon: 'check', label: t('swipe.attended') }], right: [{ key: 'missed', icon: 'alert', label: t('swipe.missed'), danger: true }] };
+  return {};
 }
 
 export function closeOpenRow() {

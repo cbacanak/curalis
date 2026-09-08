@@ -1,9 +1,9 @@
 /* Hasta listesi — TASARIM.md §5 + §5A (Display başlık kayar, sabit cam (+), arama adası → klavye üstü kapsül, hairline liste) */
 import { Patients, Procedures, Appointments, fullName } from '../db.js';
 import { esc, icon, initials, fmtDate, fmtDayMonth, fmtTime, parseDate, daysBetween, emptyState, toast, undoToast, age, actionMenu, statusText, phoneHref, waHref, sheet } from '../ui.js';
-import { swipeWrap, bindSwipe } from '../swipe.js';
+import { swipeWrap, bindSwipe, apptActions } from '../swipe.js';
 import { reminderHref } from '../messages.js';
-import { patientForm, appointmentForm } from '../forms.js';
+import { patientForm, appointmentForm, procedureForm } from '../forms.js';
 import { setTopbar, go, replacePath } from '../nav.js';
 import { setIsland, openSearch, closeSearch } from '../dock.js';
 import { t, cmp, lower, procLabel, apptLabel, isOp } from '../i18n.js';
@@ -69,7 +69,7 @@ export async function render(root, { embedded = false, activeId = null, newPatie
   function upcomingCard(a) {
     const p = pById[a.patientId];
     const pr = a.procedureId ? prById[a.procedureId] : null;
-    return `
+    return wrap(`
       <button class="upcoming-card" type="button" data-open="${p.id}">
         <div>
           <div class="name">${esc(fullName(p))}</div>
@@ -79,7 +79,7 @@ export async function render(root, { embedded = false, activeId = null, newPatie
           <div class="date">${esc(fmtDayMonth(a.date))}</div>
           <div class="rel">${esc(daysLabel(a))}</div>
         </div>
-      </button>`;
+      </button>`, `appt:${a.id}`, apptActions(a));
   }
 
   /** Geciken kontrol satırı: hasta, kontrol adı, tarih; sağda 'N gün gecikti' ya da 'Gelmedi' */
@@ -96,7 +96,7 @@ export async function render(root, { embedded = false, activeId = null, newPatie
           <div class="row-sub">${esc(sub)}</div>
         </div>
         <div class="row-end">${a.status === 'missed' ? statusText('missed') : `<span class="status danger">${esc(t('days.late', { n: daysBetween(d, today) }))}</span>`}</div>
-      </button>`, `appt:${a.id}`, a.status === 'planned' ? { left: [{ key: 'attended', icon: 'check', label: t('swipe.attended') }], right: [{ key: 'missed', icon: 'alert', label: t('swipe.missed'), danger: true }] } : { left: [{ key: 'attended', icon: 'check', label: t('swipe.attended') }] });
+      </button>`, `appt:${a.id}`, apptActions(a, { overdue: true }));
   }
   /** Geciken satır menüsü: yeniden planla / geldi / gelmedi / hasta kartı */
   async function overdueMenu(a) {
@@ -115,6 +115,12 @@ export async function render(root, { embedded = false, activeId = null, newPatie
     else if (v === 'open') go(`/patient/${a.patientId}/randevular`);
   }
 
+  /** Kaydırma aksiyonu: durum / yeniden planla / işlem tarihini değiştir */
+  async function apptAction(a, act) {
+    if (act === 'attended' || act === 'missed') { setStatus(a, act); return; }
+    if (act === 'reschedule') { const r = await appointmentForm({ patientId: a.patientId, procedures: procedures.filter((x) => x.patientId === a.patientId), existing: { ...a, status: 'planned' } }); if (r) { toast(t('overdue.rescheduled')); render(root); } }
+    if (act === 'redate') { const pr = prById[a.procedureId]; if (!pr) return; const r = await procedureForm({ patientId: a.patientId, existing: pr, procedures: procedures.filter((x) => x.patientId === a.patientId) }); if (r) { toast(r.shiftedControls ? t('form.proc.shifted', { n: r.shiftedControls }) : t('p.proc.updated')); render(root); } }
+  }
   /** 'gelmedi' onay sormaz; geri al kapsülü önceki durumu döndürür (§5B) */
   async function setStatus(a, v) {
     const prev = a.status;
@@ -199,7 +205,7 @@ export async function render(root, { embedded = false, activeId = null, newPatie
     if (!embedded) bindSwipe(list, {
       onAction: async (key, act) => {
         const [kind, kid] = key.split(':');
-        if (kind === 'appt') { const a = appointments.find((x) => x.id === kid); if (a) setStatus(a, act); return; }
+        if (kind === 'appt') { const a = appointments.find((x) => x.id === kid); if (a) apptAction(a, act); return; }
         const p = pById[kid]; if (!p) return;
         if (act === 'call') location.href = phoneHref(p.phone);
         else if (act === 'wa') window.open(waHref(p.phone), '_blank', 'noopener');

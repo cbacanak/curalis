@@ -10,7 +10,7 @@ import {
 } from '../forms.js';
 import { setTopbar, go, replacePath, rerender } from '../nav.js';
 import { setDock, isMobile } from '../dock.js';
-import { swipeWrap, bindSwipe } from '../swipe.js';
+import { swipeWrap, bindSwipe, apptActions } from '../swipe.js';
 import { reminderHref } from '../messages.js';
 import { t, lower, procLabel, apptLabel, kindLabel, isOp } from '../i18n.js';
 import { PERIODS, TRASH_DAYS, sortAngles, periodLabel, angleLabel, consentLabel, anesthesiaLabel, fieldLabel, optionLabel } from '../model.js';
@@ -424,14 +424,18 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
           <div class="row-sub">${esc(sub)}</div>
         </div>
         <div class="row-end">${statusText(a.status, { overdue, today })}</div>
-      </button>`, a.id, isOp(a) ? {} : apptSwipe(a));
+      </button>`, a.id, apptActions(a, { overdue: isOverdue(a) }));
   }
   function bindApptRows(scope, before) {
     scope.querySelectorAll('[data-appt]').forEach((b) => { b.onclick = () => { before?.(); openAppointment(b.dataset.appt); }; });
-    bindSwipe(scope, { onAction: (key, act) => { const a = data.appointments.find((x) => x.id === key); if (a) setStatus(a, act); } });
+    bindSwipe(scope, { onAction: (key, act) => { const a = data.appointments.find((x) => x.id === key); if (a) apptAction(a, act); } });
   }
-  /** Randevu satırı kaydırma aksiyonları: sola → Gelmedi, sağa → Geldi (planlı kayıtlarda) */
-  const apptSwipe = (a) => (a.status === 'planned' ? { left: [{ key: 'attended', icon: 'check', label: t('swipe.attended') }], right: [{ key: 'missed', icon: 'alert', label: t('swipe.missed'), danger: true }] } : {});
+  /** Kaydırma aksiyonu: durum / yeniden planla / işlem tarihini değiştir (aksiyon kümesi swipe.js apptActions) */
+  async function apptAction(a, act) {
+    if (act === 'attended' || act === 'missed') { setStatus(a, act); return; }
+    if (act === 'reschedule') { const r = await appointmentForm({ patientId: id, procedures: data.procedures, existing: { ...a, status: 'planned' } }); if (r) { toast(t('overdue.rescheduled')); refresh(); } }
+    if (act === 'redate') { const pr = data.procById[a.procedureId]; if (!pr) return; const r = await procedureForm({ patientId: id, existing: pr, procedures: data.procedures }); if (r) { toast(r.shiftedControls ? t('form.proc.shifted', { n: r.shiftedControls }) : t('p.proc.updated')); refresh(); } }
+  }
   /** Durum değişimi; 'gelmedi' onay sormaz, geri al kapsülü önceki durumu döndürür (§5B) */
   async function setStatus(a, v) {
     const prev = a.status;

@@ -421,7 +421,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
   transition: transform var(--dur-fast);
 }
 .upcoming-card:active { transform: scale(.99); }
-.upcoming-card + .upcoming-card { margin-top: 10px; }
+.upcoming-card + .upcoming-card, .swipe + .swipe .upcoming-card { margin-top: 10px; }
 .upcoming-card .name { font-size: var(--fs-title); font-weight: var(--fw-medium); }
 .upcoming-card .sub { font-size: var(--fs-caption); color: var(--upcoming-sub); margin-top: 4px; }
 .upcoming-card .date { font-size: var(--fs-title); font-weight: var(--fw-medium); text-align: right; white-space: nowrap; }
@@ -429,7 +429,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 /* Geciken kontrol kartı (§5A Ajanda): uyarı zemini, tek istisna renkli kart */
 .overdue-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; text-align: left; background: var(--warning-bg); color: var(--text); border-radius: var(--r-card); padding: 16px 20px; transition: transform var(--dur-fast); }
 .overdue-card:active { transform: scale(.99); }
-.overdue-card + .overdue-card { margin-top: 10px; }
+.overdue-card + .overdue-card, .swipe + .swipe .overdue-card { margin-top: 10px; }
 .overdue-card .name { font-size: var(--fs-title); font-weight: var(--fw-medium); }
 .overdue-card .sub { font-size: var(--fs-caption); color: var(--warning); margin-top: 4px; }
 .overdue-card .date { font-size: var(--fs-title); font-weight: var(--fw-medium); text-align: right; white-space: nowrap; }
