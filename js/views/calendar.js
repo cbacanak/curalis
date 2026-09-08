@@ -1,6 +1,7 @@
 /* Ajanda — liste (geciken + yaklaşan) ve aylık takvim; TASARIM.md §5A: segment kontrol, geciken uyarı kartları, arama adası, sabit cam (+) */
 import { Appointments, Patients, Procedures, fullName } from '../db.js';
-import { esc, icon, initials, fmtTime, fmtDateLong, fmtDayMonth, weekdayShort, parseDate, daysBetween, statusText, emptyState, toast, actionMenu, confirmDialog, segmented, bindSegmented } from '../ui.js';
+import { esc, icon, initials, fmtTime, fmtDateLong, fmtDayMonth, weekdayShort, parseDate, daysBetween, statusText, emptyState, toast, undoToast, actionMenu, segmented, bindSegmented } from '../ui.js';
+import { swipeWrap, bindSwipe } from '../swipe.js';
 import { appointmentForm, procedureForm } from '../forms.js';
 import { setTopbar, go } from '../nav.js';
 import { setIsland, openSearch, closeSearch, isMobile } from '../dock.js';
@@ -41,7 +42,8 @@ export async function render(root) {
     const sub = isOp(a)
       ? [withDate ? fmtDayMonth(a.date) : null, fmtTime(a.date), t('op.row'), apptLabel(a), a.notes || null].filter(Boolean).join(' · ')
       : [withDate ? fmtDayMonth(a.date) : null, fmtTime(a.date), lower(apptLabel(a)), pr ? procLabel(pr.typeName) : (kindLabel(a.type) !== apptLabel(a) ? kindLabel(a.type) : null), a.notes || null].filter(Boolean).join(' · ');
-    return `
+    const swipe = a.status === 'planned' && !isOp(a) ? { left: [{ key: 'attended', icon: 'check', label: t('swipe.attended') }], right: [{ key: 'missed', icon: 'alert', label: t('swipe.missed'), danger: true }] } : {};
+    return swipeWrap(`
       <button class="row ${a.status === 'attended' || a.status === 'cancelled' ? 'muted' : ''} ${isOp(a) ? 'op' : ''}" type="button" data-appt="${a.id}">
         <div class="avatar sm">${esc(initials(p ? fullName(p) : '?'))}</div>
         <div class="row-main">
@@ -49,7 +51,7 @@ export async function render(root) {
           <div class="row-sub">${esc(sub)}</div>
         </div>
         <div class="row-end">${a.status === 'planned' && !overdue ? `<span class="status">${esc(daysLeft(d))}</span>` : statusText(a.status, { overdue, today: daysBetween(today, d) === 0 })}</div>
-      </button>`;
+      </button>`, a.id, swipe);
   };
   /** Planlı randevular için "Bugün", "Yarın", "6 gün" */
   const daysLeft = (d) => { const n = daysBetween(today, d); return n === 0 ? t('common.today') : n === 1 ? t('common.tomorrow') : t('days.n', { n }); };
@@ -260,12 +262,21 @@ export async function render(root) {
         else { items.push({ label: t('common.edit'), icon: 'edit', value: 'edit' }); items.push({ label: t('common.delete'), icon: 'trash', value: 'delete', danger: true }); }
         const v = await actionMenu(`${p ? fullName(p) : ''} · ${apptLabel(a)}`, items);
         if (v === 'open') go(`/patient/${a.patientId}/${isOp(a) ? 'islemler' : 'randevular'}`);
-        else if (['attended', 'missed', 'planned'].includes(v)) { await Appointments.save({ ...a, status: v }); toast(t('common.updated')); refresh(); }
+        else if (['attended', 'missed', 'planned'].includes(v)) setStatus(a, v);
         else if (v === 'editProc') { const pr = prById[a.procedureId]; if (!pr) return; const r = await procedureForm({ patientId: a.patientId, existing: pr }); if (r) { toast(r.shiftedControls ? t('form.proc.shifted', { n: r.shiftedControls }) : t('p.proc.updated')); refresh(); } }
         else if (v === 'edit') { const r = await appointmentForm({ patientId: a.patientId, procedures: procedures.filter((x) => x.patientId === a.patientId), existing: a }); if (r) { toast(t('appt.updated')); refresh(); } }
-        else if (v === 'delete') { if (await confirmDialog({ title: t('appt.deleteQ'), okText: t('common.delete'), danger: true })) { await Appointments.remove(a.id); toast(t('common.deleted')); refresh(); } }
+        else if (v === 'delete') { await Appointments.remove(a.id); refresh(); undoToast(t('undo.apptDeleted'), async () => { await Appointments.restore(a.id); toast(t('undo.restored')); refresh(); }); }
       };
     });
+    bindSwipe(body, { onAction: (key, act) => { const a = appointments.find((x) => x.id === key); if (a) setStatus(a, act); } });
+  }
+  /** 'gelmedi' onay sormaz; geri al kapsülü önceki durumu döndürür (§5B) */
+  async function setStatus(a, v) {
+    const prev = a.status;
+    await Appointments.save({ ...a, status: v });
+    refresh();
+    if (v === 'missed') undoToast(t('undo.missed'), async () => { await Appointments.save({ ...a, status: prev }); toast(t('undo.restored')); refresh(); });
+    else toast(t('common.updated'));
   }
 
   paint();

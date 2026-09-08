@@ -15,7 +15,7 @@ body {
   overscroll-behavior-y: none;
   overflow-x: clip; /* hidden yerine clip: body kaydırma kabı olmaz, yapışkan öğeler çalışır */
 }
-body.scroll-locked { position: fixed; left: 0; right: 0; width: 100%; overflow: hidden; }
+html.scroll-locked, html.scroll-locked body { overflow: hidden; overscroll-behavior: none; }   /* gövde sabitlenmez (iOS yerleşim görünümü) */
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; background: none; border: 0; padding: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 a { color: inherit; text-decoration: none; }
@@ -293,7 +293,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 #layer { position: relative; z-index: 100; }
 .sheet-backdrop {
   position: fixed; inset: 0; bottom: auto; height: var(--vv-h, 100%); background: rgba(11, 19, 38, .45); display: flex; align-items: flex-end; justify-content: center;
-  opacity: 0; transition: opacity var(--dur) var(--ease); z-index: 180;
+  opacity: 0; transition: opacity var(--dur) var(--ease); z-index: 180; touch-action: none; overscroll-behavior: contain;
 }
 .sheet-backdrop.open { opacity: 1; }
 .sheet-backdrop.closing { opacity: 0; }
@@ -311,6 +311,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .sheet-title { flex: 1; font-size: 20px; font-weight: var(--fw-medium); letter-spacing: -.01em; padding-top: 8px; }
 .sheet-close { margin-top: 6px; color: var(--text-secondary); font-size: var(--fs-body); height: 36px; padding: 0 4px; flex: 0 0 auto; }
 .sheet-body { padding: 12px var(--page-x) 20px; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; }
+.sheet-head, .sheet-foot, .action-sheet .menu, .action-sheet .btn { touch-action: manipulation; }
 .sheet-foot { display: flex; gap: 8px; align-items: center; padding: 8px var(--page-x) 16px; }
 .sheet-foot .btn-primary { flex: 1; height: 46px; }
 .spacer { flex: 1; }
@@ -348,7 +349,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 @media (min-width: 880px) { .toast { top: auto; bottom: 28px; transform: translate(-50%, 12px); } .toast.show { transform: translate(-50%, 0); } }
 
 /* Eylem sayfası (silme onayı) — iOS action sheet */
-.action-sheet { position: fixed; inset: 0; bottom: auto; height: var(--vv-h, 100%); z-index: 190; background: rgba(11, 19, 38, .45); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 0 12px calc(12px + var(--safe-b)); opacity: 0; transition: opacity var(--dur) var(--ease); }
+.action-sheet { position: fixed; inset: 0; bottom: auto; height: var(--vv-h, 100%); z-index: 190; touch-action: none; overscroll-behavior: contain; background: rgba(11, 19, 38, .45); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 0 12px calc(12px + var(--safe-b)); opacity: 0; transition: opacity var(--dur) var(--ease); }
 .action-sheet.open { opacity: 1; }
 .as-group { width: 100%; max-width: 440px; transform: translateY(24px); transition: transform var(--dur) var(--ease); }
 .open .as-group { transform: none; }
@@ -678,3 +679,28 @@ html.locked, body.locked { background: var(--bg-inverse); }   /* kilit ekranın�
 #vv-debug pre { margin: 0; white-space: pre-wrap; }
 .vv-debug-actions { display: flex; gap: 8px; margin-top: 8px; }
 .vv-debug-actions button { flex: 1; height: 36px; border-radius: 8px; background: rgba(245,244,240,.14); color: inherit; font: inherit; }
+
+/* ---------------- Liste etkileşimleri (§5B): kaydırma aksiyonları, uzun basma, geri al ---------------- */
+.swipe { position: relative; overflow: hidden; -webkit-touch-callout: none; }
+.swipe-body { position: relative; background: var(--bg); touch-action: pan-y; user-select: none; -webkit-user-select: none; will-change: transform; }
+.swipe-body .row { border-bottom: 1px solid var(--hairline); }
+.list .swipe:last-child .swipe-body .row { border-bottom: 0; }
+.swipe-actions { position: absolute; top: 0; bottom: 0; display: flex; }
+.swipe-actions.left { left: 0; }
+.swipe-actions.right { right: 0; }
+.swipe-act { width: 72px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: var(--bg-subtle); color: var(--text); font-size: var(--fs-label); }
+.swipe-act .ic { width: 20px; height: 20px; }
+.swipe-act.danger { background: var(--danger-bg); color: var(--danger); }
+.swipe-act:active { filter: brightness(.96); }
+/* Uzun basma önizlemesi */
+.peek { display: flex; align-items: center; gap: 14px; padding: 4px 0 16px; }
+.menu-list { display: flex; flex-direction: column; }
+.menu-list .menu-item { width: 100%; color: inherit; }
+.menu-list .menu-item.danger { color: var(--danger); }
+/* Geri al kapsülü: tab bar / yüzen aksiyonların 10px üstünde, 48px cam kapsül */
+.undo { position: fixed; left: 16px; right: 16px; top: calc(var(--vv-h, 100vh) - var(--tabbar-h) - var(--dock-b) - var(--safe-b) - 10px - 48px); height: 48px; border-radius: 24px; z-index: 200; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 6px 0 18px; font-size: var(--fs-small); color: var(--text); opacity: 0; transform: translateY(8px); transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease); }
+.undo.show { opacity: 1; transform: none; }
+.undo-text { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.undo-btn { height: 36px; padding: 0 14px; border-radius: 18px; background: var(--primary-bg); color: var(--primary-text); font-size: var(--fs-small); font-weight: var(--fw-medium); flex: 0 0 auto; }
+body.has-undo .toast { margin-top: -58px; }   /* bildirim, geri al kapsülünün üstünde */
+@media (min-width: 880px) { .undo { left: calc(var(--sidenav-w) + 24px); right: 24px; top: auto; bottom: 24px; } body.has-undo .toast { margin-top: 0; bottom: 84px; } }

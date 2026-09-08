@@ -1,5 +1,5 @@
 /* Ayarlar — bölüm etiketi + hairline satırlar; yıkıcı eylem yalnızca kırmızı metin */
-import { counts, clearAllData, Templates, trashCount, Audit } from '../db.js';
+import { counts, clearAllData, Templates, trashCount, Audit, SCHEMA } from '../db.js';
 import { templatesSheet, trashSheet, auditSheet } from './manage.js';
 import { TRASH_DAYS } from '../model.js';
 import { esc, icon, toast, confirmDialog, actionMenu } from '../ui.js';
@@ -11,7 +11,7 @@ import { segmented, bindSegmented } from '../ui.js';
 import { t, getLang, setLang, LANGS, applyStaticText } from '../i18n.js';
 import { showViewportDebug } from '../viewport.js';
 
-export const APP_VERSION = '0.9.3';
+export const APP_VERSION = '0.10.1';
 
 export async function render(root) {
   setTopbar({ title: t('s.title') });
@@ -82,7 +82,7 @@ export async function render(root) {
       ${rowBtn('clear', esc(t('s.clear')), '', { danger: true })}
     </section>
 
-    <p class="t-caption section app-mark" style="color:var(--text-tertiary)"><img src="icons/icon.svg" alt="" width="20" height="20">${esc(t('s.version', { v: APP_VERSION }))}</p>
+    <p class="t-caption section app-mark" style="color:var(--text-tertiary)"><img src="icons/icon.svg" alt="" width="20" height="20">${esc(t('s.version', { v: APP_VERSION, s: SCHEMA }))}</p>
     </div>`;
 
   bindSegmented(root.querySelector('.seg[data-name=theme]'), (v) => applyTheme(v));

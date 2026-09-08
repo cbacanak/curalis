@@ -33,13 +33,13 @@ gerekli olanlar yapılır.
 Sürüm numaraları plandaki v0.x sayılarıyla değil, gerçek sürümle (0.8.x / 0.9.x) izlenir; eşleme CHANGELOG.md'de.
 
 - [x] **Adım 0 — Rename ve ikon:** tamamen. Repo `curalis`, manifest/başlık/ikon Curalis, eski adres yönlendiriyor.
-- [~] **Adım 1 — Veri modeli:** kısmen. Alanlar MOBIL.md §2 ile birebir (aşağıya bak); "eski veri bozulmadan taşınır", migrasyon öncesi otomatik yedek ve geri alma yapılmadı — eski veri istekle atıldı (IndexedDB adı değişti). Ayarlar'da "şema v2" yazısı yok.
+- [x] **Adım 1 — Veri modeli:** alanlar MOBIL.md §2 ile birebir (aşağıya bak); Ayarlar'da "şema v2" yazısı (0.10.0). Eski veri istekle atıldığı için (IndexedDB adı değişti) migrasyon öncesi yedek/geri alma uygulanmadı. Kural (Eylül 2026): bundan sonra şema değişikliği yalnızca migrasyonla, mevcut veri hiçbir sürümde atılmaz.
 - [x] **Adım 2 — Navigasyon katmanı (5A):** tamamen (0.9.0–0.9.3). Kaydırınca küçülen tab bar (isteğe bağlı) yok. Kamera sekmesi canlı kameraya açılır, kamera yoksa galeriye düşer (Adım 10 tamamlandığı için).
 - [x] **Adım 3 — Şablonlar ve kontrol planı:** tamamen. Ayarlar > Şablonlar, türe özel alanlar, otomatik kontrol randevuları, serbest metin tür yok.
 - [x] **Adım 4 — Fotoğraf dönem/açı/gruplama:** tamamen. Dönem+açı zorunlu, açıya göre grup, dönem çipleri, EXIF yeniden kodlamayla temizlenir.
 - [~] **Adım 5 — Karşılaştırma:** kısmen. Üç mod, seçim modu + raf, anonim paylaşım (Web Share) var; dönem şeridi, senkron zoom, çift dokunuş tam ekran yok.
 - [x] **Adım 6 — Klinik alanlar ve onam:** tamamen.
-- [~] **Adım 7 — Liste etkileşimleri ve geri al:** kısmen. Soft delete + Silinenler (30 gün) + geciken kontroller var; kaydırma aksiyonları, uzun basma sheet'i, geri al kapsülü yok (silme hâlâ onay soruyor).
+- [x] **Adım 7 — Liste etkileşimleri ve geri al (0.10.0):** kaydırma aksiyonları (hasta: sola Ara · WhatsApp, sağa Randevu; randevu: sola Gelmedi, sağa Geldi), 400 ms uzun basma önizlemesi (Ara · Fotoğraf çek · Karşılaştır · Sil), geri al kapsülü (silme ve 'gelmedi' onay sormaz, 5 sn geri al; kalıcı silme ve yedek üzerine yazma onay sorar), soft delete + Silinenler (30 gün), geciken kontroller.
 - [~] **Adım 8 — Formlar ve klavye:** çok az. inputmode/type/autocapitalize ve boşluk temizleme var; kademeli sheet, Türkçe baş harf düzeltme, Rehberden seç, pasif/aktif Kaydet, hazır mesaj şablonları yok.
 - [~] **Adım 9 — Yedek ve güvenlik:** kısmen. Şifreli yedek (birleştir/değiştir), PIN frenleme, otomatik kilit süresi, denetim kaydında paylaşım/yedek var; günlük otomatik yedek ve arka planda bulanıklaştırma yok.
 - [x] **Adım 10 — Kamera denemesi:** tamamen (web sınırlarıyla). 90 sn kabul ölçümü cihazda yapılmadı.
@@ -53,7 +53,7 @@ Sürüm numaraları plandaki v0.x sayılarıyla değil, gerçek sürümle (0.8.x
 - Photo: hasta, işlem, dosya adı, çekim tarihi, `period`, `angle`, notlar; kaydedilen dosyada EXIF yok — var.
 - Appointment: hasta, işlem, tarih-saat, tür (control/consultation/operation/other), dönem etiketi, durum (planned/attended/missed/cancelled) — var; `calendarEventID` web'de gereksiz.
 - AuditEntry: zaman, cihaz, eylem, varlık; Ayarlar'dan görünür, silinemez — var.
-- Eksik: Ayarlar'da "şema v2" göstergesi; migrasyon öncesi otomatik yedek ve geri alma (eski veri atıldığı için uygulanmadı).
+- "şema v2" göstergesi Ayarlar'da (0.10.0). Migrasyon öncesi otomatik yedek ve geri alma eski veri atıldığı için uygulanmadı; sonraki şema değişikliklerinde zorunlu.
 
 ## Mobil uygulama için öncelikli
 

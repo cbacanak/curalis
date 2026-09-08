@@ -72,6 +72,9 @@ function watchLargeTitle(anchor) {
   mo.observe(view, { childList: true });
 }
 
+/** Geçerli görünümü yeniden çizer (geri al sonrası) */
+export const rerender = () => window.dispatchEvent(new Event('hashchange'));
+
 export function setActiveNav(key) {
   document.querySelectorAll('[data-nav]').forEach((el) => el.classList.toggle('on', el.dataset.nav === key));
 }
