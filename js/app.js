@@ -3,6 +3,7 @@ import { openDB, purgeExpired } from './db.js';
 import { currentPath, setActiveNav } from './nav.js';
 import { requestPersist, renderNotice } from './storage.js';
 import { initLock } from './lock.js';
+import { initViewportFix, relayoutBars } from './viewport.js';
 import { toast, emptyState } from './ui.js';
 import { t, applyStaticText } from './i18n.js';
 
@@ -61,6 +62,7 @@ async function start() {
   await initLock();
   window.addEventListener('hashchange', route);
   route();
+  initViewportFix();   // iOS: alt çubuk açılışta yukarıda kalmasın
   // Silinenler: süresi dolanlar kalıcı olarak kaldırılır (en iyi çaba)
   purgeExpired().catch(() => { /* bir sonraki açılışta yeniden denenir */ });
   // Verilerin tarayıcı tarafından yer açmak için silinmemesini iste; riskli ortamda uyar

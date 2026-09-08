@@ -5,6 +5,7 @@
  */
 import { Settings, clearAllData } from './db.js';
 import { el, icon, esc, toast, lockScroll, unlockScroll } from './ui.js';
+import { relayoutBars } from './viewport.js';
 import { t } from './i18n.js';
 
 const PIN_KEY = 'pin';
@@ -199,8 +200,8 @@ export async function showLock() {
     document.body.classList.remove('locked');
     unlockScroll();
     locked = false;
-    // iOS: kilit kalkınca sabit alt çubuk bazen bir kaydırmaya kadar yanlış yerde kalıyor; küçük bir kaydırma ile yerleşimi tazele
-    requestAnimationFrame(() => { const y = window.scrollY; window.scrollTo(0, y + 1); window.scrollTo(0, y); });
+    // iOS: kilit kalkınca sabit alt çubuk bir kaydırmaya kadar yanlış yerde kalabiliyor; yeniden yerleştir
+    requestAnimationFrame(relayoutBars); setTimeout(relayoutBars, 300);
   }
 }
 
