@@ -11,7 +11,7 @@ import {
 import { setTopbar, go, replacePath, rerender } from '../nav.js';
 import { setDock, isMobile } from '../dock.js';
 import { swipeWrap, bindSwipe, apptActions } from '../swipe.js';
-import { reminderHref } from '../messages.js';
+import { openReminder } from '../messages.js';
 import { t, lower, procLabel, apptLabel, kindLabel, isOp } from '../i18n.js';
 import { PERIODS, TRASH_DAYS, sortAngles, periodLabel, angleLabel, consentLabel, anesthesiaLabel, fieldLabel, optionLabel } from '../model.js';
 import { hydrateBlob, audit } from '../db.js';
@@ -460,7 +460,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     if (!isOp(a)) items.push({ label: t('appt.delete'), icon: 'trash', value: 'delete', danger: true });
     const v = await actionMenu(title, items);
     if (!v) return;
-    if (v === 'remind') { window.open(await reminderHref(a.status === 'missed' ? 'missed' : 'reminder', { patient: data.patient, a, pr }), '_blank', 'noopener'); return; }
+    if (v === 'remind') { openReminder(a.status === 'missed' ? 'missed' : 'reminder', { patient: data.patient, a, pr }); return; }
     if (['attended', 'missed', 'planned'].includes(v)) {
       await setStatus(a, v);
     } else if (v === 'edit') {

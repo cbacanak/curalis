@@ -8,11 +8,18 @@ const KEY = 'messageTemplates';
 export const MESSAGE_KEYS = ['reminder', 'missed'];
 export const defaultTemplate = (k) => t(`msg.${k}.default`);
 
+let cache = null;   // dokunma olayı içinde senkron bağlantı üretebilmek için
 export async function getTemplates() {
   const saved = (await Settings.get(KEY, null)) || {};
-  return Object.fromEntries(MESSAGE_KEYS.map((k) => [k, saved[k] || defaultTemplate(k)]));
+  cache = Object.fromEntries(MESSAGE_KEYS.map((k) => [k, saved[k] || defaultTemplate(k)]));
+  return cache;
 }
-export const saveTemplates = (obj) => Settings.set(KEY, obj);
+export const saveTemplates = async (obj) => { await Settings.set(KEY, obj); cache = null; };
+/** Şablonlar bellekteyse senkron, değilse varsayılan (ilk çağrıda yükleme başlatılır) */
+export function templatesSync() {
+  if (!cache) { getTemplates().catch(() => {}); return Object.fromEntries(MESSAGE_KEYS.map((k) => [k, defaultTemplate(k)])); }
+  return cache;
+}
 
 /** Şablonu doldurur. patient: hasta; a: randevu; pr: bağlı işlem (opsiyonel) */
 export function fillTemplate(tpl, { patient, a, pr }) {
@@ -26,9 +33,10 @@ export function fillTemplate(tpl, { patient, a, pr }) {
   return tpl.replace(/\{(ad|tarih|saat|kontrol|islem)\}/g, (_, k) => map[k]).replace(/\s{2,}/g, ' ').trim();
 }
 
-/** WhatsApp bağlantısı: numara + hazır metin */
-export async function reminderHref(kind, { patient, a, pr }) {
-  const tpls = await getTemplates();
-  const text = fillTemplate(tpls[kind] || defaultTemplate(kind), { patient, a, pr });
-  return `${waHref(patient.phone)}?text=${encodeURIComponent(text)}`;
+/** WhatsApp bağlantısı: E.164 numara + hazır metin. Senkron: dokunma olayı içinde location.href ile açılır. */
+export function reminderHref(kind, { patient, a, pr }) {
+  const tpls = templatesSync();
+  return waHref(patient.phone, fillTemplate(tpls[kind] || defaultTemplate(kind), { patient, a, pr }));
 }
+/** Hatırlatmayı aç: aynı sekmede (window.open iOS'ta engelleniyor); wa.me evrensel bağlantı WhatsApp'ı açar */
+export function openReminder(kind, ctx) { location.href = reminderHref(kind, ctx); }

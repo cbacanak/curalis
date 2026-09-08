@@ -2,7 +2,7 @@
 import { Patients, Procedures, Appointments, fullName } from '../db.js';
 import { esc, icon, initials, fmtDate, fmtDayMonth, fmtTime, parseDate, daysBetween, emptyState, toast, undoToast, age, actionMenu, statusText, phoneHref, waHref, sheet } from '../ui.js';
 import { swipeWrap, bindSwipe, apptActions } from '../swipe.js';
-import { reminderHref } from '../messages.js';
+import { openReminder } from '../messages.js';
 import { patientForm, appointmentForm, procedureForm } from '../forms.js';
 import { setTopbar, go, replacePath } from '../nav.js';
 import { setIsland, openSearch, closeSearch } from '../dock.js';
@@ -109,7 +109,7 @@ export async function render(root, { embedded = false, activeId = null, newPatie
     if (p.phone) items.push({ label: t('appt.remind'), icon: 'chat', value: 'remind' });
     items.push({ label: t('cal.openPatient'), icon: 'user', value: 'open' });
     const v = await actionMenu(`${fullName(p)} · ${apptLabel(a)}`, items);
-    if (v === 'remind') { window.open(await reminderHref(a.status === 'missed' ? 'missed' : 'reminder', { patient: p, a, pr: a.procedureId ? prById[a.procedureId] : null }), '_blank', 'noopener'); return; }
+    if (v === 'remind') { openReminder(a.status === 'missed' ? 'missed' : 'reminder', { patient: p, a, pr: a.procedureId ? prById[a.procedureId] : null }); return; }
     if (v === 'reschedule') { const r = await appointmentForm({ patientId: a.patientId, procedures: procedures.filter((x) => x.patientId === a.patientId), existing: { ...a, status: 'planned' } }); if (r) { toast(t('overdue.rescheduled')); render(root); } }
     else if (v === 'attended' || v === 'missed') setStatus(a, v);
     else if (v === 'open') go(`/patient/${a.patientId}/randevular`);
@@ -208,7 +208,7 @@ export async function render(root, { embedded = false, activeId = null, newPatie
         if (kind === 'appt') { const a = appointments.find((x) => x.id === kid); if (a) apptAction(a, act); return; }
         const p = pById[kid]; if (!p) return;
         if (act === 'call') location.href = phoneHref(p.phone);
-        else if (act === 'wa') window.open(waHref(p.phone), '_blank', 'noopener');
+        else if (act === 'wa') location.href = waHref(p.phone);   // aynı sekme: evrensel bağlantı WhatsApp'ı açar, window.open iOS'ta engelleniyor
         else if (act === 'appt') { const r = await appointmentForm({ patientId: p.id, procedures: procedures.filter((x) => x.patientId === p.id) }); if (r) { toast(t('p.apptAdded')); render(root); } }
       },
       onLongPress: (key) => { const [kind, kid] = key.split(':'); if (kind === 'patient' && pById[kid]) peekPatient(pById[kid]); },

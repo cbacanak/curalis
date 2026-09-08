@@ -162,11 +162,16 @@ export function phoneHref(phone) {
   return 'tel:' + (phone || '').replace(/[^\d+]/g, '');
 }
 /** WhatsApp bağlantısı: 05xx → 905xx; +90… → 90… */
-export function waHref(phone) {
+/** E.164 (artı işaretsiz): 0532… → 90532…, +90… → 90…, 0090… → 90…, 532… → 90532… */
+export function e164(phone) {
   let d = (phone || '').replace(/\D/g, '');
-  if (d.startsWith('0')) d = '90' + d.slice(1);
+  if (d.startsWith('00')) d = d.slice(2);
+  else if (d.startsWith('0')) d = '90' + d.slice(1);
   else if (d.length === 10 && d.startsWith('5')) d = '90' + d;
-  return 'https://wa.me/' + d;
+  return d;
+}
+export function waHref(phone, text = '') {
+  return 'https://wa.me/' + e164(phone) + (text ? '?text=' + encodeURIComponent(text) : '');
 }
 
 /* ---------------- Katman: sheet / confirm / toast ---------------- */

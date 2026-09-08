@@ -100,6 +100,7 @@ async function start() {
   route();
   initViewportFix();   // iOS: alt çubuk açılışta yukarıda kalmasın
   initDynamicType();   // iOS Dynamic Type → --dt (rem ölçeği)
+  import('./messages.js').then((m) => m.getTemplates()).catch(() => {});   // WhatsApp hatırlatma metinleri belleğe (senkron bağlantı için)
   wideQuery.addEventListener('change', route);   // 768px eşiği geçilince yerleşim değişir
   // Klavye kısayolları (iPad / masaüstü): ⌘N yeni hasta, ⌘F ara; Esc sheet'lerde zaten kapatır
   document.addEventListener('keydown', async (e) => {

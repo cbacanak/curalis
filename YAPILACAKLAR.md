@@ -58,8 +58,8 @@ Plan dışı yapılan: İngilizce dil desteği. Kural (8 Eyl 2026): plan dışı
 
 ## Deneme bulguları (gerçek kullanım, 1. hafta)
 
-1. [ ] Kaydırma aksiyonları tüm satır türlerinde: geciken randevu (sağa Geldi, sola Yeniden planla), planlı işlem (sağa Yapıldı, sola Tarihi değiştir), planlı kontrol (sağa Geldi, sola Gelmedi). Aynı satır türü her ekranda aynı aksiyon.
-2. [ ] WhatsApp hatırlatma çalışmıyor: numara E.164 (0 → 90), wa.me bağlantısına hazır mesaj, dokunma olayı içinde senkron `location.href`; `window.open` yok.
+1. [x] Kaydırma aksiyonları tüm satır türlerinde: geciken randevu (sağa Geldi, sola Yeniden planla), planlı işlem (sağa Yapıldı, sola Tarihi değiştir), planlı kontrol (sağa Geldi, sola Gelmedi). Aynı satır türü her ekranda aynı aksiyon.
+2. [x] WhatsApp hatırlatma çalışmıyor: numara E.164 (0 → 90), wa.me bağlantısına hazır mesaj, dokunma olayı içinde senkron `location.href`; `window.open` yok.
 3. [ ] Ara / WhatsApp'tan dönüşte kaydırma bozuluyor: visibilitychange, pagehide, touchcancel'da kaydırma durumu sıfırlanır, açık satırlar kapanır.
 4. [ ] Kamera hasta seçimi: üstte arama; bölümler "Bugün randevusu olanlar", "Son 5", "Tümü".
 5. [ ] Randevu formunda "Tüm alanları göster" yok; kademeli sheet: kısa form tarih-saat, tür, bağlı işlem (son işlem önseçili), dönem; yukarı çekince kalan alanlar.
