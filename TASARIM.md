@@ -233,6 +233,44 @@ Web'de `backdrop-filter` desteklenmeyen tarayıcıda `--glass-bg` opaklığı .9
 - Karanlık mod: cam değerleri `--glass-bg-dark` ailesinden; seçili tab dolgusu `--text` (fildişi), ikon `--bg-inverse`.
 - Kilit ekranı, formlar, sheet'ler değişmez.
 
+## 5B. Etkileşim kalıpları
+
+Her madde için uygulanabilirlik: **W** = web'de tam, **W~** = web'de yaklaşık, **N** = native bekler.
+
+### Liste etkileşimleri
+- **Kaydırma aksiyonları** (W~): Hasta satırı sola → Ara · WhatsApp; sağa → Randevu ekle. Randevu satırı sola → Gelmedi; sağa → Geldi. Aksiyon zemini `--bg-subtle`, yıkıcı olan `--danger-bg`. Web'de touch olayıyla; native'de sistem swipeActions.
+- **Uzun basma önizlemesi** (W~): Hastaya 400ms basınca alt sheet: küçük kart + aksiyonlar (Ara, Fotoğraf çek, Karşılaştır, Sil). Native'de context menu.
+- **Geri al** (W): Silme, "gelmedi", randevu iptali gibi işlemler onay sormaz; işlem yapılır, altta 5 sn cam kapsül "Hasta silindi · Geri al". Kalıcı silme (30 gün sonrası) ve yedek üzerine yazma hâlâ onay ister.
+- **Rehberden ekle** (W~): Yeni hasta formunda "Rehberden seç"; web'de Contact Picker API (iOS Safari destekli), native'de CNContactPicker.
+
+### Sheet ve formlar
+- **Kademeli sheet** (W~): Yeni hasta / randevu formu önce yarı yükseklikte (zorunlu alanlar: ad, telefon), yukarı çekince tam form. Web'de iki sabit yükseklik; native'de detents.
+- **Akıllı klavye** (W): `inputmode="tel"` telefon, `type="date"` tarih, `autocapitalize="words"` ad. Klavye üstünde "Önceki / Sonraki" gezinme.
+- **Türkçe ad düzeltme** (W): Baş harf büyütmede İ/ı, Ş/ş doğru; kaydederken baştaki/sondaki boşluk temizlenir.
+- **Kaydet butonu** (W): Zorunlu alanlar dolana kadar pasif (`--text-tertiary`), dolunca `--primary`. Hata mesajı alanın altında, kırmızı metin, ikon yok.
+
+### Fotoğraf ve karşılaştırma
+- **Dönem şeridi** (W): Karşılaştırma ekranının altında yatay zaman çizgisi: Öncesi · 1h · 1a · 3a · 6a · 1y. Sol fotoğraf sabit (Öncesi), şeritte kaydırınca sağ fotoğraf değişir. Aynı açı yoksa nokta soluk.
+- **Senkron zoom** (W): İki fotoğrafta pinch aynı anda; kaydırma da senkron.
+- **Çift dokunuş** (W): Tam ekran; aşağı kaydırarak kapat.
+- **Otomatik deklanşör** (N): Seviye ve yüz çerçevesi yeşilken 1 sn sonra çek; kapatılabilir.
+
+### Sistem entegrasyonu
+- **Ana ekran hızlı aksiyonları** (W~/N): İkona basılı tutunca Yeni hasta · Fotoğraf çek · Bugünün kontrolleri. Web'de manifest `shortcuts`; native'de UIApplicationShortcutItem.
+- **Widget** (N): Küçük boy, bugünün kontrolleri; hasta adı yerine baş harfler.
+- **Spotlight** (N): Hasta adı sistem aramasında; açılış kilitli.
+- **Paylaşım** (W): Karşılaştırma görseli Web Share API ile doğrudan WhatsApp/Mail'e; anonim, EXIF'siz.
+
+### Görsel ve his
+- **Dynamic Type** (W): Tüm yazı boyutları `rem`; sistem yazı boyutuna uyar. Başlık 2 kademe büyüdüğünde düzen bozulmamalı.
+- **Tabular rakamlar** (W): İstatistik ve tarih sütunlarında `font-variant-numeric: tabular-nums`.
+- **Haptic** (N): Fotoğraf çekiminde hafif, kaydetmede yumuşak, hatada sert.
+- **Ten tonu kuralı** (W): `#D9BFB0` yalnızca ikon ve küçük vurgu; asla metin veya buton dolgusu.
+- **İlk açılış turu yok** (W): Boş durum metinleri yeterli.
+
+### iPad'e hazırlık (şimdiden kural)
+- Genişlik ≥ 768px: hasta listesi sol sütun (320px), kart sağda; kamera ve karşılaştırma tam ekran. Klavye: ⌘N yeni hasta, ⌘F ara, Esc kapat.
+
 ## 6. Hareket ve his
 
 - Tüm geçişler 200–250ms, `cubic-bezier(0.2, 0.8, 0.2, 1)`. `prefers-reduced-motion` saygı gösterilir.
