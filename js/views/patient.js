@@ -2,14 +2,15 @@
 import { Patients, Procedures, Photos, Appointments, fullName } from '../db.js';
 import {
   esc, el, icon, fmtDate, fmtDateLong, fmtTime, fmtDayMonth, age, relDay, sinceProcedure,
-  parseDate, daysBetween, phoneHref, sheet, confirmDialog, actionMenu, toast, statusText, emptyState,
+  parseDate, daysBetween, phoneHref, sheet, confirmDialog, actionMenu, toast, undoToast, statusText, emptyState,
 } from '../ui.js';
 import { blobURL, releaseURLs } from '../photos.js';
 import {
   patientForm, procedureForm, appointmentForm, photoUploadForm, photoEditForm, regenerateControls, defaultPeriodFor,
 } from '../forms.js';
-import { setTopbar, go, replacePath } from '../nav.js';
+import { setTopbar, go, replacePath, rerender } from '../nav.js';
 import { setDock, isMobile } from '../dock.js';
+import { swipeWrap, bindSwipe } from '../swipe.js';
 import { t, lower, procLabel, apptLabel, kindLabel, isOp } from '../i18n.js';
 import { PERIODS, TRASH_DAYS, sortAngles, periodLabel, angleLabel, consentLabel, anesthesiaLabel, fieldLabel, optionLabel } from '../model.js';
 import { hydrateBlob, audit } from '../db.js';
@@ -32,6 +33,9 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
   async function refresh() { await load(); paint(); }
 
   await load();
+  // Uzun basma menüsünden "Karşılaştır": Fotoğraflar sekmesi seçim modunda açılır
+  let compareFlag = false;
+  try { compareFlag = sessionStorage.getItem('curalis:compare') === id; if (compareFlag) sessionStorage.removeItem('curalis:compare'); } catch { /* yok say */ }
   if (!data.patient) {
     setTopbar({ title: t('p.title'), back: '/' });
     root.classList.remove('has-hero');
@@ -56,16 +60,12 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     if (v === 'appt') addAppointment();
     if (v === 'delete') deletePatient();
   }
+  /** Silme onay sormaz (§5B): yumuşak silinir, 5 sn geri al; Silinenler'den 30 gün içinde de dönebilir */
   async function deletePatient() {
-    const ok = await confirmDialog({
-      title: t('p.deleteQ'),
-      message: `${t('p.deleteMsg', { name: fullName(data.patient), procs: data.procedures.length, photos: data.photos.length, appts: data.appointments.length })} ${t('trash.hint', { days: TRASH_DAYS })}`,
-      okText: t('common.delete'), danger: true,
-    });
-    if (!ok) return;
+    const name = fullName(data.patient);
     await Patients.remove(id);
-    toast(t('p.deleted'));
     go('/');
+    undoToast(t('undo.patientDeleted', { name }), async () => { await Patients.restore(id); toast(t('undo.restored')); rerender(); });
   }
   async function addProcedure() {
     const r = await procedureForm({ patientId: id, procedures: data.procedures });
@@ -122,6 +122,8 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
   /** "Öncesi · 11 Ağu · Cephe" */
   const photoCaption = (ph) => [periodOf(ph), fmtDayMonth(ph.date), angleOf(ph)].filter(Boolean).join(' · ');
   const periodRank = (ph) => { const i = PERIODS.indexOf(ph.period); return i < 0 ? PERIODS.length : i; };
+
+  if (compareFlag && data.patient) { state.tab = 'fotograflar'; state.compare = true; presetCompare(); }
 
   /* ---------- Çizim ---------- */
   function paint() {
@@ -399,8 +401,8 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
         if (ok) { await regenerateControls(pr); toast(t('p.proc.regenerated')); refresh(); }
       }
       if (v === 'delete') {
-        const ok = await confirmDialog({ title: t('p.proc.deleteQ'), message: `${t('p.proc.deleteMsg', { type: procLabel(pr.typeName), n: controls.length })} ${t('trash.hint', { days: TRASH_DAYS })}`, okText: t('common.delete'), danger: true });
-        if (ok) { await Procedures.remove(pr.id); toast(t('p.proc.deleted')); refresh(); }
+        await Procedures.remove(pr.id); refresh();
+        undoToast(t('undo.procDeleted'), async () => { await Procedures.restore(pr.id); toast(t('undo.restored')); refresh(); });
       }
     };
   }
@@ -414,17 +416,28 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const sub = isOp(a)
       ? [fmtDayMonth(a.date), fmtTime(a.date), t('op.row'), a.notes || null].filter(Boolean).join(' · ')
       : [fmtDayMonth(a.date), fmtTime(a.date), kindLabel(a.type), pr ? procLabel(pr.typeName) : null, pr && a.auto ? sinceProcedure(pr.date, d) : null, a.notes || null].filter(Boolean).join(' · ');
-    return `
+    return swipeWrap(`
       <button class="row ${a.status === 'attended' || a.status === 'cancelled' ? 'muted' : ''} ${isOp(a) ? 'op' : ''}" type="button" data-appt="${a.id}">
         <div class="row-main">
           <div class="row-title">${esc(apptLabel(a))}</div>
           <div class="row-sub">${esc(sub)}</div>
         </div>
         <div class="row-end">${statusText(a.status, { overdue, today })}</div>
-      </button>`;
+      </button>`, a.id, isOp(a) ? {} : apptSwipe(a));
   }
   function bindApptRows(scope, before) {
     scope.querySelectorAll('[data-appt]').forEach((b) => { b.onclick = () => { before?.(); openAppointment(b.dataset.appt); }; });
+    bindSwipe(scope, { onAction: (key, act) => { const a = data.appointments.find((x) => x.id === key); if (a) setStatus(a, act); } });
+  }
+  /** Randevu satırı kaydırma aksiyonları: sola → Gelmedi, sağa → Geldi (planlı kayıtlarda) */
+  const apptSwipe = (a) => (a.status === 'planned' ? { left: [{ key: 'attended', icon: 'check', label: t('swipe.attended') }], right: [{ key: 'missed', icon: 'alert', label: t('swipe.missed'), danger: true }] } : {});
+  /** Durum değişimi; 'gelmedi' onay sormaz, geri al kapsülü önceki durumu döndürür (§5B) */
+  async function setStatus(a, v) {
+    const prev = a.status;
+    await Appointments.save({ ...a, status: v });
+    refresh();
+    if (v === 'missed') undoToast(t('undo.missed'), async () => { await Appointments.save({ ...a, status: prev }); toast(t('undo.restored')); refresh(); });
+    else toast(t({ attended: 'appt.doneToast', planned: 'appt.plannedToast' }[v]));
   }
   async function openAppointment(apptId) {
     const a = data.appointments.find((x) => x.id === apptId);
@@ -442,9 +455,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     const v = await actionMenu(title, items);
     if (!v) return;
     if (['attended', 'missed', 'planned'].includes(v)) {
-      await Appointments.save({ ...a, status: v });
-      toast(t({ attended: 'appt.doneToast', missed: 'appt.missedToast', planned: 'appt.plannedToast' }[v]));
-      refresh();
+      await setStatus(a, v);
     } else if (v === 'edit') {
       const r = await appointmentForm({ patientId: id, procedures: data.procedures, existing: a });
       if (r) { toast(t('appt.updated')); refresh(); }
@@ -454,8 +465,8 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     } else if (v === 'proc') {
       openProcedure(pr.id);
     } else if (v === 'delete') {
-      const ok = await confirmDialog({ title: t('appt.deleteQ'), message: title, okText: t('common.delete'), danger: true });
-      if (ok) { await Appointments.remove(a.id); toast(t('appt.deleted')); refresh(); }
+      await Appointments.remove(a.id); refresh();
+      undoToast(t('undo.apptDeleted'), async () => { await Appointments.restore(a.id); toast(t('undo.restored')); refresh(); });
     }
   }
   function paintAppointments(body) {
@@ -632,13 +643,11 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     };
     v.querySelector('[data-act=delete]').onclick = async () => {
       const ph = list[idx];
-      const ok = await confirmDialog({ title: t('p.photo.deleteQ'), message: t('trash.hint', { days: TRASH_DAYS }), okText: t('common.delete'), danger: true });
-      if (!ok) return;
       await Photos.remove(ph.id);
-      // Silme sonrası görüntüleyici kapanır ve galeriye dönülür; sonraki fotoğrafa geçmek "silinmedi" izlenimi veriyordu
+      // Silme sonrası görüntüleyici kapanır ve galeriye dönülür; onay yerine geri al kapsülü (§5B)
       close();
       await refresh();
-      toast(t('p.photo.deleted'));
+      undoToast(t('undo.photoDeleted'), async () => { await Photos.restore(ph.id); toast(t('undo.restored')); refresh(); });
     };
     let sx = null;
     v.querySelector('.viewer-stage').addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });

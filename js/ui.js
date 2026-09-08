@@ -57,6 +57,7 @@ const ICONS = {
   zoom: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3M11 8v6M8 11h6"/>',
   backspace: '<path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><path d="m18 9-6 6M12 9l6 6"/>',
   swap: '<path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>',
+  chat: '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.6-.8L3 21l1.9-5.1A8.4 8.4 0 1 1 21 11.5z"/>',
   share: '<path d="M12 3v13M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/>',
   grid: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>',
 };
@@ -159,6 +160,13 @@ export function sinceProcedure(procDate, at = new Date()) {
 
 export function phoneHref(phone) {
   return 'tel:' + (phone || '').replace(/[^\d+]/g, '');
+}
+/** WhatsApp bağlantısı: 05xx → 905xx; +90… → 90… */
+export function waHref(phone) {
+  let d = (phone || '').replace(/\D/g, '');
+  if (d.startsWith('0')) d = '90' + d.slice(1);
+  else if (d.length === 10 && d.startsWith('5')) d = '90' + d;
+  return 'https://wa.me/' + d;
 }
 
 /* ---------------- Katman: sheet / confirm / toast ---------------- */
@@ -335,6 +343,21 @@ export function toast(msg, { kind = 'default', duration = 2600 } = {}) {
   t.className = `toast toast-${kind} show`;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), duration);
+}
+
+/** Geri al kapsülü (§5B): işlem yapılır, 5 sn cam kapsül "… · Geri al". Onay sorulmaz. */
+let undoTimer = null;
+export function undoToast(msg, onUndo, { duration = 5000 } = {}) {
+  document.getElementById('undo')?.remove();
+  clearTimeout(undoTimer);
+  const u = el(`<div id="undo" class="undo glass" role="status" aria-live="polite"><span class="undo-text">${esc(msg)}</span><button type="button" class="undo-btn">${esc(t('common.undo'))}</button></div>`);
+  layer().appendChild(u);
+  document.body.classList.add('has-undo');
+  requestAnimationFrame(() => u.classList.add('show'));
+  const hide = () => { clearTimeout(undoTimer); u.classList.remove('show'); document.body.classList.remove('has-undo'); setTimeout(() => u.remove(), 250); };
+  undoTimer = setTimeout(hide, duration);
+  u.querySelector('.undo-btn').onclick = async () => { hide(); await onUndo?.(); };
+  return hide;
 }
 
 /* ---------------- Form yardımcıları ---------------- */

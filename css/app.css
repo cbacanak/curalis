@@ -678,3 +678,28 @@ html.locked, body.locked { background: var(--bg-inverse); }   /* kilit ekranın�
 #vv-debug pre { margin: 0; white-space: pre-wrap; }
 .vv-debug-actions { display: flex; gap: 8px; margin-top: 8px; }
 .vv-debug-actions button { flex: 1; height: 36px; border-radius: 8px; background: rgba(245,244,240,.14); color: inherit; font: inherit; }
+
+/* ---------------- Liste etkileşimleri (§5B): kaydırma aksiyonları, uzun basma, geri al ---------------- */
+.swipe { position: relative; overflow: hidden; -webkit-touch-callout: none; }
+.swipe-body { position: relative; background: var(--bg); touch-action: pan-y; user-select: none; -webkit-user-select: none; will-change: transform; }
+.swipe-body .row { border-bottom: 1px solid var(--hairline); }
+.list .swipe:last-child .swipe-body .row { border-bottom: 0; }
+.swipe-actions { position: absolute; top: 0; bottom: 0; display: flex; }
+.swipe-actions.left { left: 0; }
+.swipe-actions.right { right: 0; }
+.swipe-act { width: 72px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: var(--bg-subtle); color: var(--text); font-size: var(--fs-label); }
+.swipe-act .ic { width: 20px; height: 20px; }
+.swipe-act.danger { background: var(--danger-bg); color: var(--danger); }
+.swipe-act:active { filter: brightness(.96); }
+/* Uzun basma önizlemesi */
+.peek { display: flex; align-items: center; gap: 14px; padding: 4px 0 16px; }
+.menu-list { display: flex; flex-direction: column; }
+.menu-list .menu-item { width: 100%; color: inherit; }
+.menu-list .menu-item.danger { color: var(--danger); }
+/* Geri al kapsülü: tab bar / yüzen aksiyonların 10px üstünde, 48px cam kapsül */
+.undo { position: fixed; left: 16px; right: 16px; top: calc(var(--vv-h, 100vh) - var(--tabbar-h) - var(--dock-b) - var(--safe-b) - 10px - 48px); height: 48px; border-radius: 24px; z-index: 200; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 6px 0 18px; font-size: var(--fs-small); color: var(--text); opacity: 0; transform: translateY(8px); transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease); }
+.undo.show { opacity: 1; transform: none; }
+.undo-text { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.undo-btn { height: 36px; padding: 0 14px; border-radius: 18px; background: var(--primary-bg); color: var(--primary-text); font-size: var(--fs-small); font-weight: var(--fw-medium); flex: 0 0 auto; }
+body.has-undo .toast { margin-top: -58px; }   /* bildirim, geri al kapsülünün üstünde */
+@media (min-width: 880px) { .undo { left: calc(var(--sidenav-w) + 24px); right: 24px; top: auto; bottom: 24px; } body.has-undo .toast { margin-top: 0; bottom: 84px; } }

@@ -1,6 +1,7 @@
 /* Hasta listesi — TASARIM.md §5 + §5A (Display başlık kayar, sabit cam (+), arama adası → klavye üstü kapsül, hairline liste) */
 import { Patients, Procedures, Appointments, fullName } from '../db.js';
-import { esc, icon, initials, fmtDate, fmtDayMonth, fmtTime, parseDate, daysBetween, emptyState, toast, age, actionMenu, statusText } from '../ui.js';
+import { esc, icon, initials, fmtDate, fmtDayMonth, fmtTime, parseDate, daysBetween, emptyState, toast, undoToast, age, actionMenu, statusText, phoneHref, waHref, sheet } from '../ui.js';
+import { swipeWrap, bindSwipe } from '../swipe.js';
 import { patientForm, appointmentForm } from '../forms.js';
 import { setTopbar, go } from '../nav.js';
 import { setIsland, openSearch, closeSearch } from '../dock.js';
@@ -84,7 +85,7 @@ export async function render(root) {
     const pr = a.procedureId ? prById[a.procedureId] : null;
     const d = parseDate(a.date);
     const sub = [isOp(a) ? t('op.row') : apptLabel(a), pr && !isOp(a) ? procLabel(pr.typeName) : null, `${fmtDayMonth(a.date)} ${fmtTime(a.date)}`].filter(Boolean).join(' · ');
-    return `
+    return swipeWrap(`
       <button class="row" type="button" data-overdue="${a.id}">
         <div class="avatar sm">${esc(initials(fullName(p)))}</div>
         <div class="row-main">
@@ -92,7 +93,7 @@ export async function render(root) {
           <div class="row-sub">${esc(sub)}</div>
         </div>
         <div class="row-end">${a.status === 'missed' ? statusText('missed') : `<span class="status danger">${esc(t('days.late', { n: daysBetween(d, today) }))}</span>`}</div>
-      </button>`;
+      </button>`, `appt:${a.id}`, a.status === 'planned' ? { left: [{ key: 'attended', icon: 'check', label: t('swipe.attended') }], right: [{ key: 'missed', icon: 'alert', label: t('swipe.missed'), danger: true }] } : { left: [{ key: 'attended', icon: 'check', label: t('swipe.attended') }] });
   }
   /** Geciken satır menüsü: yeniden planla / geldi / gelmedi / hasta kartı */
   async function overdueMenu(a) {
@@ -105,8 +106,43 @@ export async function render(root) {
     items.push({ label: t('cal.openPatient'), icon: 'user', value: 'open' });
     const v = await actionMenu(`${fullName(p)} · ${apptLabel(a)}`, items);
     if (v === 'reschedule') { const r = await appointmentForm({ patientId: a.patientId, procedures: procedures.filter((x) => x.patientId === a.patientId), existing: { ...a, status: 'planned' } }); if (r) { toast(t('overdue.rescheduled')); render(root); } }
-    else if (v === 'attended' || v === 'missed') { await Appointments.save({ ...a, status: v }); toast(t(v === 'attended' ? 'appt.doneToast' : 'appt.missedToast')); render(root); }
+    else if (v === 'attended' || v === 'missed') setStatus(a, v);
     else if (v === 'open') go(`/patient/${a.patientId}/randevular`);
+  }
+
+  /** 'gelmedi' onay sormaz; geri al kapsülü önceki durumu döndürür (§5B) */
+  async function setStatus(a, v) {
+    const prev = a.status;
+    await Appointments.save({ ...a, status: v });
+    render(root);
+    if (v === 'missed') undoToast(t('undo.missed'), async () => { await Appointments.save({ ...a, status: prev }); toast(t('undo.restored')); render(root); });
+    else toast(t('appt.doneToast'));
+  }
+  /** Uzun basma önizlemesi (§5B): küçük kart + Ara · Fotoğraf çek · Karşılaştır · Sil */
+  async function peekPatient(p) {
+    const lp = lastProc[p.id];
+    const s = sheet({ title: fullName(p), size: 'sm', closeText: t('common.close'), content: `
+      <div class="peek">
+        <div class="avatar">${esc(initials(fullName(p)))}</div>
+        <div class="row-main">
+          <div class="row-title">${esc(fullName(p))}</div>
+          <div class="row-sub">${esc([age(p.birthDate) !== null ? t('age', { n: age(p.birthDate) }) : null, p.phone || null, lp ? `${procLabel(lp.typeName)} · ${fmtDayMonth(lp.date)}` : t('patients.noProc')].filter(Boolean).join(' · '))}</div>
+        </div>
+      </div>
+      <div class="menu-list">
+        ${p.phone ? `<a class="menu-item" href="${phoneHref(p.phone)}" data-peek="call">${icon('phone')}<span>${esc(t('swipe.call'))}</span></a>` : ''}
+        <button class="menu-item" type="button" data-peek="photo">${icon('camera')}<span>${esc(t('peek.photo'))}</span></button>
+        <button class="menu-item" type="button" data-peek="compare">${icon('compare')}<span>${esc(t('peek.compare'))}</span></button>
+        <button class="menu-item danger" type="button" data-peek="delete">${icon('trash')}<span>${esc(t('p.delete'))}</span></button>
+      </div>` });
+    s.body.querySelectorAll('[data-peek]').forEach((b) => {
+      b.onclick = async () => {
+        const k = b.dataset.peek; s.close();
+        if (k === 'photo') go(`/camera/${p.id}`);
+        else if (k === 'compare') { try { sessionStorage.setItem('curalis:compare', p.id); } catch { /* yok say */ } go(`/patient/${p.id}/fotograflar`); }
+        else if (k === 'delete') { await Patients.remove(p.id); render(root); undoToast(t('undo.patientDeleted', { name: fullName(p) }), async () => { await Patients.restore(p.id); toast(t('undo.restored')); render(root); }); }
+      };
+    });
   }
 
   function patientRow(p, q = '') {
@@ -114,7 +150,9 @@ export async function render(root) {
     const a = age(p.birthDate);
     const planned = lp && parseDate(lp.date) > today;
     const sub = [a !== null ? String(a) : null, lp ? `${planned ? `${t('op.planned')} · ` : ''}${procLabel(lp.typeName)} · ${fmtDayMonth(lp.date)}` : t('patients.noProc')].filter(Boolean).join(' · ');
-    return `
+    // Kaydırma (§5B): sola → Ara · WhatsApp (telefon varsa), sağa → Randevu ekle
+    const right = p.phone ? [{ key: 'call', icon: 'phone', label: t('swipe.call') }, { key: 'wa', icon: 'chat', label: t('swipe.whatsapp') }] : [];
+    return swipeWrap(`
       <a class="row" href="#/patient/${p.id}">
         <div class="avatar">${esc(initials(fullName(p)))}</div>
         <div class="row-main">
@@ -122,7 +160,7 @@ export async function render(root) {
           <div class="row-sub">${esc(sub)}</div>
         </div>
         <div class="row-end">${icon('chevron')}</div>
-      </a>`;
+      </a>`, `patient:${p.id}`, { left: [{ key: 'appt', icon: 'calendar', label: t('swipe.appt') }], right });
   }
 
   function paint() {
@@ -153,6 +191,17 @@ export async function render(root) {
       </section>`;
     list.querySelectorAll('[data-open]').forEach((b) => { b.onclick = () => go(`/patient/${b.dataset.open}`); });
     list.querySelectorAll('[data-overdue]').forEach((b) => { b.onclick = () => overdueMenu(appointments.find((a) => a.id === b.dataset.overdue)); });
+    bindSwipe(list, {
+      onAction: async (key, act) => {
+        const [kind, kid] = key.split(':');
+        if (kind === 'appt') { const a = appointments.find((x) => x.id === kid); if (a) setStatus(a, act); return; }
+        const p = pById[kid]; if (!p) return;
+        if (act === 'call') location.href = phoneHref(p.phone);
+        else if (act === 'wa') window.open(waHref(p.phone), '_blank', 'noopener');
+        else if (act === 'appt') { const r = await appointmentForm({ patientId: p.id, procedures: procedures.filter((x) => x.patientId === p.id) }); if (r) { toast(t('p.apptAdded')); render(root); } }
+      },
+      onLongPress: (key) => { const [kind, kid] = key.split(':'); if (kind === 'patient' && pById[kid]) peekPatient(pById[kid]); },
+    });
   }
 
   input.addEventListener('input', () => { lastQuery = input.value; paint(); });
