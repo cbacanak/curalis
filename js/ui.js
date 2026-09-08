@@ -175,19 +175,20 @@ const layer = () => document.getElementById('layer');
 /* Sheet açıkken arka plandaki sayfanın kaymasını engeller (iOS dahil) */
 let openSheets = 0;
 let savedScrollY = 0;
+/* Kaydırma kilidi: gövde sabit konuma ALINMAZ (iOS Ana Ekran uygulamasında yerleşim görünümünü durum çubuğu kadar
+ * kısaltıyor ve o bandın altına hiçbir sabit katman çizilmiyordu). Bunun yerine html/body overflow gizlenir; katman
+ * (sheet, menü, kilit) tüm ekranı kapladığı ve touch-action: none olduğu için dokunma zaten sayfaya ulaşmaz. */
 export function lockScroll() {
   if (openSheets++ > 0) return;
   savedScrollY = window.scrollY;
-  document.body.style.top = `-${savedScrollY}px`;
-  document.body.classList.add('scroll-locked');
-  relayoutSoon();   // iOS: gövde sabitlenince yerleşim görünümü kısalabiliyor
+  document.documentElement.classList.add('scroll-locked');
+  relayoutSoon();
 }
 export function unlockScroll() {
   if (--openSheets > 0) return;
   openSheets = 0;
-  document.body.classList.remove('scroll-locked');
-  document.body.style.top = '';
-  window.scrollTo(0, savedScrollY);
+  document.documentElement.classList.remove('scroll-locked');
+  if (Math.abs(window.scrollY - savedScrollY) > 1) window.scrollTo(0, savedScrollY);
   relayoutSoon();
 }
 

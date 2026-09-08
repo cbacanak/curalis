@@ -15,7 +15,7 @@ body {
   overscroll-behavior-y: none;
   overflow-x: clip; /* hidden yerine clip: body kaydırma kabı olmaz, yapışkan öğeler çalışır */
 }
-body.scroll-locked { position: fixed; left: 0; right: 0; width: 100%; overflow: hidden; }
+html.scroll-locked, html.scroll-locked body { overflow: hidden; overscroll-behavior: none; }   /* gövde sabitlenmez (iOS yerleşim görünümü) */
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; background: none; border: 0; padding: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 a { color: inherit; text-decoration: none; }
@@ -293,7 +293,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 #layer { position: relative; z-index: 100; }
 .sheet-backdrop {
   position: fixed; inset: 0; bottom: auto; height: var(--vv-h, 100%); background: rgba(11, 19, 38, .45); display: flex; align-items: flex-end; justify-content: center;
-  opacity: 0; transition: opacity var(--dur) var(--ease); z-index: 180;
+  opacity: 0; transition: opacity var(--dur) var(--ease); z-index: 180; touch-action: none; overscroll-behavior: contain;
 }
 .sheet-backdrop.open { opacity: 1; }
 .sheet-backdrop.closing { opacity: 0; }
@@ -311,6 +311,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .sheet-title { flex: 1; font-size: 20px; font-weight: var(--fw-medium); letter-spacing: -.01em; padding-top: 8px; }
 .sheet-close { margin-top: 6px; color: var(--text-secondary); font-size: var(--fs-body); height: 36px; padding: 0 4px; flex: 0 0 auto; }
 .sheet-body { padding: 12px var(--page-x) 20px; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; }
+.sheet-head, .sheet-foot, .action-sheet .menu, .action-sheet .btn { touch-action: manipulation; }
 .sheet-foot { display: flex; gap: 8px; align-items: center; padding: 8px var(--page-x) 16px; }
 .sheet-foot .btn-primary { flex: 1; height: 46px; }
 .spacer { flex: 1; }
@@ -348,7 +349,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 @media (min-width: 880px) { .toast { top: auto; bottom: 28px; transform: translate(-50%, 12px); } .toast.show { transform: translate(-50%, 0); } }
 
 /* Eylem sayfası (silme onayı) — iOS action sheet */
-.action-sheet { position: fixed; inset: 0; bottom: auto; height: var(--vv-h, 100%); z-index: 190; background: rgba(11, 19, 38, .45); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 0 12px calc(12px + var(--safe-b)); opacity: 0; transition: opacity var(--dur) var(--ease); }
+.action-sheet { position: fixed; inset: 0; bottom: auto; height: var(--vv-h, 100%); z-index: 190; touch-action: none; overscroll-behavior: contain; background: rgba(11, 19, 38, .45); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 0 12px calc(12px + var(--safe-b)); opacity: 0; transition: opacity var(--dur) var(--ease); }
 .action-sheet.open { opacity: 1; }
 .as-group { width: 100%; max-width: 440px; transform: translateY(24px); transition: transform var(--dur) var(--ease); }
 .open .as-group { transform: none; }
