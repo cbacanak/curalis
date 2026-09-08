@@ -82,6 +82,18 @@
   --content-w: 720px;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
+  --dock-b: 16px;          /* yüzen tab bar'ın alttan boşluğu (§5A) */
+
+  /* Cam malzeme — yalnızca navigasyon katmanı (§5A) */
+  --glass-bg:      rgba(255, 255, 255, .62);
+  --glass-bg-dark: rgba(20, 28, 48, .55);
+  --glass-border:  rgba(255, 255, 255, .8);
+  --glass-border-dark: rgba(255, 255, 255, .14);
+  --glass-blur:    18px;
+  --glass-shadow:  0 8px 24px rgba(11, 19, 38, .12);
+  --tab-off:       #8A8F9B;
+  --tab-on-bg:     var(--bg-inverse);
+  --tab-on-fg:     var(--text-on-inverse);
 }
 
 /* ---------------- Karanlık mod (§2.1) ---------------- */
@@ -110,6 +122,11 @@
     --upcoming-text:   var(--text);
     --upcoming-sub:    var(--text-secondary);
     --upcoming-border: var(--divider);
+    --glass-bg:     var(--glass-bg-dark);
+    --glass-border: var(--glass-border-dark);
+    --glass-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+    --tab-on-bg:    var(--text);
+    --tab-on-fg:    var(--bg-inverse);
     color-scheme: dark;
   }
 }
@@ -135,5 +152,10 @@
   --upcoming-text:   var(--text);
   --upcoming-sub:    var(--text-secondary);
   --upcoming-border: var(--divider);
+  --glass-bg:     var(--glass-bg-dark);
+  --glass-border: var(--glass-border-dark);
+  --glass-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+  --tab-on-bg:    var(--text);
+  --tab-on-fg:    var(--bg-inverse);
   color-scheme: dark;
 }

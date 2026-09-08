@@ -102,7 +102,7 @@ const TR = {
   'patients.search.ph': 'Ad, soyad veya telefon', 'patients.search': 'Hasta ara', 'patients.added': 'Hasta eklendi', 'patients.noProc': 'Henüz işlem yok',
   'patients.empty': 'Henüz hasta yok', 'patients.emptyText': 'İlk hasta kartını oluşturarak başla.', 'patients.noResult': 'Sonuç yok',
   'patients.overdue': '{n} geciken', 'patients.overdueLabel': 'Geciken kontroller · {n}', 'patients.overdueMore': '+{n} geciken daha · Ajanda\'da tümü', 'overdue.reschedule': 'Yeniden planla', 'overdue.rescheduled': 'Randevu yeniden planlandı',
-  'patients.noMatch': '"{q}" ile eşleşen hasta bulunamadı.', 'patients.upcomingLabel': 'Yaklaşan', 'patients.results': '{n} sonuç', 'patients.all': 'Tüm hastalar',
+  'patients.noMatch': '"{q}" ile eşleşen hasta bulunamadı.', 'patients.searchCount': '"{q}" için {n} sonuç', 'common.search': 'Ara', 'patients.upcomingLabel': 'Yaklaşan', 'patients.results': '{n} sonuç', 'patients.all': 'Tüm hastalar',
   // Ajanda
   'cal.title': 'Ajanda', 'cal.todayCount': 'bugün {n} randevu', 'cal.list': 'Liste', 'cal.month': 'Takvim', 'cal.overdue': 'Gecikmiş · {n}',
   'cal.upcoming': 'Yaklaşan kontrol', 'cal.upcomingOp': 'Yaklaşan ameliyat / işlem', 'cal.emptyList': 'Önümüzdeki {n} günde randevu yok', 'cal.emptyListText': 'İşlem eklendiğinde kontrol takvimi buraya düşer.',
@@ -275,7 +275,7 @@ const EN = {
   'patients.search.ph': 'Name or phone', 'patients.search': 'Search patients', 'patients.added': 'Patient added', 'patients.noProc': 'No procedures yet',
   'patients.empty': 'No patients yet', 'patients.emptyText': 'Start by creating the first patient record.', 'patients.noResult': 'No results',
   'patients.overdue': (p) => `${p.n} overdue`, 'patients.overdueLabel': 'Overdue follow-ups · {n}', 'patients.overdueMore': (p) => `+${p.n} more overdue · all in Agenda`, 'overdue.reschedule': 'Reschedule', 'overdue.rescheduled': 'Appointment rescheduled',
-  'patients.noMatch': 'No patient matches "{q}".', 'patients.upcomingLabel': 'Upcoming', 'patients.results': (p) => pl(p.n, 'result', 'results'), 'patients.all': 'All patients',
+  'patients.noMatch': 'No patient matches "{q}".', 'patients.searchCount': (p) => `${pl(p.n, 'result', 'results')} for "${p.q}"`, 'common.search': 'Search', 'patients.upcomingLabel': 'Upcoming', 'patients.results': (p) => pl(p.n, 'result', 'results'), 'patients.all': 'All patients',
   'cal.title': 'Agenda', 'cal.todayCount': (p) => `${pl(p.n, 'appointment', 'appointments')} today`, 'cal.list': 'List', 'cal.month': 'Calendar', 'cal.overdue': 'Overdue · {n}',
   'cal.upcoming': 'Upcoming follow-up', 'cal.upcomingOp': 'Upcoming surgery / procedure', 'cal.emptyList': 'No appointments in the next {n} days', 'cal.emptyListText': 'Follow-ups appear here when you add a procedure.',
   'cal.later': (p) => `${pl(p.n, 'more planned appointment', 'more planned appointments')} after ${p.days} days.`, 'cal.count': (p) => pl(p.n, 'appointment', 'appointments'), 'cal.prev': 'Previous month', 'cal.next': 'Next month',

@@ -19,9 +19,10 @@ export function currentPath() {
  * Kompakt üst çubuk. Sayfa başlığı (anchor) ekrandayken görünmez; kaydırılınca belirir.
  * actions: [{ icon, label, onClick }]  —  tone: 'inverse' lacivert çubuk (hasta kartı)
  */
-export function setTopbar({ title = '', back = null, actions = [], center = false, anchor = '.page-title', tone = '' } = {}) {
+export function setTopbar({ title = '', back = null, actions = [], center = false, anchor = '.page-title', tone = '', hidden = false } = {}) {
   const bar = document.getElementById('topbar');
   bar.classList.toggle('inverse', tone === 'inverse');
+  bar.classList.toggle('hidden', hidden);   // §5A: büyük başlık içerikle kayar, kompakt çubuk yok
   bar.innerHTML = `
     <div class="topbar-inner">
       ${back !== null ? `<button class="btn-icon" type="button" data-back aria-label="${esc(t('common.back'))}">${icon('back')}</button>` : '<span style="width:8px"></span>'}

@@ -185,6 +185,54 @@ Kurallar: Cümle düzeni (sentence case), BÜYÜK HARF yok. Satır yüksekliği 
 - Bölüm etiketi Label stilinde, satırlar hairline ile ayrılır. Sağ tarafta değer + chevron (`--text-secondary`). Açıklama satırı sadece davranışı netleştirdiği yerlerde (PIN kilidi gibi).
 - Görünüm bölümü en üstte: Tema segment kontrolü (Açık / Koyu / Sistem).
 
+## 5A. Navigasyon katmanı — iOS 26 kalıbı (Liquid Glass)
+
+Eylül 2026'dan itibaren geçerli; bölüm 5'teki "Tab bar" ve "Hasta listesi arama" tanımlarını **geçersiz kılar**. Referans görsel: `curalis-ios26-kalibi.png`.
+
+İlke: İçerik (listeler, fotoğraflar, formlar) düz ve mat kalır; yalnızca **navigasyon katmanı** (tab bar, nav butonları, yüzen aksiyonlar, arama, accessory rafı) cam malzeme kullanır. Cam üstüne cam yok. İçerik bu katmanın altına kadar kayar; altta yumuşak bir solma (blur değil) ile biter.
+
+### Cam malzeme (token)
+```css
+--glass-bg:      rgba(255,255,255,.62);   /* açık zemin üstünde */
+--glass-bg-dark: rgba(20,28,48,.55);      /* lacivert/koyu zemin üstünde */
+--glass-border:  rgba(255,255,255,.8);    /* koyuda .14 */
+--glass-blur:    18px;                    /* backdrop-filter: blur(18px) saturate(1.4) */
+--glass-shadow:  0 8px 24px rgba(11,19,38,.12);
+```
+Web'de `backdrop-filter` desteklenmeyen tarayıcıda `--glass-bg` opaklığı .92'ye çıkar. Native'de sistem `glassEffect` kullanılır, bu değerler yalnızca web içindir.
+
+### Yüzen tab bar
+- Tam genişlik değil: ortalanmış kapsül, yükseklik 56, yarıçap 28, kenarlardan 16px içeride, alttan 16px + safe‑area.
+- 4 ikon (Hastalar, Kamera, Ajanda, Ayarlar), her biri 46×46 daire; seçili olan `--bg-inverse` dolgu + fildişi ikon, diğerleri `#8A8F9B`. Etiket yok.
+- Sağında 10px boşlukla **arama adası**: 56×56 cam daire, büyüteç. Yalnızca arama olan ekranlarda (Hastalar, Ajanda, Fotoğraflar). Diğer ekranlarda ada yoktur; tab bar tek başına ortalanır.
+- Aşağı kaydırırken tab bar küçülür (yalnızca seçili ikon kalır), yukarı kaydırınca açılır. Web'de isteğe bağlı; native'de sistem davranışı.
+- İçeriğin alt 120px'i `linear-gradient(transparent → zemin .9)` ile solar; blur yok.
+
+### Arama
+- Üst başlık alanında arama **yok**. Ada'ya dokununca: klavye açılır, cam arama kapsülü (52px, yarıçap 26) klavyenin hemen üstüne yerleşir, sağında "Vazgeç". Tab bar bu sırada gizlenir.
+- Liste yerinde filtrelenir; başlık alt satırı `"ka" için 2 sonuç` olur. Eşleşen harfler altı çizili.
+- Kapatınca tab bar geri gelir, liste eski haline döner.
+
+### Nav butonları (üst)
+- Sol: geri, 40×40 cam daire. Sağ: aksiyonlar tek cam kapsülde gruplu (Ara · Düzenle · Menü), her buton 40×40, kapsül 40 yükseklik.
+- Lacivert hero üstünde `--glass-bg-dark`, açık zeminde `--glass-bg`.
+- Büyük başlık ("Hastalar", "Ajanda") sabit değil; içerikle kayar. Nav butonları sabit.
+
+### Yüzen aksiyonlar (hasta kartı)
+- Alt kenarda, tab bar yerine: dolu primary kapsül ("İşlem ekle", 56 yükseklik, `--bg-inverse`) + sağında 56×56 cam daireler (Kamera, Randevu). Hero'daki 4 buton kaldırıldı; hero yalnızca kimlik bilgisi taşır.
+- Hasta kartı bir alt ekran olduğu için tab bar burada görünmez; geri ile listeye dönülür.
+
+### Accessory rafı (fotoğraflar)
+- Seçim modunda tab bar'ın üstünde, 52px cam kapsül: sol "2 seçili · Cephe", sağ dolu "Karşılaştır" (38px). Seçim yokken görünmez.
+- Aynı raf ileride "yükleme sürüyor" gibi kalıcı durumlar için de kullanılır; aynı anda tek raf.
+
+### Diğer etkiler
+- Hastalar: üst sağda (+) cam daire; başlık altında arama çubuğu olmadığı için başlık alanı 60px kısalır.
+- Ajanda: Liste/Takvim segment kontrolü kalır; **Geciken** bölümü en üstte `--warning-bg` kart.
+- Fotoğraflar: dönem chip'leri (Tümü · Öncesi · 1. hafta · 1. ay…), ızgara **açıya göre** gruplu ("Cephe", "Sağ profil"), her grup dönem sırasıyla.
+- Karanlık mod: cam değerleri `--glass-bg-dark` ailesinden; seçili tab dolgusu `--text` (fildişi), ikon `--bg-inverse`.
+- Kilit ekranı, formlar, sheet'ler değişmez.
+
 ## 6. Hareket ve his
 
 - Tüm geçişler 200–250ms, `cubic-bezier(0.2, 0.8, 0.2, 1)`. `prefers-reduced-motion` saygı gösterilir.
@@ -212,6 +260,9 @@ Kurallar: Cümle düzeni (sentence case), BÜYÜK HARF yok. Satır yüksekliği 
 - Birden fazla dolu buton
 - Karanlıkta hero'yu gövdeyle aynı renge çekmek veya saf siyah zemin
 - Boş durumlarda illüstrasyon/emoji
+- Cam üstüne cam (accessory rafı tab bar'a değmez, nav kapsülü içinde ikinci kapsül yok)
+- İçerik katmanında cam (liste, kart, fotoğraf asla saydam değil)
+- Tam genişlik tab bar
 - 600+ font ağırlığı, BÜYÜK HARF etiket
 - Gölge, gradient
 - Alfabetik bölüm başlıkları (küçük listelerde)
