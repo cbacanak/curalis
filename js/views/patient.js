@@ -141,7 +141,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       actions: [{ icon: 'edit', label: t('common.edit'), onClick: editPatient }, { icon: 'more', label: t('common.more'), onClick: patientMenu }],
     });
     root.classList.add('has-hero');
-    setDock(false);   // hasta kartı alt ekran: tab bar yerine yüzen aksiyonlar
+    setDock(document.body.classList.contains('split'));   // hasta kartı alt ekran: tab bar yerine yüzen aksiyonlar; iPad iki sütunda tab bar kalır
 
     root.innerHTML = `
       <div class="screen">

@@ -43,7 +43,7 @@ Sürüm numaraları plandaki v0.x sayılarıyla değil, gerçek sürümle (0.8.x
 - [x] **Adım 8 — Formlar ve klavye (0.11.0):** kademeli sheet (yeni hasta / randevu yarı → tam), inputmode/type/autocapitalize/enterkeyhint, Türkçe ad düzeltme, Rehberden seç (Contact Picker), Kaydet zorunlu alanlar dolana dek pasif, hazır mesaj şablonları (Ayarlar) → randevu menüsünden WhatsApp'a atlama.
 - [x] **Adım 9 — Yedek ve güvenlik (0.10.2):** şifreli yedek al / geri yükle (birleştir / değiştir), PIN'de 5 hatada bekleme, otomatik kilit süresi, arka plan örtüsü (uygulama değiştiricide içerik gizli), denetim kaydına paylaşım/yedek, haftalık dosya yedeği hatırlatması. Günlük otomatik yedek web'de bilinçli atlandı (tarayıcı depolaması veriyle aynı yer); mobilde iCloud ile.
 - [x] **Adım 10 — Kamera denemesi:** tamamen (web sınırlarıyla). 90 sn kabul ölçümü cihazda yapılmadı.
-- [~] **Adım 11 — Cila ve erişilebilirlik:** kısmen. Tabular rakamlar, boş durumlar, skeleton, karanlık mod token'ları var; `rem` tabanlı Dynamic Type, manifest `shortcuts`, iPad iki sütun yok.
+- [x] **Adım 11 — Cila ve erişilebilirlik (0.13.0):** rem tabanlı yazı boyutları + iOS Dynamic Type, tabular rakamlar, boş durumlar, skeleton, manifest shortcuts, karanlık mod denetimi (sabit hex yok), iPad ≥768px iki sütun + ⌘N / ⌘F / Esc.
 
 ### Adım 1 alan karşılaştırması (MOBIL.md §2)
 - Ortak: `id` (UUID v4), `createdAt`, `updatedAt`, `deletedAt`, `deviceID` — var (db.js `stamp`).

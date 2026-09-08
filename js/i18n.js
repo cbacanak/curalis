@@ -67,6 +67,7 @@ const TR = {
   'anest.line': '{a} anestezi',
   'op.planned': 'Planlı', 'op.row': 'Ameliyat / işlem', 'op.editProc': 'İşlemi düzenle', 'op.inDays': '{n} gün sonra',
   // Formlar
+  'split.pick': 'Bir hasta seç', 'split.pickText': 'Soldaki listeden bir hasta seçince kartı burada açılır.',
   'form.showAll': 'Tüm alanları göster', 'form.contacts': 'Rehberden seç', 'form.contacts.fail': 'Rehber açılamadı',
   's.messages': 'Mesaj şablonları', 's.messages.sub': 'WhatsApp hatırlatma metinleri', 'msg.title': 'Mesaj şablonları', 'msg.reminder': 'Kontrol hatırlatması', 'msg.missed': 'Gelmeyen hasta', 'msg.placeholders': 'Yer tutucular: {ad} {tarih} {saat} {kontrol} {islem}', 'msg.reset': 'Varsayılana dön', 'msg.saved': 'Mesaj şablonları kaydedildi',
   'msg.reminder.default': 'Merhaba {ad}, {tarih} {saat} tarihindeki {kontrol} randevunuzu hatırlatmak isteriz. Sorunuz olursa yazabilirsiniz.', 'msg.missed.default': 'Merhaba {ad}, {tarih} tarihindeki {kontrol} randevunuza gelemediniz. Yeni bir tarih için bize yazabilirsiniz.', 'appt.remind': 'WhatsApp ile hatırlat',
@@ -248,6 +249,7 @@ const EN = {
   'anest.general': 'General', 'anest.local': 'Local', 'anest.sedation': 'Sedation', 'anest.local_sedation': 'Local + sedation', 'anest.none': 'None',
   'anest.line': '{a} anaesthesia',
   'op.planned': 'Planned', 'op.row': 'Surgery / procedure', 'op.editProc': 'Edit procedure', 'op.inDays': (p) => `in ${pl(p.n, 'day', 'days')}`,
+  'split.pick': 'Pick a patient', 'split.pickText': 'Choose a patient from the list on the left to open the card here.',
   'form.showAll': 'Show all fields', 'form.contacts': 'Pick from contacts', 'form.contacts.fail': 'Could not open contacts',
   's.messages': 'Message templates', 's.messages.sub': 'WhatsApp reminder texts', 'msg.title': 'Message templates', 'msg.reminder': 'Follow-up reminder', 'msg.missed': 'Missed appointment', 'msg.placeholders': 'Placeholders: {ad} {tarih} {saat} {kontrol} {islem}', 'msg.reset': 'Reset to default', 'msg.saved': 'Message templates saved',
   'msg.reminder.default': 'Hello {ad}, this is a reminder of your {kontrol} appointment on {tarih} at {saat}. Feel free to write if you have questions.', 'msg.missed.default': 'Hello {ad}, you missed your {kontrol} appointment on {tarih}. Write to us for a new date.', 'appt.remind': 'Remind via WhatsApp',

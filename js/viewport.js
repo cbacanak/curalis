@@ -84,3 +84,21 @@ export function showViewportDebug() {
   box.querySelector('[data-act=copy]').onclick = () => { navigator.clipboard?.writeText(JSON.stringify(metrics())); };
   box.querySelector('[data-act=close]').onclick = () => { clearInterval(timer); box.remove(); };
 }
+
+/* ---------------- iOS Dynamic Type (WEB-PLAN Adım 11) ----------------
+ * Safari'de kök yazı boyutu sistem ayarını izlemez; '-apple-system-body' izler. Gizli bir ölçüm öğesiyle
+ * sistem gövde boyutu okunur (varsayılan 17px) ve oran --dt olarak köke yazılır; tüm rem değerleri onunla ölçeklenir. */
+export function initDynamicType() {
+  if (!isIOS()) return;
+  const apply = () => {
+    const probe = document.createElement('span');
+    probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;font:-apple-system-body';
+    probe.textContent = 'x';
+    document.body.appendChild(probe);
+    const px = parseFloat(getComputedStyle(probe).fontSize);
+    probe.remove();
+    if (px > 0) document.documentElement.style.setProperty('--dt', String(Math.max(0.85, Math.min(1.6, px / 17))));
+  };
+  apply();
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) apply(); });
+}
