@@ -471,15 +471,15 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 
 /* Karşılaştırma — her iki temada lacivert; ekranın vitrini */
 .cmp .viewer-title { color: var(--text-on-inverse); font-size: var(--fs-title); font-weight: var(--fw-medium); }
-.cmp-stage { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; padding: 0 12px; }
+.cmp-stage { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; padding: 0 12px; touch-action: none; }
 .cmp-side { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; height: min(60dvh, 100%); }
 .cmp-pane { position: relative; border-radius: 10px; overflow: hidden; background: #16213A; }
-.cmp-pane img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cmp-pane img { width: 100%; height: 100%; object-fit: cover; display: block; transform-origin: center; will-change: transform; }
 .cmp-cap { position: absolute; left: 10px; bottom: 10px; font-size: var(--fs-caption); color: var(--text-on-inverse); background: rgba(11, 19, 38, .55); padding: 4px 8px; border-radius: 8px; }
 .cmp-cap.right { left: auto; right: 10px; }
 .cmp-corner { position: absolute; right: 10px; top: 10px; font-size: var(--fs-caption); color: var(--text-on-inverse); background: rgba(11, 19, 38, .55); padding: 4px 8px; border-radius: 8px; }
 .cmp-stack { position: relative; height: min(60dvh, 100%); border-radius: 10px; overflow: hidden; background: #16213A; touch-action: none; user-select: none; }
-.cmp-stack img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.cmp-stack img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; transform-origin: center; will-change: transform; }
 .cmp-handle { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--text-on-inverse); transform: translateX(-1px); pointer-events: none; }
 .cmp-handle::after { content: ''; position: absolute; top: 50%; left: 50%; width: 28px; height: 28px; border-radius: 50%; background: var(--text-on-inverse); transform: translate(-50%, -50%); }
 .cmp-range { width: 100%; margin: 14px 0 0; accent-color: var(--text-on-inverse); height: 28px; }
@@ -718,3 +718,19 @@ body.has-undo .toast { margin-top: -58px; }   /* bildirim, geri al kapsülünün
 .form-section-row .form-section { flex: 1; }
 .sheet-foot .btn-primary:disabled { opacity: 1; background: var(--bg-subtle); color: var(--text-tertiary); pointer-events: none; }
 @media (min-width: 880px) { .sheet-half { height: auto; } .sheet-half .form-more { display: block; } .sheet-half .form-expand { display: none; } }
+
+/* Karşılaştırma: dönem şeridi (§5B) */
+.cmp-timeline { display: flex; align-items: flex-start; gap: 4px; overflow-x: auto; scrollbar-width: none; margin: 0 calc(-1 * var(--page-x)) 14px; padding: 0 var(--page-x); }
+.cmp-timeline::-webkit-scrollbar { display: none; }
+.tl-dot { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 56px; padding: 4px 4px; color: var(--text-on-inverse-secondary); font-size: var(--fs-label); white-space: nowrap; }
+.tl-dot i { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--text-on-inverse); box-sizing: border-box; display: block; }
+.tl-dot.on { color: var(--text-on-inverse); }
+.tl-dot.on i { background: var(--text-on-inverse); }
+.tl-dot.dim { opacity: .4; }
+.tl-dot.fixed { color: var(--text-on-inverse); }
+.tl-dot.fixed i { background: var(--text-on-inverse); }
+/* Çift dokunuş tam ekran: yalnızca sahne */
+.cmp.full .viewer-head, .cmp.full .cmp-modes, .cmp.full .cmp-foot { display: none; }
+.cmp.full .cmp-stage { padding: 0; }
+.cmp.full .cmp-side, .cmp.full .cmp-stack { height: 100%; border-radius: 0; }
+.cmp.full .cmp-pane { border-radius: 0; }
