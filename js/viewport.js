@@ -36,7 +36,11 @@ function measure() {
 export function relayoutBars() {
   const fix = measure();
   if (fix !== lastFix) { document.documentElement.style.setProperty('--vv-fix', `${fix}px`); lastFix = fix; }
-  document.querySelectorAll('.tabbar, .action-bar.sticky').forEach((el) => {
+  // Klavye: yerleşim görünümü küçülmediyse görünür alandan farkı --kb ile ver (arama kapsülü klavyenin üstüne oturur)
+  const vv = window.visualViewport;
+  const kb = vv ? Math.max(0, Math.round(document.documentElement.clientHeight - (vv.height + vv.offsetTop))) : 0;
+  document.documentElement.style.setProperty('--kb', `${kb}px`);
+  document.querySelectorAll('.navdock, .action-bar.sticky').forEach((el) => {
     const prev = el.style.display; el.style.display = 'none'; void el.offsetHeight; el.style.display = prev;
   });
 }

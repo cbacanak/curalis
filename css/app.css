@@ -44,7 +44,7 @@ b, strong { font-weight: var(--fw-medium); }
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .view {
   flex: 1; width: 100%; max-width: var(--content-w); margin: 0 auto;
-  padding: var(--safe-t) var(--page-x) calc(var(--tabbar-h) + var(--safe-b) + 32px);
+  padding: var(--safe-t) var(--page-x) calc(var(--tabbar-h) + var(--dock-b) + var(--safe-b) + 32px);
 }
 .view.has-hero { padding-top: 0; }
 
@@ -68,19 +68,45 @@ b, strong { font-weight: var(--fw-medium); }
 .topbar.inverse { background: var(--bg-inverse); color: var(--text-on-inverse); border-bottom-color: var(--border-on-inverse); }
 .topbar.inverse .btn-icon { color: var(--text-on-inverse); }
 
-/* Alt sekme çubuğu — yalnızca ikon */
-.tabbar {
-  position: fixed; left: 0; right: 0; bottom: calc(0px - var(--vv-fix, 0px)); z-index: 30;   /* --vv-fix: js/viewport.js (iOS açılış) */
-  height: calc(var(--tabbar-h) + var(--safe-b)); padding-bottom: var(--safe-b);
-  display: flex; background: var(--bg); border-top: 1px solid var(--divider);
+/* Navigasyon katmanı — TASARIM.md §5A: yüzen cam tab bar + arama adası */
+.glass { background: var(--glass-bg); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4); backdrop-filter: blur(var(--glass-blur)) saturate(1.4); }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { :root { --glass-bg: rgba(255, 255, 255, .92); --glass-bg-dark: rgba(20, 28, 48, .92); } }
+.navdock {
+  position: fixed; left: 0; right: 0; bottom: calc(var(--dock-b) + var(--safe-b) - var(--vv-fix, 0px)); z-index: 30;
+  display: flex; justify-content: center; align-items: center; gap: 10px; padding: 0 16px; pointer-events: none;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
-.tab { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--text-tabbar-off); transition: color var(--dur-fast); }
+body.searching .navdock { opacity: 0; transform: translateY(12px); pointer-events: none; }
+.tabbar { pointer-events: auto; display: flex; align-items: center; gap: 6px; height: var(--tabbar-h); padding: 0 5px; border-radius: 28px; }
+.tab { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; color: var(--tab-off); transition: color var(--dur-fast), background var(--dur-fast); }
 .tab .ic { width: 22px; height: 22px; }
-.tab.on { color: var(--text); }
+.tab.on { background: var(--tab-on-bg); color: var(--tab-on-fg); }
 .tab span { display: none; }
+.island { pointer-events: auto; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; color: var(--text); flex: 0 0 auto; transition: transform var(--dur-fast); }
+.island:active { transform: scale(.96); }
+.island[hidden] { display: none; }
+.island .ic { width: 22px; height: 22px; }
+/* İçeriğin altı navigasyon katmanına doğru yumuşakça solar (blur yok) */
+.main::after { content: ''; position: fixed; left: 0; right: 0; bottom: calc(0px - var(--vv-fix, 0px)); height: 120px; pointer-events: none; z-index: 25; background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--bg) 90%, transparent)); }
+/* Sabit üst nav düğmeleri (§5A): büyük başlık kayar, düğmeler kalır */
+.navtop { position: fixed; top: calc(var(--safe-t) + 12px); right: 16px; z-index: 30; display: flex; gap: 8px; }
+.navtop .glass-btn { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; color: var(--text); transition: transform var(--dur-fast); }
+.navtop .glass-btn:active { transform: scale(.96); }
+.navtop .glass-btn .ic { width: 22px; height: 22px; }
+/* Klavye üstü arama kapsülü */
+.search-dock { position: fixed; left: 16px; right: 16px; z-index: 120; bottom: max(calc(var(--kb, 0px) + 12px), calc(var(--dock-b) + var(--safe-b) - var(--vv-fix, 0px))); opacity: 0; transform: translateY(8px); transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease); }
+.search-dock.open { opacity: 1; transform: none; }
+.search-glass { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 8px 0 18px; border-radius: 26px; color: var(--text-secondary); }
+.search-glass .ic { width: 18px; height: 18px; flex: 0 0 auto; }
+.search-glass input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; height: 100%; font-size: var(--fs-body); color: var(--text); }
+.search-glass input::placeholder { color: var(--text-tertiary); }
+.search-glass input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.search-cancel { height: 40px; padding: 0 12px; border-radius: 20px; color: var(--text-secondary); font-size: var(--fs-small); }
+.hl { text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
 
 @media (min-width: 880px) {
-  .tabbar { display: none; }
+  .navdock, .main::after, .navtop { display: none; }
+  .view .search { display: flex; }
   .sidenav {
     display: flex; flex-direction: column; width: var(--sidenav-w); flex: 0 0 auto;
     position: sticky; top: 0; height: 100dvh; border-right: 1px solid var(--hairline); background: var(--bg); padding: 24px 16px;
@@ -100,6 +126,7 @@ b, strong { font-weight: var(--fw-medium); }
 
 /* ---------------- Sayfa başlığı ---------------- */
 .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 24px 0 20px; }
+.page-head.has-navtop { padding-right: 64px; }
 .page-title { font-size: var(--fs-display); font-weight: var(--fw-medium); letter-spacing: var(--ls-display); line-height: var(--lh-display); }
 .page-sub { color: var(--text-secondary); font-size: var(--fs-caption); margin-top: 8px; }
 .page-head .btn-fill-icon { margin-top: 2px; }
@@ -232,7 +259,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .form-error { color: var(--danger); font-size: var(--fs-caption); background: var(--danger-bg); padding: 10px 14px; border-radius: var(--r-control); }
 @media (min-width: 640px) { .input { font-size: 15px; } }
 
-.search { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px; border-radius: var(--r-control); background: var(--bg-subtle); color: var(--text-secondary); }
+.search { display: none; align-items: center; gap: 10px; height: 48px; padding: 0 16px; border-radius: var(--r-control); background: var(--bg-subtle); color: var(--text-secondary); }
 .search .ic { width: 18px; height: 18px; }
 .search input { flex: 1; border: 0; background: transparent; outline: none; height: 100%; font-size: var(--fs-body); color: var(--text); min-width: 0; }
 .search input::placeholder { color: var(--text-secondary); }
@@ -288,7 +315,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .menu-item .check-mark { margin-left: auto; color: var(--text); }
 
 .toast {
-  position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + var(--safe-b) + 20px - var(--vv-fix, 0px)); transform: translate(-50%, 12px);
+  position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + var(--dock-b) + var(--safe-b) + 20px - var(--vv-fix, 0px)); transform: translate(-50%, 12px);
   background: var(--primary-bg); color: var(--primary-text); padding: 12px 18px; border-radius: var(--r-control); font-size: var(--fs-small);
   opacity: 0; pointer-events: none; transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease); z-index: 200; max-width: min(92vw, 420px); text-align: center;
 }
@@ -379,7 +406,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .action-bar { display: flex; gap: 10px; margin-top: 28px; }
 .action-bar .btn-primary { flex: 1; }
 .action-bar.equal .btn { flex: 1; padding: 0 12px; }   /* Vazgeç / Göster: eşit genişlik */
-.action-bar.sticky { position: sticky; bottom: calc(var(--tabbar-h) + var(--safe-b) + 12px - var(--vv-fix, 0px)); z-index: 20; background: var(--bg); padding-top: 12px; }
+.action-bar.sticky { position: sticky; bottom: calc(var(--tabbar-h) + var(--dock-b) + var(--safe-b) + 12px - var(--vv-fix, 0px)); z-index: 20; background: var(--bg); padding-top: 12px; }
 @media (min-width: 880px) { .action-bar.sticky { bottom: 16px; } }
 .compare-hint { font-size: var(--fs-caption); color: var(--text-secondary); margin-top: 16px; }
 

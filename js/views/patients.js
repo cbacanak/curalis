@@ -1,8 +1,9 @@
-/* Hasta listesi — TASARIM.md §5 (Display başlık + dolu (+), arama, yaklaşan kontrol kartı, hairline liste) */
+/* Hasta listesi — TASARIM.md §5 + §5A (Display başlık kayar, sabit cam (+), arama adası → klavye üstü kapsül, hairline liste) */
 import { Patients, Procedures, Appointments, fullName } from '../db.js';
 import { esc, icon, initials, fmtDate, fmtDayMonth, fmtTime, parseDate, daysBetween, emptyState, toast, age, actionMenu, statusText } from '../ui.js';
 import { patientForm, appointmentForm } from '../forms.js';
 import { setTopbar, go } from '../nav.js';
+import { setIsland, openSearch, closeSearch } from '../dock.js';
 import { t, cmp, lower, procLabel, apptLabel, isOp } from '../i18n.js';
 
 const MISSED_DAYS = 60;   // 'gelmedi' kayıtları bu kadar gün geciken listesinde kalır
@@ -11,7 +12,7 @@ let lastQuery = '';
 const UPCOMING_DAYS = 30;
 
 export async function render(root) {
-  setTopbar({ title: t('patients.title') });
+  setTopbar({ title: t('patients.title'), hidden: true });   // §5A: büyük başlık içerikle kayar, kompakt çubuk yok
 
   async function addPatient() {
     const p = await patientForm();
@@ -42,20 +43,24 @@ export async function render(root) {
 
   root.innerHTML = `
     <div class="screen">
-    <div class="page-head">
+    <div class="navtop" id="navtop"><button class="glass glass-btn" type="button" data-act="add" aria-label="${esc(t('patients.new'))}">${icon('plus')}</button></div>
+    <div class="page-head has-navtop">
       <div>
         <h1 class="page-title">${esc(t('patients.title'))}</h1>
-        <div class="page-sub">${esc(t('patients.count', { n: patients.length }))}${overdue.length ? ` · <span class="t-danger">${esc(t('patients.overdue', { n: overdue.length }))}</span>` : ''}${upcoming.length ? ` · ${esc(t('patients.upcoming', { n: upcoming.length }))}` : ''}</div>
+        <div class="page-sub" id="page-sub"></div>
       </div>
-      <button class="btn-fill-icon" type="button" data-act="add" aria-label="${esc(t('patients.new'))}">${icon('plus')}</button>
     </div>
     <div class="search">${icon('search')}<input type="search" placeholder="${esc(t('patients.search.ph'))}" value="${esc(lastQuery)}" autocomplete="off" aria-label="${esc(t('patients.search'))}"></div>
     <div id="list"></div>
     </div>`;
 
   root.querySelector('[data-act=add]').onclick = addPatient;
-  const input = root.querySelector('input');
+  const input = root.querySelector('input');   // satır içi arama yalnızca masaüstünde görünür; mobilde arama adası
   const list = root.querySelector('#list');
+  const subDefault = `${esc(t('patients.count', { n: patients.length }))}${overdue.length ? ` · <span class="t-danger">${esc(t('patients.overdue', { n: overdue.length }))}</span>` : ''}${upcoming.length ? ` · ${esc(t('patients.upcoming', { n: upcoming.length }))}` : ''}`;
+  const setSub = (q, n) => { root.querySelector('#page-sub').innerHTML = q ? esc(t('patients.searchCount', { q, n })) : subDefault; };
+  /** Eşleşen harfleri altı çizili göster (§5A) */
+  const hl = (text, q) => { const i = q ? lower(text).indexOf(q) : -1; return i < 0 ? esc(text) : `${esc(text.slice(0, i))}<span class="hl">${esc(text.slice(i, i + q.length))}</span>${esc(text.slice(i + q.length))}`; };
 
   function upcomingCard(a) {
     const p = pById[a.patientId];
@@ -104,7 +109,7 @@ export async function render(root) {
     else if (v === 'open') go(`/patient/${a.patientId}/randevular`);
   }
 
-  function patientRow(p) {
+  function patientRow(p, q = '') {
     const lp = lastProc[p.id];
     const a = age(p.birthDate);
     const planned = lp && parseDate(lp.date) > today;
@@ -113,7 +118,7 @@ export async function render(root) {
       <a class="row" href="#/patient/${p.id}">
         <div class="avatar">${esc(initials(fullName(p)))}</div>
         <div class="row-main">
-          <div class="row-title">${esc(fullName(p))}</div>
+          <div class="row-title">${hl(fullName(p), q)}</div>
           <div class="row-sub">${esc(sub)}</div>
         </div>
         <div class="row-end">${icon('chevron')}</div>
@@ -123,6 +128,7 @@ export async function render(root) {
   function paint() {
     const q = lower(lastQuery).trim();
     const rows = q ? patients.filter((p) => lower(`${fullName(p)} ${p.phone || ''}`).includes(q)) : patients;
+    setSub(q ? lastQuery.trim() : '', rows.length);
     if (!patients.length) {
       list.innerHTML = emptyState({ title: t('patients.empty'), text: t('patients.emptyText'), action: `<button class="btn btn-primary" type="button" data-act="add">${esc(t('patients.new'))}</button>` });
       list.querySelector('[data-act=add]').onclick = addPatient;
@@ -142,13 +148,20 @@ export async function render(root) {
         ${upcoming.slice(0, 2).map(upcomingCard).join('')}
       </section>` : ''}
       <section class="section">
-        <div class="section-label">${esc(q ? t('patients.results', { n: rows.length }) : t('patients.all'))}</div>
-        <div class="list">${rows.map(patientRow).join('')}</div>
+        ${q ? '' : `<div class="section-label">${esc(t('patients.all'))}</div>`}
+        <div class="list">${rows.map((p) => patientRow(p, q)).join('')}</div>
       </section>`;
     list.querySelectorAll('[data-open]').forEach((b) => { b.onclick = () => go(`/patient/${b.dataset.open}`); });
     list.querySelectorAll('[data-overdue]').forEach((b) => { b.onclick = () => overdueMenu(appointments.find((a) => a.id === b.dataset.overdue)); });
   }
 
   input.addEventListener('input', () => { lastQuery = input.value; paint(); });
+  // Arama adası (§5A): klavye üstü kapsül; kapanınca liste eski haline döner
+  setIsland(() => openSearch({
+    placeholder: t('patients.search.ph'), value: lastQuery,
+    onInput: (v) => { lastQuery = v; input.value = v; paint(); },
+    onClose: () => { if (lastQuery) { lastQuery = ''; input.value = ''; paint(); } },
+  }));
   paint();
+  return () => closeSearch();
 }
