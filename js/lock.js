@@ -194,7 +194,9 @@ export async function showLock() {
   document.body.classList.add('locked');
   lockScroll();
   try {
-    await pinEntry({ title: t('app.name'), sub: t('lock.enter'), length: rec.len, cancel: false, verify: verifyPin, throttle: true, forgot: true });
+    const entry = pinEntry({ title: t('app.name'), sub: t('lock.enter'), length: rec.len, cancel: false, verify: verifyPin, throttle: true, forgot: true });
+    hideCover();   // kilit ekranı DOM'da; örtü artık gereksiz
+    await entry;
   } finally {
     document.documentElement.classList.remove('locked');
     document.body.classList.remove('locked');
@@ -205,16 +207,30 @@ export async function showLock() {
   }
 }
 
+/* ---------------- Arka plan örtüsü (WEB-PLAN Adım 9): uygulama değiştiricide içerik görünmez ---------------- */
+export function showCover() {
+  if (document.getElementById('cover')) return;
+  const c = el('<div id="cover" class="cover" aria-hidden="true"><img src="icons/icon.svg" alt=""></div>');
+  document.body.appendChild(c);
+  document.documentElement.classList.add('covered');
+}
+export function hideCover() {
+  document.getElementById('cover')?.remove();
+  document.documentElement.classList.remove('covered');
+}
+
 /** Açılışta kilitler (PIN varsa) ve arka plandan dönüşleri izler. Kilit açılana dek çözülmez. */
 export async function initLock() {
   document.addEventListener('visibilitychange', async () => {
-    if (document.hidden) { hiddenAt = Date.now(); return; }
-    if (hiddenAt === null || locked) return;
-    const away = Date.now() - hiddenAt; hiddenAt = null;
-    if (!(await hasPin())) return;
-    const delay = await getLockDelay();
-    if (away >= delay * 1000) showLock();
+    if (document.hidden) { hiddenAt = Date.now(); showCover(); return; }   // PIN olmasa da örtü: gizlilik önlemi
+    if (locked) { hideCover(); return; }
+    const away = hiddenAt === null ? 0 : Date.now() - hiddenAt; hiddenAt = null;
+    const lock = (await hasPin()) && away >= (await getLockDelay()) * 1000;
+    if (lock) showLock();   // kilit ekranı çizilince örtü kalkar
+    else hideCover();
   });
+  window.addEventListener('pagehide', showCover);
+  window.addEventListener('pageshow', () => { if (!document.hidden && !locked) hideCover(); });
   await showLock();
 }
 

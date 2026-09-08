@@ -1,6 +1,6 @@
 /* Depolama sağlığı: ortam tespiti, kalıcı depolama isteği, yedek al / geri yükle */
-import { exportAll, importAll, audit, SCHEMA } from './db.js';
-import { esc, icon, sheet, toast, field } from './ui.js';
+import { exportAll, importAll, audit, SCHEMA, Settings, Patients } from './db.js';
+import { esc, icon, sheet, toast, field, fmtDate } from './ui.js';
 import { encryptBackup, decryptBackup, isEncryptedBackup, readBackupHeader, cryptoAvailable } from './crypto.js';
 import { t, locale } from './i18n.js';
 
@@ -76,8 +76,22 @@ export function storageNotice() {
   return null;
 }
 
-export function renderNotice(host) {
-  const n = storageNotice();
+const BACKUP_KEY = 'lastBackupAt';
+const BACKUP_REMIND_DAYS = 7;
+export const markBackupTaken = () => Settings.set(BACKUP_KEY, new Date().toISOString());
+export const lastBackupAt = () => Settings.get(BACKUP_KEY, null);
+/** Haftalık yedek hatırlatması: kayıt varsa ve son dosya yedeği 7 günü geçtiyse (ya da hiç yoksa). Kimlik haftaya göre değişir: kapatılsa da sonraki hafta yeniden görünür. */
+async function backupNotice() {
+  if (!(await Patients.count())) return null;
+  const last = await lastBackupAt();
+  const days = last ? Math.floor((Date.now() - new Date(last).getTime()) / 86400000) : null;
+  if (days !== null && days < BACKUP_REMIND_DAYS) return null;
+  const week = Math.floor(Date.now() / (7 * 86400000));
+  return { id: `backup-${week}`, kind: 'info', dismissable: true, title: t('n.backup.title'), text: days === null ? t('n.backup.never') : t('n.backup.text', { d: days }) };
+}
+
+export async function renderNotice(host) {
+  const n = storageNotice() || await backupNotice();
   host.innerHTML = '';
   if (!n || (n.dismissable && dismissed(n.id))) return;
   host.innerHTML = `
@@ -139,6 +153,8 @@ export async function downloadBackup() {
   const data = await exportAll();
   const bytes = await encryptBackup(data, pw);
   audit('backup', 'data', null, `${(data.patients || []).length} patients · encrypted`);
+  await markBackupTaken();
+  renderNotice(document.getElementById('notice'));
   const name = backupName();
   const file = new File([bytes], name, { type: 'application/octet-stream' });
   if (navigator.canShare && navigator.canShare({ files: [file] }) && isMobile()) {

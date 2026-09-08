@@ -190,6 +190,8 @@ const TR = {
   // Depolama / yedek
   'n.inApp.title': 'Veriler burada kalıcı olmayabilir',
   'n.inApp.text': 'Sayfa bir uygulama içi tarayıcıda (mesajlaşma uygulaması vb.) açıldı; bu tarayıcılar kapanınca verileri silebilir. Bağlantıyı Safari veya Chrome ile açın ve ana ekrana ekleyin.',
+  'n.backup.title': 'Yedek zamanı', 'n.backup.never': 'Henüz dosya yedeği alınmadı. Ayarlar > Yedek al ile şifreli dosyayı iCloud Drive\'a kaydet.', 'n.backup.text': 'Son yedek {d} gün önce. Ayarlar > Yedek al ile şifreli dosyayı iCloud Drive\'a kaydet.',
+  's.backup.last': 'Son yedek · {d}', 's.backup.never': 'Henüz yedek alınmadı · haftada bir öneririz',
   'n.ios.title': 'Ana ekrana ekleyin',
   'n.ios.text': 'Safari, 7 gün açılmayan sitelerin verilerini silebilir. Paylaş → Ana Ekrana Ekle ile kurup uygulamayı oradan açın. Ana ekrandaki uygulamanın verileri Safari\'dekinden ayrıdır; mevcut verileri Ayarlar → Yedek al ile taşıyın.',
   'n.mobile.title': 'Ana ekrana ekleyin', 'n.mobile.text': 'Tarayıcı menüsünden "Ana ekrana ekle" ile kurarsanız uygulama gibi açılır ve verileriniz korunur.',
@@ -360,6 +362,8 @@ const EN = {
   'lock.confirmSub': 'Enter the same PIN once more', 'lock.mismatch': 'PINs do not match, try again', 'lock.current': 'Current PIN', 'lock.currentSub': 'Enter your current PIN to continue',
   'n.inApp.title': 'Data may not persist here',
   'n.inApp.text': 'This page opened in an in-app browser (messaging app etc.); such browsers can wipe data when closed. Open the link in Safari or Chrome and add it to the home screen.',
+  'n.backup.title': 'Time to back up', 'n.backup.never': 'No file backup yet. Settings > Back up saves an encrypted file to iCloud Drive.', 'n.backup.text': (p) => `Last backup ${p.d} days ago. Settings > Back up saves an encrypted file to iCloud Drive.`,
+  's.backup.last': 'Last backup · {d}', 's.backup.never': 'No backup yet · weekly recommended',
   'n.ios.title': 'Add to home screen',
   'n.ios.text': 'Safari may delete data of sites not opened for 7 days. Install with Share → Add to Home Screen and open the app from there. The home screen app keeps separate data from Safari; move existing data with Settings → Back up.',
   'n.mobile.title': 'Add to home screen', 'n.mobile.text': 'Install via the browser menu "Add to home screen" so it opens like an app and your data is protected.',

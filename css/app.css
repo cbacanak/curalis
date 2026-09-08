@@ -617,6 +617,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 /* Depolama uyarı bandı */
 .notice-host { max-width: var(--content-w); width: 100%; margin: 0 auto; padding: var(--safe-t) var(--page-x) 0; }
 .notice-host:empty { display: none; }
+@media (max-width: 879px) { body:has(#navtop) .notice-host { padding-right: calc(var(--page-x) + 56px); } }   /* sabit cam (+) bildirimin kapat düğmesini örtmesin */
 .notice { display: flex; gap: 12px; align-items: flex-start; margin-top: 16px; padding: 14px 16px; border-radius: var(--r-control); font-size: var(--fs-caption); line-height: 1.4; background: var(--bg-subtle); color: var(--text); }
 .notice-main { flex: 1; min-width: 0; }
 .notice-main b { display: block; margin-bottom: 2px; font-weight: var(--fw-medium); }
@@ -655,7 +656,10 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .lock-confirm .btn-primary { background: var(--danger); color: var(--text-on-inverse); }
 .lock-confirm .btn-ghost { color: var(--text-on-inverse-secondary); }
 body.locked .app { visibility: hidden; }
-html.locked, body.locked { background: var(--bg-inverse); }   /* kilit ekranının kapsamadığı alan da lacivert (iOS ilk açılış) */
+html.locked, body.locked, html.covered { background: var(--bg-inverse); }
+/* Arka plan örtüsü: uygulama değiştiricide içerik görünmez (Adım 9) */
+.cover { position: fixed; inset: 0; z-index: 350; background: var(--bg-inverse); display: grid; place-items: center; }
+.cover img { width: 72px; height: 72px; border-radius: 18px; }   /* kilit ekranının kapsamadığı alan da lacivert (iOS ilk açılış) */
 @media (max-height: 680px) { .lock-pad { grid-template-columns: repeat(3, 62px); gap: 10px 20px; } .lock-pad button { height: 62px; font-size: 24px; } .lock-dots { margin-top: 24px; } }
 
 /* ---------------- İskelet ---------------- */
