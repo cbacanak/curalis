@@ -378,6 +378,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 /* Alt eylem satırı (Karşılaştır + ekle) */
 .action-bar { display: flex; gap: 10px; margin-top: 28px; }
 .action-bar .btn-primary { flex: 1; }
+.action-bar.equal .btn { flex: 1; padding: 0 12px; }   /* Vazgeç / Göster: eşit genişlik */
 .action-bar.sticky { position: sticky; bottom: calc(var(--tabbar-h) + var(--safe-b) + 12px); z-index: 20; background: var(--bg); padding-top: 12px; }
 @media (min-width: 880px) { .action-bar.sticky { bottom: 16px; } }
 .compare-hint { font-size: var(--fs-caption); color: var(--text-secondary); margin-top: 16px; }

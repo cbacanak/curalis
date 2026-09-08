@@ -502,9 +502,9 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
           <div class="photo-grid">${sortGroup(list).map((ph) => photoTile(ph, pr)).join('')}</div>
         </div>`).join('')
         : emptyState({ title: t('p.photo.noMatch') })}
-      <div class="action-bar sticky">
+      <div class="action-bar sticky ${state.compare ? 'equal' : ''}">
         ${state.compare
-          ? `<button class="btn btn-ghost" type="button" data-act="compare-cancel">${esc(t('common.cancel'))}</button>
+          ? `<button class="btn btn-secondary" type="button" data-act="compare-cancel">${esc(t('common.cancel'))}</button>
              <button class="btn btn-primary" type="button" data-act="compare-go" disabled>${esc(t('p.photo.show'))}</button>`
           : `<button class="btn btn-primary" type="button" data-act="compare" ${hasPair ? '' : 'disabled'}>${esc(t('p.photo.compare'))}</button>
              <button class="btn-outline-icon" type="button" data-act="add" aria-label="${esc(t('p.addPhoto'))}">${icon('plus')}</button>`}
