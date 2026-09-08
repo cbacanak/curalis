@@ -686,6 +686,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
           ${[['side', t('p.cmp.side')], ['slide', t('p.cmp.slide')], ['overlay', t('p.cmp.overlay')]].map(([k, l]) => `<button class="cmp-chip ${k === mode ? 'on' : ''}" type="button" data-mode="${k}">${esc(l)}</button>`).join('')}
         </div>
         <div class="cmp-foot">
+          <div class="cmp-timeline" id="cmp-timeline" role="tablist" aria-label="${esc(t('p.cmp.timeline'))}"></div>
           <div class="cmp-pick">
             <img class="cmp-thumb" alt="">
             <div class="cmp-pick-main">
@@ -697,6 +698,66 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
         </div>
       </div>`);
     const stage = v.querySelector('#cmp-stage');
+
+    /* ---- Senkron zoom + çift dokunuş tam ekran (§5B) ---- */
+    const zoom = { scale: 1, tx: 0, ty: 0, pinching: false };
+    const targets = () => stage.querySelectorAll('.cmp-pane img, .cmp-stack img');
+    const applyZoom = () => { const tr = zoom.scale > 1 ? `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})` : ''; targets().forEach((im) => { im.style.transform = tr; }); };
+    const resetZoom = () => { zoom.scale = 1; zoom.tx = 0; zoom.ty = 0; applyZoom(); };
+    (() => {
+      const pts = new Map();
+      let d0 = 0, s0 = 1, c0 = null, t0 = null, lastTap = 0, moved = false, p0 = null, downY = 0;
+      const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+      const center = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+      stage.addEventListener('pointerdown', (e) => {
+        pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        try { stage.setPointerCapture(e.pointerId); } catch { /* yok say */ }
+        moved = false; p0 = { x: e.clientX, y: e.clientY }; downY = e.clientY;
+        if (pts.size === 2) { const [a, b] = [...pts.values()]; d0 = dist(a, b); s0 = zoom.scale; c0 = center(a, b); t0 = { x: zoom.tx, y: zoom.ty }; zoom.pinching = true; }
+      });
+      stage.addEventListener('pointermove', (e) => {
+        if (!pts.has(e.pointerId)) return;
+        pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pts.size === 2) {
+          const [a, b] = [...pts.values()]; const c = center(a, b);
+          zoom.scale = Math.max(1, Math.min(4, s0 * (dist(a, b) / Math.max(1, d0))));
+          zoom.tx = zoom.scale > 1 ? t0.x + (c.x - c0.x) : 0; zoom.ty = zoom.scale > 1 ? t0.y + (c.y - c0.y) : 0;
+          applyZoom(); moved = true;
+        } else if (pts.size === 1 && p0) {
+          const dx = e.clientX - p0.x, dy = e.clientY - p0.y;
+          if (Math.abs(dx) > 6 || Math.abs(dy) > 6) moved = true;
+          if (zoom.scale > 1) { zoom.tx += dx; zoom.ty += dy; p0 = { x: e.clientX, y: e.clientY }; applyZoom(); }
+        }
+      });
+      const up = (e) => {
+        if (!pts.has(e.pointerId)) return;
+        pts.delete(e.pointerId);
+        if (pts.size === 0) {
+          zoom.pinching = false;
+          if (zoom.scale <= 1.02) resetZoom();
+          // Tam ekranda tek parmakla aşağı çekme → tam ekrandan çık
+          if (v.classList.contains('full') && zoom.scale === 1 && e.clientY - downY > 80) { v.classList.remove('full'); return; }
+          // Çift dokunuş → tam ekran aç/kapat
+          if (!moved) { const now = Date.now(); if (now - lastTap < 300) { v.classList.toggle('full'); resetZoom(); lastTap = 0; } else lastTap = now; }
+        }
+      };
+      stage.addEventListener('pointerup', up); stage.addEventListener('pointercancel', up);
+    })();
+
+    /* ---- Dönem şeridi (§5B): sol fotoğraf sabit (öncesi), şeritte seçilen dönem sağ fotoğrafı değiştirir ---- */
+    const tl = v.querySelector('#cmp-timeline');
+    const poolFor = () => { const pr = prOf(before) || prOf(after); return data.photos.filter((x) => !isPre(x) && (!pr || x.procedureId === pr.id)); };
+    const bestIn = (k) => { const c = poolFor().filter((x) => (x.period || 'other') === k).sort((x, y) => (y.date || '').localeCompare(x.date || '')); return c.find((x) => x.angle && x.angle === before.angle) || c[0] || null; };
+    function paintTimeline() {
+      const pool = poolFor();
+      const keys = PERIODS.filter((k) => k !== 'pre' && pool.some((x) => (x.period || 'other') === k));
+      tl.innerHTML = `<span class="tl-dot fixed"><i></i><span>${esc(t('phase.before'))}</span></span>${keys.map((k) => {
+        const same = pool.some((x) => (x.period || 'other') === k && x.angle && x.angle === before.angle);
+        return `<button type="button" role="tab" class="tl-dot ${(after.period || 'other') === k ? 'on' : ''} ${same ? '' : 'dim'}" data-period="${k}" aria-selected="${(after.period || 'other') === k}"><i></i><span>${esc(k === 'other' ? periodLabel(k) : t(`sched.short.${k}`))}</span></button>`;
+      }).join('')}`;
+      tl.querySelectorAll('[data-period]').forEach((b) => { b.onclick = () => { const ph = bestIn(b.dataset.period); if (ph) { after = ph; state.selected.after = ph; paintStage(); } }; });
+      tl.querySelector('.tl-dot.on')?.scrollIntoView({ inline: 'center', block: 'nearest' });
+    }
 
     const pane = (ph, alt) => `
       <div class="cmp-pane">
@@ -724,9 +785,11 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
         range.oninput = () => setPos(+range.value);
         const stack = stage.querySelector('#cmp-stack');
         const fromEvent = (e) => { const r = stack.getBoundingClientRect(); const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left; setPos(Math.max(0, Math.min(100, (x / r.width) * 100))); };
-        let drag = false;
-        stack.addEventListener('pointerdown', (e) => { drag = true; fromEvent(e); });
-        stack.addEventListener('pointermove', (e) => { if (drag) fromEvent(e); });
+        // Tutamaç: tek parmakla sürükle ya da dokun; pinch başlarsa (ikinci parmak) tutamaç yerinde kalır
+        let drag = false, dragMoved = false;
+        stack.addEventListener('pointerdown', (e) => { if (zoom.scale > 1 || !e.isPrimary) return; drag = true; dragMoved = false; });
+        stack.addEventListener('pointermove', (e) => { if (drag && e.isPrimary && !zoom.pinching && zoom.scale === 1) { dragMoved = true; fromEvent(e); } });
+        stack.addEventListener('pointerup', (e) => { if (drag && e.isPrimary && !dragMoved && !zoom.pinching && zoom.scale === 1) fromEvent(e); drag = false; });
         window.addEventListener('pointerup', () => { drag = false; });
       } else {
         stage.innerHTML = `
@@ -742,6 +805,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       }
       v.querySelector('.cmp-thumb').src = blobURL(after.id + ':t', after.thumb || after.blob);
       v.querySelector('.cmp-pick-sub').textContent = [fmtDate(after.date), corner(after)].filter(Boolean).join(' · ');
+      resetZoom(); paintTimeline();
     }
 
     const close = () => { document.removeEventListener('keydown', onKey); v.remove(); state.compare = false; state.selected = { before: null, after: null }; paintTab(); };

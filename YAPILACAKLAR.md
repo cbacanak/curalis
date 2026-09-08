@@ -37,7 +37,7 @@ Sürüm numaraları plandaki v0.x sayılarıyla değil, gerçek sürümle (0.8.x
 - [x] **Adım 2 — Navigasyon katmanı (5A):** tamamen (0.9.0–0.9.3). Kaydırınca küçülen tab bar (isteğe bağlı) yok. Kamera sekmesi canlı kameraya açılır, kamera yoksa galeriye düşer (Adım 10 tamamlandığı için).
 - [x] **Adım 3 — Şablonlar ve kontrol planı:** tamamen. Ayarlar > Şablonlar, türe özel alanlar, otomatik kontrol randevuları, serbest metin tür yok.
 - [x] **Adım 4 — Fotoğraf dönem/açı/gruplama:** tamamen. Dönem+açı zorunlu, açıya göre grup, dönem çipleri, EXIF yeniden kodlamayla temizlenir.
-- [~] **Adım 5 — Karşılaştırma:** kısmen. Üç mod, seçim modu + raf, anonim paylaşım (Web Share) var; dönem şeridi, senkron zoom, çift dokunuş tam ekran yok.
+- [x] **Adım 5 — Karşılaştırma ekranı (0.12.0):** üç mod (yan yana / kaydırıcı / üst üste), dönem şeridi, senkron zoom, çift dokunuş tam ekran, seçim modu + accessory rafı, anonim paylaşım (Web Share, ad yok, EXIF yok, dönem/açı etiketi).
 - [x] **Adım 6 — Klinik alanlar ve onam:** tamamen.
 - [x] **Adım 7 — Liste etkileşimleri ve geri al (0.10.0):** kaydırma aksiyonları (hasta: sola Ara · WhatsApp, sağa Randevu; randevu: sola Gelmedi, sağa Geldi), 400 ms uzun basma önizlemesi (Ara · Fotoğraf çek · Karşılaştır · Sil), geri al kapsülü (silme ve 'gelmedi' onay sormaz, 5 sn geri al; kalıcı silme ve yedek üzerine yazma onay sorar), soft delete + Silinenler (30 gün), geciken kontroller.
 - [x] **Adım 8 — Formlar ve klavye (0.11.0):** kademeli sheet (yeni hasta / randevu yarı → tam), inputmode/type/autocapitalize/enterkeyhint, Türkçe ad düzeltme, Rehberden seç (Contact Picker), Kaydet zorunlu alanlar dolana dek pasif, hazır mesaj şablonları (Ayarlar) → randevu menüsünden WhatsApp'a atlama.
