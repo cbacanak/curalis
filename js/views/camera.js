@@ -163,7 +163,7 @@ export async function render(root, { id = null } = {}) {
     closed = true;
     state.stream?.getTracks().forEach((tr) => tr.stop());
     state.stream = null;
-    window.removeEventListener('deviceorientation', onOrient);
+    window.removeEventListener('devicemotion', onMotion); if (levelRaf) cancelAnimationFrame(levelRaf);
   }
   function showFallback(msg) {
     fallback.hidden = false;
@@ -209,28 +209,40 @@ export async function render(root, { id = null } = {}) {
   el('[data-act=last]').onclick = () => { stop(); go(`/patient/${id}/fotograflar`); };
   el('[data-act=done]').onclick = () => { stop(); go(`/patient/${id}/fotograflar`); };
 
-  /* ---------- Seviye çizgisi (DeviceOrientation; iOS'ta izin ister) ---------- */
+  /* ---------- Seviye çizgisi (DeviceMotion yerçekimi vektörü; iOS'ta izin ister) ----------
+   * Dik tutuşta DeviceOrientation'ın gamma'sı kararsız (beta≈90 tekilliği); bunun yerine ivmeölçerin yerçekimi
+   * bileşenlerinden eğim hesaplanır. iOS ve Android işaretleri farklı verir; y'nin işaretiyle normalize edilir. */
   const levelEl = el('.cam-level');
-  function onOrient(e) {
-    if (e.gamma == null || e.beta == null) return;
-    const roll = e.gamma;                 // sağ/sol eğim (portre)
-    const pitch = Math.abs(e.beta - 90);  // ileri/geri eğim; dik tutuşta 90
-    levelEl.hidden = false;
-    levelEl.querySelector('i').style.transform = `rotate(${Math.max(-30, Math.min(30, roll))}deg)`;
-    levelEl.classList.toggle('warn', Math.abs(roll) > 4 || pitch > 8);
+  let levelRaf = 0, pending = null;
+  function onMotion(e) {
+    const g = e.accelerationIncludingGravity;
+    if (!g || g.x == null || g.y == null) return;
+    pending = g;
+    if (levelRaf) return;
+    levelRaf = requestAnimationFrame(() => {
+      levelRaf = 0;
+      const { x, y, z } = pending;
+      const s = y < 0 ? 1 : -1;                                         // iOS: yerçekimi yönü (dikte y<0); Android: tepki (y>0)
+      const roll = Math.atan2(x * s, -y * s) * 180 / Math.PI;           // sağa eğim +
+      const pitch = Math.atan2(Math.abs(z || 0), Math.hypot(x, y)) * 180 / Math.PI;   // dikeyden sapma
+      levelEl.hidden = false;
+      // Çizgi ufka paralel kalır: cihaz saat yönünde döndüyse çizgi ters yönde döner
+      levelEl.querySelector('i').style.transform = `rotate(${-Math.max(-30, Math.min(30, roll))}deg)`;
+      levelEl.classList.toggle('warn', Math.abs(roll) > 3 || pitch > 8);
+    });
   }
   async function enableLevel() {
     try {
-      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        const r = await DeviceOrientationEvent.requestPermission(); if (r !== 'granted') return;
+      if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+        const r = await DeviceMotionEvent.requestPermission(); if (r !== 'granted') return;
       }
-      window.addEventListener('deviceorientation', onOrient);
+      window.addEventListener('devicemotion', onMotion);
       el('[data-act=level]').hidden = true;
     } catch { /* yok say */ }
   }
-  if (typeof DeviceOrientationEvent !== 'undefined') {
-    if (typeof DeviceOrientationEvent.requestPermission === 'function') el('[data-act=level]').hidden = false;   // iOS: kullanıcı dokunuşu gerekir
-    else window.addEventListener('deviceorientation', onOrient);
+  if (typeof DeviceMotionEvent !== 'undefined') {
+    if (typeof DeviceMotionEvent.requestPermission === 'function') el('[data-act=level]').hidden = false;   // iOS: kullanıcı dokunuşu gerekir
+    else window.addEventListener('devicemotion', onMotion);
   }
   el('[data-act=level]').onclick = enableLevel;
 
