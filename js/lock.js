@@ -62,7 +62,7 @@ export function resetFail() { saveFail({ n: 0, until: 0 }); }
  *  - throttle: yanlış girişleri sayıp bekletme uygular (yalnızca gerçek PIN doğrulamasında).
  *  - forgot: "PIN'i unuttum" akışı (kilit ekranı); tüm veriyi siler.
  */
-export function pinEntry({ title, sub = '', length = null, minLength = 4, maxLength = 6, cancel = true, verify = null, throttle = false, forgot = false }) {
+export function pinEntry({ title, sub = '', length = null, minLength = 4, maxLength = 6, cancel = true, verify = null, throttle = false, forgot = false, brand = false }) {
   return new Promise((resolve) => {
     let val = '';
     let busy = false;
@@ -71,6 +71,7 @@ export function pinEntry({ title, sub = '', length = null, minLength = 4, maxLen
       <div class="lock" role="dialog" aria-modal="true" aria-label="${esc(title)}">
         <div class="lock-head">${cancel ? `<button class="btn-icon" type="button" data-act="cancel" aria-label="${esc(t('common.cancel'))}">${icon('x')}</button>` : ''}</div>
         <div class="lock-body">
+          ${brand ? '<img class="lock-brand" src="icons/icon.svg" alt="">' : ''}
           <h2 class="lock-title">${esc(title)}</h2>
           <div class="lock-sub">${esc(sub)}</div>
           <div class="lock-dots" aria-live="polite"></div>
@@ -194,7 +195,7 @@ export async function showLock() {
   document.body.classList.add('locked');
   lockScroll();
   try {
-    const entry = pinEntry({ title: t('app.name'), sub: t('lock.enter'), length: rec.len, cancel: false, verify: verifyPin, throttle: true, forgot: true });
+    const entry = pinEntry({ title: t('app.name'), sub: t('lock.enter'), length: rec.len, cancel: false, verify: verifyPin, throttle: true, forgot: true, brand: true });
     hideCover();   // kilit ekranı DOM'da; örtü artık gereksiz
     await entry;
   } finally {

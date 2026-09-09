@@ -49,6 +49,7 @@ export async function render(root, { embedded = false, activeId = null, newPatie
     ${embedded ? '' : `<div class="navtop" id="navtop"><button class="glass glass-btn" type="button" data-act="add" aria-label="${esc(t('patients.new'))}">${icon('plus')}</button></div>`}
     <div class="page-head ${embedded ? '' : 'has-navtop'}">
       <div>
+        ${embedded ? '' : `<div class="brand-line"><img src="icons/icon.svg" alt="" width="20" height="20">${esc(t('app.name'))}</div>`}
         <h1 class="page-title">${esc(t('patients.title'))}</h1>
         <div class="page-sub" id="page-sub"></div>
       </div>

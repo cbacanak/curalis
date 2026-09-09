@@ -166,6 +166,8 @@ body.searching .fab-dock { opacity: 0; pointer-events: none; }
 /* ---------------- Sayfa başlığı ---------------- */
 .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 24px 0 20px; }
 .page-head.has-navtop { padding-right: 64px; }
+.brand-line { display: flex; align-items: center; gap: 8px; font-size: var(--fs-label); letter-spacing: var(--ls-label); color: var(--text-secondary); margin-bottom: 8px; }   /* uygulama adı + simge (TASARIM §8) */
+.brand-line img { width: 20px; height: 20px; border-radius: 5px; display: block; }
 .page-title { font-size: var(--fs-display); font-weight: var(--fw-medium); letter-spacing: var(--ls-display); line-height: var(--lh-display); }
 .page-sub { color: var(--text-secondary); font-size: var(--fs-caption); margin-top: 8px; }
 .page-head .btn-fill-icon { margin-top: 2px; }
@@ -652,6 +654,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .lock-head { display: flex; align-items: center; min-height: 44px; margin: 0 -8px; }
 .lock-head .btn-icon { color: var(--text-on-inverse); }
 .lock-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; max-width: 320px; margin: 0 auto; }
+.lock-brand { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 16px; }
 .lock-title { font-size: var(--fs-display); font-weight: var(--fw-medium); letter-spacing: var(--ls-display); line-height: var(--lh-display); text-align: center; }
 .lock-sub { color: var(--text-on-inverse-secondary); font-size: var(--fs-small); text-align: center; margin-top: 10px; }
 .lock-dots { display: flex; gap: 22px; height: 14px; margin: 36px 0 0; }
