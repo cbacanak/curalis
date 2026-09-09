@@ -4,6 +4,7 @@ Web planı adımları (YAPILACAKLAR.md "Yapıldı") ile gerçek sürüm numarala
 
 | Sürüm | Tarih | Adım | Özet |
 |---|---|---|---|
+| 0.13.2 | 2026-09-09 | Deneme bulguları 6–9 | Kamera seviye çizgisi yerçekimi vektöründen (DeviceMotion); karşılaştırma kaydırıcısı tutamaçtan takılmıyor (işaretçi yakalama yalnızca pinch/zoom); alt bar sayfa geçişlerinde sabit (arama adası gizlenip geri gelmiyor, gizle-göster tazelemesi kaldırıldı, cam katmanlar kendi katmanında); Hastalar başlığında ve kilit ekranında uygulama simgesi + adı. |
 | 0.13.1 | 2026-09-08 | Deneme bulguları 1–5 | Kaydırma aksiyonları tüm randevu satırlarında aynı küme (geciken: Geldi / Yeniden planla; planlı işlem: Yapıldı / Tarihi değiştir); WhatsApp hatırlatma senkron location.href + E.164; Ara/WhatsApp dönüşünde kaydırma sıfırlanır; kamera ve Ajanda hasta seçici (arama, Bugün / Son 5 / Tümü); randevu formu kademeli (bağlı işlem önseçili, dönem çipleri). |
 | 0.13.0 | 2026-09-08 | Adım 11 | yazı boyutları rem (iOS Dynamic Type --dt çarpanıyla ölçeklenir), manifest kısayolları (Yeni hasta / Fotoğraf çek / Bugünün kontrolleri), iPad ve geniş ekranda (≥768px) iki sütun (liste solda 320px, kart sağda), ⌘N yeni hasta ve ⌘F ara, sabit hex renkler token'a alındı. |
 | 0.12.0 | 2026-09-08 | Adım 5 | karşılaştırmada dönem şeridi (Öncesi sabit, şeritte seçilen dönem sağ fotoğrafı değiştirir; aynı açı yoksa nokta soluk), senkron pinch zoom ve kaydırma (her iki fotoğraf ve kaydırıcı/üst üste modları), çift dokunuş tam ekran + aşağı çekerek çıkış. |
