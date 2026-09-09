@@ -7,7 +7,7 @@ import { t } from './i18n.js';
 let islandHandler = null;
 let active = null;   // açık arama kapsülü
 
-/** Arama adası: handler verilirse görünür (Hastalar, Ajanda, Fotoğraflar); null ise gizlenir */
+/** Arama adası: handler verilirse görünür (Hastalar, Ajanda); null ise gizlenir */
 export function setIsland(handler) {
   islandHandler = handler;
   const b = document.getElementById('search-island');
@@ -15,6 +15,11 @@ export function setIsland(handler) {
   b.hidden = !handler;
   b.onclick = () => { if (islandHandler) islandHandler(); };
 }
+
+/** Rota değişimi: handler düşer ama ada görünür kalır; görünüm çizilince settleIsland() son durumu uygular.
+ * Böylece iki arama ekranı arasında geçişte ada gizlenip geri gelmez, tab bar yana kaymaz (deneme bulgusu 8). */
+export function resetIsland() { islandHandler = null; }
+export function settleIsland() { const b = document.getElementById('search-island'); if (b) b.hidden = !islandHandler; }
 
 /**
  * Klavye üstü arama kapsülü. Tab bar bu sırada gizlenir (body.searching).

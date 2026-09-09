@@ -93,7 +93,9 @@ b, strong { font-weight: var(--fw-medium); }
   display: flex; justify-content: center; align-items: center; gap: 10px; padding: 0 16px; pointer-events: none;
   transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
-body.searching .navdock { opacity: 0; transform: translateY(12px); pointer-events: none; }
+/* Yüzen cam katmanlar kendi bileşik katmanında: sayfa içeriği değişince yeniden çizilip pırpırlamasın (deneme bulgusu 8) */
+.navdock, .fab-dock, .shelf { transform: translateZ(0); backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+body.searching .navdock { opacity: 0; transform: translate3d(0, 12px, 0); pointer-events: none; }
 .tabbar { pointer-events: auto; display: flex; align-items: center; gap: 6px; height: var(--tabbar-h); padding: 0 5px; border-radius: 28px; }
 .tab { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; color: var(--tab-off); transition: color var(--dur-fast), background var(--dur-fast); }
 .tab .ic { width: 22px; height: 22px; }

@@ -4,7 +4,7 @@ import { currentPath, setActiveNav } from './nav.js';
 import { requestPersist, renderNotice } from './storage.js';
 import { initLock } from './lock.js';
 import { initViewportFix, initDynamicType } from './viewport.js';
-import { setIsland, closeSearch, setDock } from './dock.js';
+import { resetIsland, settleIsland, closeSearch, setDock } from './dock.js';
 import { toast, emptyState } from './ui.js';
 import { t, applyStaticText } from './i18n.js';
 
@@ -44,7 +44,7 @@ async function route() {
   const token = ++renderToken;
   if (cleanup) { try { cleanup(); } catch { /* yok say */ } cleanup = null; }
   document.getElementById('layer').querySelectorAll('.sheet-backdrop, .viewer').forEach((e) => e.remove());
-  closeSearch(); setIsland(null); setDock(true); document.getElementById('navtop')?.remove();
+  closeSearch(); resetIsland(); setDock(true); document.getElementById('navtop')?.remove();
 
   for (const r of routes) {
     const m = path.match(r.re);
@@ -65,6 +65,7 @@ async function route() {
       if (!activeId) {   // liste rotası: sağda yer tutucu
         root.innerHTML = `<div class="screen">${emptyState({ title: t('split.pick'), text: t('split.pickText') })}</div>`;
         const { setTopbar } = await import('./nav.js'); setTopbar({ title: t('patients.title'), hidden: true });
+        settleIsland();
         return;
       }
     } else { master.innerHTML = ''; masterKey = null; }
@@ -81,6 +82,7 @@ async function route() {
       console.error(err);
       root.innerHTML = emptyState({ title: t('common.error'), text: err.message || String(err), action: `<a class="btn btn-primary" href="#/">${t('common.home')}</a>` });
     }
+    if (token === renderToken) settleIsland();
     return;
   }
   location.hash = '#/';
