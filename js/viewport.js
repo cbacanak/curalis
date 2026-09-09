@@ -33,27 +33,21 @@ export function metrics() {
   };
 }
 
-/** Değişkenleri yaz; değiştiyse yüzen katmanları yeniden yerleştir (gizle-göster ile sabit konum tazelenir) */
-export function relayoutBars(force = false) {
+/** Alt kenar değişkenlerini yaz; katmanlar 'top: calc(--vv-h - …)' ile konumlandığından değişken güncellemesi yeterlidir.
+ * (Eski gizle-göster tazelemesi kaldırıldı: cam katmanı her tazelemede yeniden çizilip pırpırlıyordu — deneme bulgusu 8) */
+export function relayoutBars() {
   const m = metrics();
   const pad = m.kbOpen ? 12 : 16 + safeB();   // alt kenardan boşluk: klavye üstünde 12px, değilse 16px + safe-area
-  const changed = m.edge !== last.h || pad !== last.pad;
-  if (changed) {
-    const de = document.documentElement;
-    de.style.setProperty('--vv-h', `${m.edge}px`);
-    de.style.setProperty('--vv-fix', `${m.edge - m.clientH}px`);
-    de.style.setProperty('--edge-pad', `${pad}px`);
-    last = { h: m.edge, pad };
-  }
-  if (changed || force) {
-    document.querySelectorAll('.navdock, .search-dock, .action-bar.sticky').forEach((el) => {
-      const prev = el.style.display; el.style.display = 'none'; void el.offsetHeight; el.style.display = prev;
-    });
-  }
+  if (m.edge === last.h && pad === last.pad) return;
+  const de = document.documentElement;
+  de.style.setProperty('--vv-h', `${m.edge}px`);
+  de.style.setProperty('--vv-fix', `${m.edge - m.clientH}px`);
+  de.style.setProperty('--edge-pad', `${pad}px`);
+  last = { h: m.edge, pad };
 }
 
 /** Birkaç kez ölç: iOS düzeltmeyi gecikmeli yapıyor */
-export function relayoutSoon() { requestAnimationFrame(() => relayoutBars(true)); [120, 400, 900].forEach((ms) => setTimeout(() => relayoutBars(), ms)); }
+export function relayoutSoon() { requestAnimationFrame(() => relayoutBars()); [120, 400, 900].forEach((ms) => setTimeout(() => relayoutBars(), ms)); }
 
 export function initViewportFix() {
   const vv = window.visualViewport;
@@ -80,7 +74,7 @@ export function showViewportDebug() {
   const pre = box.querySelector('pre');
   const paint = () => { pre.textContent = JSON.stringify(metrics(), null, 1).replace(/[{}"]/g, '').trim(); };
   const timer = setInterval(paint, 500); paint();
-  box.querySelector('[data-act=fix]').onclick = () => { relayoutBars(true); paint(); };
+  box.querySelector('[data-act=fix]').onclick = () => { last = { h: null, pad: null }; relayoutBars(); paint(); };
   box.querySelector('[data-act=copy]').onclick = () => { navigator.clipboard?.writeText(JSON.stringify(metrics())); };
   box.querySelector('[data-act=close]').onclick = () => { clearInterval(timer); box.remove(); };
 }

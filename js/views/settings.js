@@ -11,7 +11,7 @@ import { segmented, bindSegmented } from '../ui.js';
 import { t, getLang, setLang, LANGS, applyStaticText } from '../i18n.js';
 import { showViewportDebug } from '../viewport.js';
 
-export const APP_VERSION = '0.13.1';
+export const APP_VERSION = '0.13.2';
 
 export async function render(root) {
   setTopbar({ title: t('s.title') });

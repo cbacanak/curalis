@@ -63,6 +63,10 @@ Plan dışı yapılan: İngilizce dil desteği. Kural (8 Eyl 2026): plan dışı
 3. [x] Ara / WhatsApp'tan dönüşte kaydırma bozuluyor: visibilitychange, pagehide, touchcancel'da kaydırma durumu sıfırlanır, açık satırlar kapanır.
 4. [x] Kamera hasta seçimi: üstte arama; bölümler "Bugün randevusu olanlar", "Son 5", "Tümü".
 5. [x] Randevu formunda "Tüm alanları göster" yok; kademeli sheet: kısa form tarih-saat, tür, bağlı işlem (son işlem önseçili), dönem; yukarı çekince kalan alanlar.
+6. [x] Kamera seviye çizgisi yanlış: dik tutuşta DeviceOrientation gamma kararsız; yerçekimi vektöründen (DeviceMotion) hesaplanır, çizgi ufka paralel kalır.
+7. [x] Karşılaştırma kaydırıcısı tutamaçtan tutunca takılıyor: zoom denetleyicisinin tek parmakta işaretçi yakalaması tutamacın olaylarını yutuyordu; yakalama yalnızca pinch ve yakınlaştırılmış kaydırmada.
+8. [x] Alt çubuk sayfa geçişlerinde pırpırlıyor: gizle-göster ile yeniden yerleştirme kaldırıldı, cam katmanlar kendi katmanına alındı.
+9. [x] Uygulama adı ve ikonu uygulama içinde: Hastalar başlığının üstünde 20px ikon + Curalis; kilit ekranında 56px ikon.
 
 ## Küçük iyileştirmeler
 

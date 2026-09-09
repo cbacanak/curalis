@@ -93,7 +93,9 @@ b, strong { font-weight: var(--fw-medium); }
   display: flex; justify-content: center; align-items: center; gap: 10px; padding: 0 16px; pointer-events: none;
   transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
-body.searching .navdock { opacity: 0; transform: translateY(12px); pointer-events: none; }
+/* Yüzen cam katmanlar kendi bileşik katmanında: sayfa içeriği değişince yeniden çizilip pırpırlamasın (deneme bulgusu 8) */
+.navdock, .fab-dock, .shelf { transform: translateZ(0); backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+body.searching .navdock { opacity: 0; transform: translate3d(0, 12px, 0); pointer-events: none; }
 .tabbar { pointer-events: auto; display: flex; align-items: center; gap: 6px; height: var(--tabbar-h); padding: 0 5px; border-radius: 28px; }
 .tab { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; color: var(--tab-off); transition: color var(--dur-fast), background var(--dur-fast); }
 .tab .ic { width: 22px; height: 22px; }
@@ -164,6 +166,8 @@ body.searching .fab-dock { opacity: 0; pointer-events: none; }
 /* ---------------- Sayfa başlığı ---------------- */
 .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 24px 0 20px; }
 .page-head.has-navtop { padding-right: 64px; }
+.brand-line { display: flex; align-items: center; gap: 8px; font-size: var(--fs-label); letter-spacing: var(--ls-label); color: var(--text-secondary); margin-bottom: 8px; }   /* uygulama adı + simge (TASARIM §8) */
+.brand-line img { width: 20px; height: 20px; border-radius: 5px; display: block; }
 .page-title { font-size: var(--fs-display); font-weight: var(--fw-medium); letter-spacing: var(--ls-display); line-height: var(--lh-display); }
 .page-sub { color: var(--text-secondary); font-size: var(--fs-caption); margin-top: 8px; }
 .page-head .btn-fill-icon { margin-top: 2px; }
@@ -650,6 +654,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .lock-head { display: flex; align-items: center; min-height: 44px; margin: 0 -8px; }
 .lock-head .btn-icon { color: var(--text-on-inverse); }
 .lock-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; max-width: 320px; margin: 0 auto; }
+.lock-brand { width: 56px; height: 56px; border-radius: 14px; margin-bottom: 16px; }
 .lock-title { font-size: var(--fs-display); font-weight: var(--fw-medium); letter-spacing: var(--ls-display); line-height: var(--lh-display); text-align: center; }
 .lock-sub { color: var(--text-on-inverse-secondary); font-size: var(--fs-small); text-align: center; margin-top: 10px; }
 .lock-dots { display: flex; gap: 22px; height: 14px; margin: 36px 0 0; }
