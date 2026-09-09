@@ -715,9 +715,11 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       const center = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
       stage.addEventListener('pointerdown', (e) => {
         pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-        try { stage.setPointerCapture(e.pointerId); } catch { /* yok say */ }
         moved = false; p0 = { x: e.clientX, y: e.clientY }; downY = e.clientY;
         if (pts.size === 2) { const [a, b] = [...pts.values()]; d0 = dist(a, b); s0 = zoom.scale; c0 = center(a, b); t0 = { x: zoom.tx, y: zoom.ty }; zoom.pinching = true; }
+        // İşaretçiyi yalnızca pinch ya da yakınlaştırılmış kaydırmada sahnede tut; yoksa alt katmanlar
+        // (kaydırma tutamacı) pointermove almaz ve tutamaç takılı kalır (deneme bulgusu 7)
+        if (zoom.pinching || zoom.scale > 1) pts.forEach((_, id) => { try { stage.setPointerCapture(id); } catch { /* yok say */ } });
       });
       stage.addEventListener('pointermove', (e) => {
         if (!pts.has(e.pointerId)) return;
@@ -791,9 +793,10 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
         const fromEvent = (e) => { const r = stack.getBoundingClientRect(); const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left; setPos(Math.max(0, Math.min(100, (x / r.width) * 100))); };
         // Tutamaç: tek parmakla sürükle ya da dokun; pinch başlarsa (ikinci parmak) tutamaç yerinde kalır
         let drag = false, dragMoved = false;
-        stack.addEventListener('pointerdown', (e) => { if (zoom.scale > 1 || !e.isPrimary) return; drag = true; dragMoved = false; });
+        stack.addEventListener('pointerdown', (e) => { if (zoom.scale > 1 || !e.isPrimary) return; drag = true; dragMoved = false; try { stack.setPointerCapture(e.pointerId); } catch { /* yok say */ } });
         stack.addEventListener('pointermove', (e) => { if (drag && e.isPrimary && !zoom.pinching && zoom.scale === 1) { dragMoved = true; fromEvent(e); } });
-        stack.addEventListener('pointerup', (e) => { if (drag && e.isPrimary && !dragMoved && !zoom.pinching && zoom.scale === 1) fromEvent(e); drag = false; });
+        const endDrag = (e) => { if (drag && e.isPrimary && !dragMoved && !zoom.pinching && zoom.scale === 1 && e.type === 'pointerup') fromEvent(e); drag = false; };
+        stack.addEventListener('pointerup', endDrag); stack.addEventListener('pointercancel', endDrag);
         window.addEventListener('pointerup', () => { drag = false; });
       } else {
         stage.innerHTML = `
