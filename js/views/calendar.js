@@ -178,7 +178,10 @@ export async function render(root) {
 
     const monthTitle = first.toLocaleDateString(locale(), { month: 'long', year: 'numeric' });
     const monthCount = appointments.filter((a) => a.date.slice(0, 7) === `${y}-${pad(m + 1)}` && a.status !== 'cancelled').length;
-    const dot = (a) => `<i class="cal-dot ${isOp(a) ? 'op' : ''} ${a.status === 'attended' ? 'done' : a.status === 'missed' ? 'warn' : (parseDate(a.date) < today && a.status === 'planned') ? 'warn' : ''}"></i>`;
+    // Durum biçimle de ayrılır (bkz. .cal-dot). Başlık, biçimin yanında metin karşılığını verir.
+    const dotState = (a) => (a.status === 'attended' ? 'done' : (a.status === 'missed' || (parseDate(a.date) < today && a.status === 'planned')) ? 'warn' : '');
+    const dotTitle = (a) => (a.status === 'planned' && parseDate(a.date) < today ? t('status.late') : t(`status.${a.status}`));
+    const dot = (a) => `<i class="cal-dot ${isOp(a) ? 'op' : ''} ${dotState(a)}" title="${esc(`${apptLabel(a)} · ${dotTitle(a)}`)}"></i>`;
 
     body.innerHTML = `
       <div class="cal-head">

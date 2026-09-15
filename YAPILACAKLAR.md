@@ -234,11 +234,14 @@ kolay. Beş dakikalık iş, ileride migrasyonu kurtarır.
   Token çifti listesinde kalan tek uyarı `--text-tertiary` / nötr zemin
   4.14:1; yalnızca bu muaf devre dışı düğmeyi ilgilendiriyor.
 
-  *Açık kalan (karar bekliyor):* takvim noktalarının **durumu** (planlı /
-  geldi / gelmedi) yalnızca renkle veriliyor; biçim farkı sadece randevu ile
-  işlemi ayırıyor. Noktalar özet gösterge, gün seçilince liste durumu
-  metinle yazıyor. Ayrıca arama kapsülü hâlâ eski cam zeminini (`--glass-bg`,
-  %62) kullanıyor; alt çubuktaki gibi tema zeminine geçirilebilir.
+  *Kapanış (v0.14.3).* Takvim noktalarının durumu artık biçimle de ayrılıyor:
+  planlı = içi boş çember, geldi = dolu daire, gelmedi/gecikti = dolu kare.
+  Renk yerinde kaldı, biçim onu destekliyor. Randevu ile işlem ayrımı boyutta
+  (6px / 9px). Her noktanın `title` ile metin karşılığı var. Gerekçe: takvim
+  özet göstergesidir, aya bakıp tarama yapılır; ayrımı görmek için her güne
+  dokunmak takvimin amacını ortadan kaldırır.
+  Arama kapsülü de alt çubuğun tema zeminine (`--dock-bg`) geçirildi:
+  kapsüldeki metinler her arka planda 5.14:1 ve üstünde, büyüteç ikonu aynı.
 
   *Renkle tek başına verilen bilgi:* Geciken kontrol zaten metin taşıyordu
   ("26 gün gecikti"), değişmedi. Kamera su terazisi yalnızca renk
