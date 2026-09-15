@@ -96,7 +96,7 @@
   /* Yüzen alt çubuğun zemini: arkasından geçen içerikten bağımsız, temaya uyar (üst çubuktaki
      ton geçişinin alt çubuk karşılığı). Cam etkisi korunur ama kontrast arkadakine bağlı kalmaz. */
   --dock-bg:       rgba(245, 244, 240, .92);
-  --tab-off:       #8A8F9B;
+  --tab-off:       #7C818E;
   --tab-on-bg:     var(--bg-inverse);
   --tab-on-fg:     var(--text-on-inverse);
 }
