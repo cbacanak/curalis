@@ -848,7 +848,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
     return s.result;
   }
 
-  /** İki fotoğrafı etiketleriyle tek görsele birleştirip paylaşır (hasta adı yazmaz) */
+  /** İki fotoğrafı etiketleriyle tek görsele birleştirip dışa aktarır (hasta adı yazmaz) */
   /**
    * Onam kontrolü (MOBIL.md §5, YAPILACAKLAR Aşama 1.3): amaç seçilir; 'tanıtım' onamı yoksa seçenek kapalı.
    * Tek alana bakılır: onam kapsamı (consentStatus). Kapsam dışındaysa uyarı gösterilir ve ek onay

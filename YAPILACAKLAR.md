@@ -91,6 +91,21 @@ kolay. Beş dakikalık iş, ileride migrasyonu kurtarır.
   açılmasını engellerdi. Yeni yedekler alanı taşıyor, eski yedekler
   alansız kayıtlarıyla sorunsuz açılıyor (ikisi de test edildi).
 
+  *`RECORD_SCHEMA` ne zaman artar (kural, v0.13.6).* Yalnızca kayıt biçimi
+  **geriye dönük uyumsuz** hale geldiğinde — yani eski kodun yeni kaydı
+  doğru okuyamayacağı durumda. Sürüm numarası okuyucuya "bu kaydı nasıl
+  çözeceksin" der; okuma kuralı değişmiyorsa artırmak bilgi taşımaz,
+  yalnızca gürültü olur.
+
+  - **Artırmaz:** isteğe bağlı alan eklemek (eski kod alanı görmez, yeni kod
+    yokluğunu varsayılanla karşılar), bir alanın değerini başka alana taşımak,
+    idempotent migrasyon çalıştırmak. Aşama 1.3'ün iki onam alanını tek alana
+    indirmesi bu yüzden sürümü artırmadı.
+  - **Artıracak:** şifreleme (Aşama 3). Şifreli bir kaydı sürümü bilmeyen kod
+    okuyamaz. O gelene kadar `1` = şifresiz.
+
+  Kural `js/db.js` içinde sabitin başında da yazılıdır.
+
 **1.2 PIN ekranındaki yanlış güvence (beş dakika).**
 - [x] "Cihaz İçi Şifrelenmiş Medikal Veri" ibaresi kaldırılır, yerine
       **"Veriler bu cihazda saklanır"** yazılır. Şifreleme yokken o
