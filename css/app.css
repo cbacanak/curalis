@@ -379,6 +379,9 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .as-head { padding: 18px 20px 14px; text-align: center; }
 .as-title { font-size: var(--fs-title); font-weight: var(--fw-medium); }
 .as-text { font-size: var(--fs-caption); color: var(--text-secondary); margin-top: 6px; line-height: 1.45; }
+.trash-purge-all { display: block; width: 100%; text-align: center; padding: 18px 0 6px; }
+.as-field { display: block; margin-top: 14px; text-align: left; }
+.as-hint { display: block; font-size: var(--fs-caption); color: var(--text-secondary); margin-bottom: 6px; line-height: 1.4; }
 .as-btn { display: block; width: 100%; height: 54px; font-size: var(--fs-title); border-top: 1px solid var(--hairline); color: var(--text); }
 .as-btn.danger { color: var(--danger); font-weight: var(--fw-medium); }
 .as-btn.primary { font-weight: var(--fw-medium); }
@@ -552,10 +555,14 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .cal-dot.op.warn { box-shadow: inset 0 0 0 1.5px var(--warning); }
 .row.op .row-title { font-weight: var(--fw-medium); }
 /* Klinik uyarı şeridi (hero altı, tek satır) */
-/* Kritik uyarı şeridi (TASARIM §5.2): hero altı, sekme üstü. Uzun metin kesilmez, sarılır. */
-.clinical-strip { background: var(--danger-bg); color: var(--danger); font-size: var(--fs-small); padding: 10px var(--page-x); display: flex; gap: 10px; align-items: baseline; }
-.clinical-strip .cs-label { flex: 0 0 auto; font-size: var(--fs-label); letter-spacing: var(--ls-label); }
-.clinical-strip .cs-items { min-width: 0; overflow-wrap: anywhere; }
+/* Kritik uyarı şeridi (TASARIM §5.2): hero altı, sekme üstü. Tek şerit, iki kademe.
+   Uzun metin kesilmez, sarılır. */
+.clinical-strip { font-size: var(--fs-small); }
+.cs-row { padding: 10px var(--page-x); display: flex; gap: 10px; align-items: baseline; }
+.cs-row.cs-danger { background: var(--danger-bg); color: var(--danger); }   /* şu an dikkat et */
+.cs-row.cs-note { background: var(--warning-bg); color: var(--warning); }   /* planlamada hesaba kat */
+.cs-label { flex: 0 0 auto; font-size: var(--fs-label); letter-spacing: var(--ls-label); }
+.cs-items { min-width: 0; overflow-wrap: anywhere; }
 .t-warning { color: var(--warning); }
 /* Form bölüm etiketi */
 .form-section { font-size: var(--fs-label); letter-spacing: .06em; color: var(--text-secondary); margin: 14px 0 2px; }

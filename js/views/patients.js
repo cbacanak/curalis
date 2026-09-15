@@ -1,6 +1,6 @@
 /* Hasta listesi — TASARIM.md §5 + §5A (Display başlık kayar, sabit cam (+), arama adası → klavye üstü kapsül, hairline liste) */
-import { Patients, Procedures, Appointments, fullName } from '../db.js';
-import { esc, icon, initials, fmtDate, fmtDayMonth, fmtTime, parseDate, daysBetween, emptyState, toast, undoToast, age, actionMenu, statusText, phoneHref, waHref, sheet } from '../ui.js';
+import { Patients, Procedures, Photos, Appointments, fullName } from '../db.js';
+import { esc, icon, initials, fmtDate, fmtDayMonth, fmtTime, parseDate, daysBetween, emptyState, toast, undoToast, age, actionMenu, confirmTyped, statusText, phoneHref, waHref, sheet } from '../ui.js';
 import { swipeWrap, bindSwipe, apptActions } from '../swipe.js';
 import { openReminder } from '../messages.js';
 import { patientForm, appointmentForm, procedureForm } from '../forms.js';
@@ -9,6 +9,19 @@ import { setIsland, openSearch, closeSearch } from '../dock.js';
 import { t, cmp, lower, procLabel, apptLabel, isOp } from '../i18n.js';
 
 const MISSED_DAYS = 60;   // 'gelmedi' kayıtları bu kadar gün geciken listesinde kalır
+
+/** Hasta silme yıkıcı bir işlem (TASARIM §12): hasta kartındakiyle aynı onay — ad yazılır, toast yok. */
+async function deletePatient(p) {
+  const name = fullName(p);
+  const [procs, photos, appts] = await Promise.all([Procedures.byPatient(p.id), Photos.byPatient(p.id), Appointments.byPatient(p.id)]);
+  const ok = await confirmTyped({
+    title: t('p.deleteQ'),
+    message: t('p.deleteMsg', { name, procs: procs.length, photos: photos.length, appts: appts.length }),
+    expect: name, hint: t('p.deleteHint', { name }), okText: t('p.delete'),
+  });
+  if (ok) await Patients.remove(p.id);
+  return ok;
+}
 
 let lastQuery = '';
 const UPCOMING_DAYS = 30;
@@ -152,7 +165,7 @@ export async function render(root, { embedded = false, activeId = null, newPatie
         const k = b.dataset.peek; s.close();
         if (k === 'photo') go(`/camera/${p.id}`);
         else if (k === 'compare') { try { sessionStorage.setItem('curalis:compare', p.id); } catch { /* yok say */ } go(`/patient/${p.id}/fotograflar`); }
-        else if (k === 'delete') { await Patients.remove(p.id); render(root); undoToast(t('undo.patientDeleted', { name: fullName(p) }), async () => { await Patients.restore(p.id); toast(t('undo.restored')); render(root); }); }
+        else if (k === 'delete') { if (await deletePatient(p)) render(root); }
       };
     });
   }
