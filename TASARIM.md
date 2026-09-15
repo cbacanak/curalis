@@ -1,4 +1,4 @@
-# Curalis Clinical — Nihai Tasarım ve Uygulama Spesifikasyonu (TASARIM_FINAL.md)
+# Curalis Clinical — Nihai Tasarım ve Uygulama Spesifikasyonu (TASARIM.md)
 
 Bu doküman, Curalis Plastik Cerrahi Hasta Takip PWA ve iOS uygulamasının baştan sona geliştirilen tasarım sistemini, arayüz mimarisini, bileşen standartlarını ve ekran envanterini belgeler.
 
@@ -41,7 +41,7 @@ Bu doküman, Curalis Plastik Cerrahi Hasta Takip PWA ve iOS uygulamasının baş
 
 Tüm renkler `:root` ve `@media (prefers-color-scheme: dark)` bloklarında tanımlı CSS değişkenleri üzerinden yönetilir.
 
-> **Kontrast düzeltmesi (v2.5):** `--text-secondary` ve `--text-tertiary` önceki değerlerinde WCAG eşiğinin altındaydı (~4.3:1 ve ~2:1). Klinik kullanımda bu estetik değil işlevsel bir sorun. İkisi de koyulaştırıldı. Değişiklik yapıldığında her token çifti bir kontrast aracıyla yeniden ölçülmelidir.
+> **Kontrast düzeltmesi:** `--text-secondary` ve `--text-tertiary` önceki değerlerinde WCAG eşiğinin altındaydı (~4.3:1 ve ~2:1). Klinik kullanımda bu estetik değil işlevsel bir sorun. İkisi de koyulaştırıldı. Değişiklik yapıldığında her token çifti bir kontrast aracıyla yeniden ölçülmelidir.
 
 ```css
 :root {
@@ -233,7 +233,7 @@ Tüm renkler `:root` ve `@media (prefers-color-scheme: dark)` bloklarında tanı
 - Görünüm tercihi: Açık / Koyu / Sistem Tema segmenti.
 - Veri Güvenliği: Yerel depolama durumu, PIN Değiştir, Biyometrik Kilit.
 - Dışa Aktar & Yedekle: Şifreli JSON Yedek, Görselleri Arşivle.
-- Sürüm künyesi: Orijinal Curalis halka simgesi ve v2.5.0 derleme numarası.
+- Sürüm künyesi: Orijinal Curalis halka simgesi ve sürüm numarası. Numaranın tek kaynağı koddur; bu belgede sürüm yazılmaz.
 
 ### 11. Mikro Etkileşimler & Yardımcı Durumlar
 - **Uzun Basma Önizlemesi (Context Menu):** Hastaya basılı tutulduğunda açılan hızlı arama, fotoğraf çekme, randevu oluşturma ve arşivleme aksiyon menüsü.
