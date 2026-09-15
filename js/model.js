@@ -26,6 +26,10 @@ export const OP_PERIOD = 'op';   // işlem günü kaydının periodLabel değeri
 
 /* Fotoğraf onamı */
 export const CONSENT_STATUSES = ['none', 'treatment', 'treatment_education', 'treatment_education_marketing'];
+/* Görsel kullanım onayı (YAPILACAKLAR Aşama 1.3): hastanın fotoğraflarının kayıt dışında
+ * kullanılmasına onay verip vermediği. 'none' henüz sorulmadı, 'declined' hasta kabul etmedi.
+ * Alanı olmayan eski kayıtlar 'none' okunur; ayrı migrasyon gerekmez, alan isteğe bağlıdır. */
+export const PHOTO_CONSENTS = ['none', 'granted', 'declined'];
 
 /* Anestezi */
 export const ANESTHESIA = ['general', 'local', 'sedation', 'local_sedation', 'none'];
@@ -39,6 +43,7 @@ export const angleLabel = (k) => t(`angle.${k}`);
 export const apptTypeLabel = (k) => t(`appt.type.${k}`);
 export const statusLabel = (k) => t(`status.${k}`);
 export const consentLabel = (k) => t(`consent.${k || 'none'}`);
+export const photoConsentLabel = (k) => t(`photoConsent.${k || 'none'}`);
 export const anesthesiaLabel = (k) => (k ? t(`anest.${k}`) : '');
 export const fieldTypeLabel = (k) => t(`field.type.${k}`);
 
