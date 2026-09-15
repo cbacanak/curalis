@@ -233,12 +233,18 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
   /** Kritik uyarı şeridi (TASARIM §5.2, MOBIL.md §3): alerji / antikoagülan / sigara.
    *  Hero'nun hemen altında, sekmelerin üstünde ve #tab-body'nin DIŞINDA durur; sekme değişimi
    *  yalnızca tab-body'yi yeniden çizdiği için şerit kaybolmaz. Bu bilgi kaçırılamayacak tek yerde durmalı.
-   *  Renk tek başına bilgi taşımaz: zeminin yanında "Tıbbi uyarı" etiketi de yazılır.
-   *  Uyarı yoksa şerit hiç çizilmez, boş kutu bırakılmaz. Uzun metin kesilmez, sarılır. */
+   *  İki kademe, tek şerit: alerji ve antikoagülan "şu an dikkat et" (danger), sigara
+   *  "planlamada hesaba kat" (warning). Hepsi kırmızı olsaydı kırmızının anlamı zayıflardı.
+   *  Kademeler renk dışında etiketle de ayrılır; renk tek başına bilgi taşımaz.
+   *  Kademe boşsa satırı çizilmez, ikisi de boşsa şerit hiç çizilmez. Uzun metin kesilmez, sarılır. */
   function clinicalStrip(p) {
-    const items = [p.allergies ? `${t('p.allergy')} · ${p.allergies}` : null, p.anticoagulant ? t('p.warn.anticoagulant') : null, p.smoking ? t('p.warn.smoking') : null].filter(Boolean);
-    if (!items.length) return '';
-    return `<div class="clinical-strip"><span class="cs-label">${esc(t('p.warn.label'))}</span><span class="cs-items">${esc(items.join('  ·  '))}</span></div>`;
+    const tiers = [
+      { cls: 'cs-danger', label: t('p.warn.label'), items: [p.allergies ? `${t('p.allergy')} · ${p.allergies}` : null, p.anticoagulant ? t('p.warn.anticoagulant') : null].filter(Boolean) },
+      { cls: 'cs-note', label: t('p.risk.label'), items: [p.smoking ? t('p.warn.smoking') : null].filter(Boolean) },
+    ].filter((x) => x.items.length);
+    if (!tiers.length) return '';
+    return `<div class="clinical-strip">${tiers.map((x) => `
+      <div class="cs-row ${x.cls}"><span class="cs-label">${esc(x.label)}</span><span class="cs-items">${esc(x.items.join('  ·  '))}</span></div>`).join('')}</div>`;
   }
 
   /* ---------- Genel ---------- */

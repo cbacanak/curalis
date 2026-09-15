@@ -155,8 +155,11 @@ kolay. Beş dakikalık iş, ileride migrasyonu kurtarır.
   çizdiği için şerit hiç kaybolmuyordu. Uyarı yoksa da hiç çizilmiyordu.
   İkinci bir şerit eklenmedi; var olan genişletildi.
 
-  *Ne değişti:* Zemin `--warning-bg` yerine `--danger-bg`. Renge ek olarak
-  "Tıbbi uyarı" etiketi eklendi, böylece bilgi yalnızca renkle verilmiyor.
+  *Ne değişti:* Renge ek olarak etiket eklendi, böylece bilgi yalnızca renkle
+  verilmiyor. Şerit iki kademeye ayrıldı (v0.13.8, tek şerit içinde iki satır):
+  alerji ve antikoagülan `--danger-bg` zeminde "Tıbbi uyarı" — şu an dikkat et;
+  sigara `--warning-bg` zeminde "Risk faktörü" — planlamada hesaba kat. Hepsi
+  kırmızı olsaydı kırmızının anlamı zayıflardı. Boş kademenin satırı çizilmez.
   Uzun metin kesiliyordu (`white-space: nowrap` + ellipsis); artık sarılıyor.
   Alerji listesi uzun olan hastada metnin sonu görünmüyordu, bu düzeldi.
 
