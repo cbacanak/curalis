@@ -1,10 +1,25 @@
-# Curalis Clinical — Yapılanlar ve İlerleme Raporu (YAPILACAKLAR_GUNCEL.md)
+# Curalis Clinical — Yapılanlar ve İlerleme Raporu (YAPILACAKLAR.md)
 
 Bu dosya, Curalis projesinde tamamlanan tasarım geliştirmelerini, hayata geçirilen özellikleri ve gelecekte native (Swift/iOS) aşamasına geçerken kullanılacak yol haritasını özetler.
 
 ---
 
 ## Tamamlanan Tasarım ve Arayüz İşleri (Done)
+
+**Kodda ne var (özet).** Aşağıdaki liste tasarım işlerini anlatır; uygulamanın
+kendisi on iki adımlık bir web planıyla yazıldı ve yayında. Sırasıyla: veri
+modeli ve Curalis kimliği (0.6.x), şablonlar ve kontrol planı, dönem/açı düzeni,
+karşılaştırma modları, onam ve klinik şerit (0.7.x), kamera çekimi — hayalet,
+ızgara, seviye, seri çekim (0.8.x), iOS 26 cam navigasyonu ve dört ekrana
+uygulanması (0.9.x), kaydırma aksiyonları ile uzun basma önizlemesi (0.10.0),
+arka plan örtüsü ve haftalık yedek hatırlatması (0.10.2), kademeli sheet
+(0.11.0), karşılaştırmada dönem şeridi (0.12.0), rem tabanlı yazı ölçeği ve
+ana ekran kısayolları (0.13.0). Ardından gerçek kullanımda çıkan dokuz bulgu
+düzeltildi (0.13.1–0.13.2): kaydırma aksiyonlarının tüm satır türlerine
+yayılması, WhatsApp hatırlatması, kamera hasta seçici, kademeli randevu formu,
+kamera seviye çizgisi, karşılaştırma kaydırıcısının takılması, alt barın sayfa
+geçişlerinde sabitlenmesi ve uygulama adı/simgesinin arayüze girmesi. Sürüm
+sürüm döküm CHANGELOG.md'de.
 
 ### 1. Temel Görsel Dil & Tasarım Sistemi v2
 - [x] **Gece Laciverti Paleti:** `#0B1326` ana vurgu, `#F5F4F0` kırık fildişi zemin, `#D9BFB0` ten tonu vurgusu entegre edildi.
@@ -38,7 +53,7 @@ Bu dosya, Curalis projesinde tamamlanan tasarım geliştirmelerini, hayata geçi
 - [x] **Orijinal İkon Entegrasyonu:** Depodaki özgün iki fildişi halka ve ten tonu kesişimli Curalis simgesi ana marka varlığı olarak onaylandı.
 
 ### Geri alınan / düzeltilen
-- [~] **"Anonim Paylaşım" butonu.** Adlandırma kaldırıldı, "Dışa Aktar" oldu. Gerekçe: yüz fotoğrafı anonimleştirilemez; EXIF temizliği anonimlik değildir. Detay: TASARIM_FINAL §3.1.
+- [~] **"Anonim Paylaşım" butonu.** Adlandırma kaldırıldı, "Dışa Aktar" oldu. Gerekçe: yüz fotoğrafı anonimleştirilemez; EXIF temizliği anonimlik değildir. Detay: TASARIM §3.1.
 
 ---
 
@@ -97,7 +112,7 @@ kolay. Beş dakikalık iş, ileride migrasyonu kurtarır.
 
 **1.4 Kritik uyarı görünürlüğü.**
 - [ ] Tıbbi uyarı / alerji alanının hasta detayında hero altında, sekme
-      değişiminden bağımsız görünmesi (TASARIM_FINAL §5.2)
+      değişiminden bağımsız görünmesi (TASARIM §5.2)
 
 **1.5 Yıkıcı işlem koruması.**
 - [ ] Hasta silme için ayrı onay adımı (toast yetmez)
@@ -111,7 +126,7 @@ kolay. Beş dakikalık iş, ileride migrasyonu kurtarır.
       terazisi, seçili tab) metin veya biçimle desteklenmesi
 
 ### Aşama 2: Web / PWA İyileştirmeleri
-- [ ] Sistem durumları: yükleniyor / boş / hata / kısmi (TASARIM_FINAL §13)
+- [ ] Sistem durumları: yükleniyor / boş / hata / kısmi (TASARIM §13)
 - [ ] Dokunmatik cihazlar için `touch-action` ve swipe gesture entegrasyonu
 - [ ] Standart açı kamera çekiminde HTML5 Canvas ile kılavuz çizgilerinin canlı akışa bindirilmesi
 - [ ] Fotoğraf dışa aktarma için Web Share API (rıza kontrolünden sonra)
@@ -119,14 +134,13 @@ kolay. Beş dakikalık iş, ileride migrasyonu kurtarır.
 - [ ] Dynamic Type / sistem yazı boyutu ölçeklenmesi
 
 ### Aşama 3: iOS Native Geçişi (Swift / SwiftUI)
-- [ ] `TASARIM_FINAL.md` token'larının SwiftUI `Color` ve `Font` extension'larına dönüştürülmesi
+- [ ] `TASARIM.md` token'larının SwiftUI `Color` ve `Font` extension'larına dönüştürülmesi
 - [ ] iOS 26 Liquid Glass hissi için SwiftUI `glassEffect` ve `UltraThinMaterial` arka planları
 - [ ] LocalAuthentication framework ile Face ID / Touch ID biyometrik kilit
 - [ ] **Şifreleme.** Native tarafta Keychain'de anahtar saklama, veri
       şifreleme, ve `schemaVersion: 1` kayıtlarının migrasyonu.
       Tamamlandığında PIN ekranındaki ibare "Cihaz içi şifrelenmiş
-      medikal veri" olarak geri gelebilir. Yedek JSON çıktısı da
-      şifreli olmalı.
+      medikal veri" olarak geri gelebilir.
 
 ---
 
@@ -136,5 +150,5 @@ Kapsam bayrağı taşıyan maddeler. Aşama 3 bitmeden açılmaz.
 
 - **Apple Pencil ile fotoğraf üzerine operasyon planlama.** iPad demek — ayrı düzen, ayrı test yükü, ayrı mağaza hedefi. Telefon sürümü oturmadan başlanmaz.
 - **`CNContactPickerViewController` ile rehberden hasta import.** Kişisel rehberle tıbbi kaydı karıştırıyor; rehber izni istemek bu uygulamanın gizlilik duruşuyla çelişiyor ve kazandırdığı zaman az. Gerekirse sonra.
-- **Yüz maskeleme / bulanıklaştırma** (TASARIM_FINAL §3.1 isteğe bağlı maddesi)
+- **Yüz maskeleme / bulanıklaştırma** (TASARIM §3.1 isteğe bağlı maddesi)
 - **Çoklu kullanıcı / asistan erişimi**
