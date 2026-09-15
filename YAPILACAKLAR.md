@@ -217,10 +217,28 @@ kolay. Beş dakikalık iş, ileride migrasyonu kurtarır.
   (`--dock-bg`, %92 örtücü) — üst çubuktaki ton geçişinin alt çubuk
   karşılığı. Pasif ikon artık arkadaki içerikten neredeyse bağımsız:
   koyu fotoğraf arkasında **1.32 → 2.50** (açık tema) ve **1.19 → 3.86**
-  (koyu tema). Koyu tema ikon eşiğini (3:1) geçiyor; **açık tema
-  geçmiyor** — sınır zemin değil, ikon renginin kendisi: `--tab-off`
-  (`#8A8F9B`) tamamen örtücü sayfa renginde bile 2.94'te kalıyor. 3:1 için
-  yaklaşık `#7C818E` gerekir. Değiştirilmedi, karar bekliyor.
+  (koyu tema). Açık temada eşik yine kaçıyordu; sınır zemin değil ikon
+  renginin kendisiydi. **v0.14.2'de `--tab-off` `#8A8F9B` → `#7C818E`**
+  yapıldı: pasif ikon artık her arka planda 3:1 üstünde (açık tema
+  3.01–3.57, koyu tema 3.21–4.13) ve seçili sekmeyle arası 4.75:1 (açık) /
+  3.54:1 (koyu) ile açık kalıyor.
+
+  *Kalan `--text-tertiary` kullanımları ayrı ayrı değerlendirildi (v0.14.2).*
+  - **Gösterge (3:1 gerekir, geçiyor):** takvim noktaları. Altı varyantın
+    hepsi ölçüldü, en düşük 4.61:1 (açık) / 5.93:1 (koyu).
+  - **Dekoratif (eşik yok):** satır sonu chevron'u, ayar satırı ve seçici
+    listesi ikonları. Bilgiyi yanlarındaki metin taşıyor; yine de
+    4.61:1 / 5.93:1 ölçüldüler.
+  - **Devre dışı (WCAG muaf):** menü öğesi, araç çubuğu bağlantısı ve dolu
+    düğme. Düşük kontrast burada bilginin kendisi, kusur değil.
+  Token çifti listesinde kalan tek uyarı `--text-tertiary` / nötr zemin
+  4.14:1; yalnızca bu muaf devre dışı düğmeyi ilgilendiriyor.
+
+  *Açık kalan (karar bekliyor):* takvim noktalarının **durumu** (planlı /
+  geldi / gelmedi) yalnızca renkle veriliyor; biçim farkı sadece randevu ile
+  işlemi ayırıyor. Noktalar özet gösterge, gün seçilince liste durumu
+  metinle yazıyor. Ayrıca arama kapsülü hâlâ eski cam zeminini (`--glass-bg`,
+  %62) kullanıyor; alt çubuktaki gibi tema zeminine geçirilebilir.
 
   *Renkle tek başına verilen bilgi:* Geciken kontrol zaten metin taşıyordu
   ("26 gün gecikti"), değişmedi. Kamera su terazisi yalnızca renk
