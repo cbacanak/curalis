@@ -145,9 +145,20 @@ kolay. Beş dakikalık iş, ileride migrasyonu kurtarır.
   yüklenirse migrasyon yeniden çalışır. Paylaşım kapısı artık tek alana
   bakıyor.
 
-**1.4 Kritik uyarı görünürlüğü.**
-- [ ] Tıbbi uyarı / alerji alanının hasta detayında hero altında, sekme
+**1.4 Kritik uyarı görünürlüğü.** — **yapıldı (v0.13.7)**
+- [x] Tıbbi uyarı / alerji alanının hasta detayında hero altında, sekme
       değişiminden bağımsız görünmesi (TASARIM §5.2)
+
+  *Ne bulundu:* Şerit zaten vardı (`clinicalStrip`, alerji + antikoagülan +
+  sigara) ve zaten doğru yerdeydi — hero'nun altında, sekmelerin üstünde ve
+  `#tab-body`'nin dışında. Sekme değişimi yalnızca tab-body'yi yeniden
+  çizdiği için şerit hiç kaybolmuyordu. Uyarı yoksa da hiç çizilmiyordu.
+  İkinci bir şerit eklenmedi; var olan genişletildi.
+
+  *Ne değişti:* Zemin `--warning-bg` yerine `--danger-bg`. Renge ek olarak
+  "Tıbbi uyarı" etiketi eklendi, böylece bilgi yalnızca renkle verilmiyor.
+  Uzun metin kesiliyordu (`white-space: nowrap` + ellipsis); artık sarılıyor.
+  Alerji listesi uzun olan hastada metnin sonu görünmüyordu, bu düzeldi.
 
 **1.5 Yıkıcı işlem koruması.**
 - [ ] Hasta silme için ayrı onay adımı (toast yetmez)
