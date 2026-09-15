@@ -355,6 +355,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .menu-item .ic { color: var(--text-secondary); width: 20px; height: 20px; }
 .menu-item .menu-main { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 .menu-item .menu-sub { font-size: var(--fs-caption); color: var(--text-tertiary); }
+.menu-note { margin: 10px 4px 0; font-size: var(--fs-caption); line-height: 1.45; color: var(--text-secondary); }   /* menü altı açıklama (dışa aktarmada ne temizlendiği) */
 .menu-item[disabled] { color: var(--text-tertiary); cursor: default; }
 .menu-item[disabled] .ic { color: var(--text-tertiary); }
 .menu-item.danger .ic { color: var(--danger); }

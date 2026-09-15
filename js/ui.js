@@ -327,14 +327,15 @@ export function confirmDialog({ title = null, message = '', okText = null, cance
 }
 
 /** Basit eylem menüsü: items [{label, icon, danger, value}] */
-export function actionMenu(title, items) {
+/** note: menünün altında duran açıklama satırı (ör. dışa aktarmada ne temizlendiği) */
+export function actionMenu(title, items, { note = '' } = {}) {
   const s = sheet({
     title,
     size: 'sm',
     content: `<div class="menu">${items.map((it, i) => `
       <button class="menu-item ${it.danger ? 'danger' : ''}" data-i="${i}" type="button" ${it.disabled ? 'disabled' : ''}>
         ${it.icon ? icon(it.icon) : ''}<span class="menu-main"><span>${esc(it.label)}</span>${it.sub ? `<span class="menu-sub">${esc(it.sub)}</span>` : ''}</span>${it.checked ? `<span class="check-mark">${icon('check')}</span>` : ''}
-      </button>`).join('')}</div>`,
+      </button>`).join('')}</div>${note ? `<p class="menu-note">${esc(note)}</p>` : ''}`,
   });
   s.body.querySelectorAll('.menu-item').forEach((b) => {
     b.onclick = () => s.close(items[+b.dataset.i].value ?? items[+b.dataset.i].label);
