@@ -119,13 +119,16 @@ kolay. Beş dakikalık iş, ileride migrasyonu kurtarır.
   çıktıdan neyin temizlendiği yazıyor; onay `granted` değilse uyarı ve ek
   onay adımı çıkıyor, engelleme yok, karar denetim kaydına yazılıyor.
 
-  *Dikkat — iki onam alanı yan yana duruyor.* Depoda zaten `consentStatus`
-  vardı (`none` / `treatment` / `treatment_education` /
-  `treatment_education_marketing`) ve formdaki bölüm adı "Fotoğraf onamı".
-  Yeni `photoConsent` bununla örtüşüyor: ikisi birbiriyle çelişebilir.
-  Şimdilik paylaşım kapısında **hangisi daha kısıtlıysa o geçerli**, yani
-  çelişki güvenli yöne düşüyor. Kalıcı çözüm için ikisinin tek alana
-  indirilmesi gerekir; Aşama 3'teki migrasyondan önce karara bağlanmalı.
+  *İki onam alanı sorunu çözüldü (v0.13.5).* Kısa süre iki alan yan yana
+  durdu; `photoConsent` kaldırıldı, tek alan `consentStatus` kaldı — daha
+  zengin ve zaten yerleşik olan o. Kapsam listesine `declined` eklendi, yani
+  "kayıtlı değil" ile "hasta kabul etmedi" artık ayrı değerler; eskiden ikisi
+  `none` altında birleşiyordu. Migrasyon açılışta bir kez çalışıyor:
+  `granted` en kısıtlı kapsama (`treatment`), `declined` ret değerine taşındı;
+  mevcut kapsam kayıtlıysa çelişkide daha kısıtlı olan kazandı, onam tarihi
+  boşsa girilen tarih oraya geçti, sonra alan silindi. Eski bir yedek geri
+  yüklenirse migrasyon yeniden çalışır. Paylaşım kapısı artık tek alana
+  bakıyor.
 
 **1.4 Kritik uyarı görünürlüğü.**
 - [ ] Tıbbi uyarı / alerji alanının hasta detayında hero altında, sekme

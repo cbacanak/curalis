@@ -6,7 +6,7 @@
  */
 
 import { t as tr, procLabel } from './i18n.js';
-import { DEFAULT_TEMPLATES, TRASH_DAYS } from './model.js';
+import { DEFAULT_TEMPLATES, TRASH_DAYS, mergeConsent } from './model.js';
 
 const DB_NAME = 'curalis';
 const DB_VERSION = 1;
@@ -68,6 +68,40 @@ async function init() {
   if (!id) { id = uid(); await Settings.set('deviceID', id); }
   _deviceID = id;
   await seedTemplates();
+  await migratePhotoConsent();
+}
+
+/* Onam alanlarının birleştirilmesi (YAPILACAKLAR Aşama 1.3).
+ * Kısa süre iki alan vardı: photoConsent ve consentStatus. Tek alan kaldı: consentStatus.
+ * 'granted' en kısıtlı kapsama ('treatment'), 'declined' ret değerine taşınır. Mevcut kapsam kayıtlı
+ * değilse taşınan değer geçerli olur; ikisi de kayıtlıysa çelişki vardır ve daha kısıtlı olan kazanır.
+ * Taşındıktan sonra alan silinir.
+ * Girilen tarih atılmaz: onam tarihi boşsa görsel onay tarihi oraya geçer.
+ * Açılışta bir kez çalışır; bittiğini ayarlarda işaretler ki her açılışta tüm hastalar taranmasın.
+ * force: yedek geri yüklendikten sonra çağrılır — eski bir yedek alanı taşıyan kayıtlar getirebilir
+ * ve bayrak çoktan kurulmuş olabilir. */
+const PHOTO_CONSENT_MIGRATED = 'migrated:photoConsent';
+async function migratePhotoConsent({ force = false } = {}) {
+  if (!force && await Settings.get(PHOTO_CONSENT_MIGRATED)) return 0;
+  const rows = await run('patients', 'readonly', (s) => promisify(s.getAll()));
+  const todo = rows.filter((r) => r.photoConsent !== undefined || r.photoConsentDate !== undefined);
+  let moved = 0;
+  if (todo.length) {
+    const next = todo.map((r) => {
+      const { photoConsent, photoConsentDate, ...rest } = r;
+      const mapped = photoConsent === 'granted' ? 'treatment' : photoConsent === 'declined' ? 'declined' : null;
+      const before = rest.consentStatus || 'none';
+      const out = { ...rest, consentStatus: mapped ? mergeConsent(mapped, before) : before };
+      if (!out.consentDate && photoConsentDate) out.consentDate = photoConsentDate;
+      if (out.consentStatus !== before) moved += 1;
+      return out;
+    });
+    await run('patients', 'readwrite', (s) => { next.forEach((r) => s.put(r)); });
+    changed('patients');
+    audit('migrate', 'data', null, `photoConsent → consentStatus · ${todo.length} kayıt · ${moved} kapsam değişti`);
+  }
+  await Settings.set(PHOTO_CONSENT_MIGRATED, true);
+  return todo.length;
 }
 
 function promisify(req) {
@@ -522,5 +556,6 @@ export async function importAll(data, { replace = true } = {}) {
     (data.settings || []).filter((x) => x.key !== 'pin' && x.key !== 'deviceID').forEach((x) => s.settings.put(x));
   });
   await seedTemplates();
+  await migratePhotoConsent({ force: true });   // eski yedek onam alanını taşıyan kayıt getirmiş olabilir
   audit('restore_backup', 'data', null, `${replace ? 'replace' : 'merge'} · ${data.exportedAt || ''}`);
 }

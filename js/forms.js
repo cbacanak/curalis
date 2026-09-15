@@ -5,8 +5,8 @@ import { processImage, readExifDate, blobURL } from './photos.js';
 import { sheet, field, selectField, textareaField, segmentField, chipField, bindChoiceFields, segmented, bindSegmented, formData, esc, icon, toast, fmtDate, parseDate, daysBetween } from './ui.js';
 import { t, cmp, procLabel } from './i18n.js';
 import {
-  PERIODS, FOLLOWUP_PERIODS, DEFAULT_FOLLOWUPS, ANGLES, sortAngles, APPT_TYPES, APPT_STATUSES, CONSENT_STATUSES, PHOTO_CONSENTS, ANESTHESIA, DEFAULT_ANESTHESIA,
-  periodLabel, angleLabel, apptTypeLabel, statusLabel, consentLabel, photoConsentLabel, anesthesiaLabel, fieldLabel, optionLabel, periodFromDays,
+  PERIODS, FOLLOWUP_PERIODS, DEFAULT_FOLLOWUPS, ANGLES, sortAngles, APPT_TYPES, APPT_STATUSES, CONSENT_STATUSES, ANESTHESIA, DEFAULT_ANESTHESIA,
+  periodLabel, angleLabel, apptTypeLabel, statusLabel, consentLabel, anesthesiaLabel, fieldLabel, optionLabel, periodFromDays,
 } from './model.js';
 
 export const procOption = (pr) => [pr.id, `${procLabel(pr.typeName)} · ${fmtDate(pr.date)}`];
@@ -81,10 +81,6 @@ export function patientForm(existing = null) {
         ${field({ label: t('form.priorSurgeries'), name: 'priorSurgeries', value: p.priorSurgeries, placeholder: t('form.priorSurgeries.ph') })}
 
         ${sectionLabel('form.sec.consent')}
-        <div class="form-row">
-          ${selectField({ label: t('form.photoConsent'), name: 'photoConsent', value: p.photoConsent || 'none', options: PHOTO_CONSENTS.map((k) => [k, photoConsentLabel(k)]), optional: false })}
-          ${field({ label: t('form.photoConsentDate'), name: 'photoConsentDate', type: 'date', value: p.photoConsentDate })}
-        </div>
         ${selectField({ label: t('form.consentStatus'), name: 'consentStatus', value: p.consentStatus || 'none', options: CONSENT_STATUSES.map((k) => [k, consentLabel(k)]), optional: false })}
         <div class="form-row">
           ${field({ label: t('form.consentDate'), name: 'consentDate', type: 'date', value: p.consentDate })}
@@ -119,13 +115,6 @@ export function patientForm(existing = null) {
       form.dispatchEvent(new Event('input', { bubbles: true }));
     } catch (e) { if (e?.name !== 'AbortError') toast(t('form.contacts.fail')); }
   };
-  // Görsel onay tarihi yalnızca onay 'Var' iken anlamlı; diğer durumlarda gizlenir ve kaydederken temizlenir
-  const pcSelect = form.querySelector('[name=photoConsent]');
-  const pcDate = form.querySelector('[name=photoConsentDate]').closest('.field');
-  const syncPhotoConsent = () => { pcDate.style.display = pcSelect.value === 'granted' ? '' : 'none'; };
-  pcSelect.addEventListener('change', syncPhotoConsent);
-  syncPhotoConsent();
-
   const input = form.querySelector('#consent-input');
   const pick = form.querySelector('#consent-pick');
   const paintDoc = () => {
@@ -152,7 +141,6 @@ export function patientForm(existing = null) {
       ...p, firstName: d.firstName, lastName: d.lastName, phone: d.phone, birthDate: d.birthDate, gender: d.gender,
       allergies: d.allergies, medications: d.medications, anticoagulant: !!d.anticoagulant, smoking: !!d.smoking, priorSurgeries: d.priorSurgeries,
       consentStatus: d.consentStatus || 'none', consentDate: d.consentDate || null, consentDocument: consentDoc,
-      photoConsent: d.photoConsent || 'none', photoConsentDate: d.photoConsent === 'granted' ? (d.photoConsentDate || null) : null,
       bloodType: d.bloodType, email: d.email, referral: d.referral, notes: d.notes,
     });
   });

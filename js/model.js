@@ -24,12 +24,21 @@ export const APPT_TYPES = ['control', 'consultation', 'operation', 'other'];
 export const APPT_STATUSES = ['planned', 'attended', 'missed', 'cancelled'];
 export const OP_PERIOD = 'op';   // işlem günü kaydının periodLabel değeri
 
-/* Fotoğraf onamı */
-export const CONSENT_STATUSES = ['none', 'treatment', 'treatment_education', 'treatment_education_marketing'];
-/* Görsel kullanım onayı (YAPILACAKLAR Aşama 1.3): hastanın fotoğraflarının kayıt dışında
- * kullanılmasına onay verip vermediği. 'none' henüz sorulmadı, 'declined' hasta kabul etmedi.
- * Alanı olmayan eski kayıtlar 'none' okunur; ayrı migrasyon gerekmez, alan isteğe bağlıdır. */
-export const PHOTO_CONSENTS = ['none', 'granted', 'declined'];
+/* Fotoğraf onamı — tek alan (YAPILACAKLAR Aşama 1.3).
+ * 'none' henüz sorulmadı, 'declined' hasta kabul etmedi; ikisi ayrı değerlerdir.
+ * Kalanlar kapsamı anlatır. Alanı olmayan eski kayıtlar 'none' okunur. */
+export const CONSENT_STATUSES = ['none', 'declined', 'treatment', 'treatment_education', 'treatment_education_marketing'];
+/* Kayıtlı değerler kısıtlıdan geniş'e. 'none' burada yok: o bir kısıtlama değil, bilgi yokluğudur. */
+const CONSENT_ORDER = ['declined', 'treatment', 'treatment_education', 'treatment_education_marketing'];
+/** İki onam değerini birleştirir (Aşama 1.3 migrasyonu).
+ *  Biri kayıtlı değilse diğeri geçerli olur; ikisi de kayıtlıysa çelişki vardır ve daha kısıtlı olan kazanır. */
+export function mergeConsent(a, b) {
+  const known = (k) => (CONSENT_ORDER.includes(k) ? k : null);
+  const x = known(a), y = known(b);
+  if (!x) return y || 'none';
+  if (!y) return x;
+  return CONSENT_ORDER.indexOf(x) <= CONSENT_ORDER.indexOf(y) ? x : y;
+}
 
 /* Anestezi */
 export const ANESTHESIA = ['general', 'local', 'sedation', 'local_sedation', 'none'];
@@ -43,7 +52,6 @@ export const angleLabel = (k) => t(`angle.${k}`);
 export const apptTypeLabel = (k) => t(`appt.type.${k}`);
 export const statusLabel = (k) => t(`status.${k}`);
 export const consentLabel = (k) => t(`consent.${k || 'none'}`);
-export const photoConsentLabel = (k) => t(`photoConsent.${k || 'none'}`);
 export const anesthesiaLabel = (k) => (k ? t(`anest.${k}`) : '');
 export const fieldTypeLabel = (k) => t(`field.type.${k}`);
 
