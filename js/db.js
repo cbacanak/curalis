@@ -14,7 +14,15 @@ export const SCHEMA = 2;          // yedek DOSYASI şema sürümü (MOBIL.md §2
 /* Tek KAYIT biçiminin sürümü (YAPILACAKLAR Aşama 1.1). Yedek dosyası sürümüyle karıştırılmamalı:
  * SCHEMA yedek dosyasının yapısını, RECORD_SCHEMA tek bir kaydın biçimini anlatır.
  * Her yazma bu sürümü damgalar: kayıt o an geçerli kodun biçimindedir.
- * Aşama 3'te şifreleme geldiğinde migrasyon bu alana bakar: 1 = şifresiz. */
+ *
+ * NE ZAMAN ARTAR: yalnızca kayıt biçimi geriye dönük uyumsuz hale geldiğinde — yani eski kodun
+ * yeni kaydı doğru okuyamayacağı durumda. Sürüm numarası okuyucuya "bu kaydı nasıl çözeceksin"
+ * der; okuma kuralı değişmiyorsa numaranın artması bilgi taşımaz, yalnızca gürültü olur.
+ *
+ * ARTIRMAZ: isteğe bağlı alan eklemek (eski kod alanı görmez, yeni kod yokluğunu varsayılanla
+ * karşılar), bir alanın değerini başka alana taşımak, idempotent migrasyon çalıştırmak.
+ * ARTIRACAK: şifreleme (Aşama 3) — şifreli kaydı sürümü bilmeyen kod okuyamaz.
+ * O gelene kadar 1 = şifresiz. */
 export const RECORD_SCHEMA = 1;
 const BACKUP_APP = 'curalis';
 
