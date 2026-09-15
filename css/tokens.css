@@ -80,6 +80,10 @@
 
   /* Yerleşim */
   --tabbar-h: 56px;
+  /* Tab bar genişliği: 4 sekme × 46px + 3 boşluk × 6px + 2 iç boşluk × 5px + 2 kenarlık × 1px.
+     Arama adası akışa girmeden bunun sağına konumlanır; sekme sayısı değişirse bu değer güncellenir. */
+  --tabbar-w: 214px;
+  --island-gap: 10px;        /* tab bar ile arama adası arası */
   --sidenav-w: 232px;
   --content-w: 720px;
   --safe-b: env(safe-area-inset-bottom, 0px);

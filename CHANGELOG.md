@@ -4,6 +4,7 @@ Web planı adımları (YAPILACAKLAR.md "Yapıldı") ile gerçek sürüm numarala
 
 | Sürüm | Tarih | Adım | Özet |
 |---|---|---|---|
+| 0.14.6 | 2026-09-15 | Alt bar sabitlendi | Arama adası akıştan çıkarıldı: tab bar ekrana göre ortalanıyor, ada `--tabbar-w` üzerinden onun sağına konumlanıyor. Eskiden ikisi tek grup olarak ortalandığı için ada belirip kaybolduğunda grubun genişliği değişiyor ve tab bar kayıyordu. Arama açık durumu değişmedi. |
 | 0.14.5 | 2026-09-15 | Ağ isteği yok | `index.html`'deki Google Fonts satırları kaldırıldı (iki preconnect + stylesheet). Inter zaten render edilmiyordu: yazı tipi yığını `-apple-system` ile başlıyor ve servis çalışanı kendi kaynağı dışını önbelleğe almıyordu. Beş ekran ve yeniden yüklemeler boyunca dış ağ isteği sıfır; MOBIL §10'un "ağ isteği yok" kriteri artık geçiyor. |
 | 0.14.4 | 2026-09-15 | Aşama 2 | `prefers-reduced-transparency` desteği: tercih açıkken cam yüzeyler düz zemine düşer ve bulanıklık kalkar (üst çubuk düğmeleri, raf, geri al kapsülü, alt çubuk, arama kapsülü). Aşama 2'nin kalan dört maddesi yapılmış olarak işaretlendi. Kamera maddesi sonuç diliyle yeniden yazıldı; sabit medikal çizgiler "Sonraki tur"a taşındı (yüz nirengi tespitine bağlı). |
 | 0.14.3 | 2026-09-15 | Renk ayrımı kapanışı | Takvim noktalarında durum biçimle de ayrılıyor: planlı içi boş çember, geldi dolu daire, gelmedi/gecikti dolu kare; randevu/işlem ayrımı boyutta (6px/9px) ve her noktanın metin karşılığı (`title`) var. Arama kapsülü alt çubuğun tema zeminine geçirildi: kapsüldeki metinler her arka planda 5.14:1 ve üstünde. |
