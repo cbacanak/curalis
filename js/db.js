@@ -10,7 +10,12 @@ import { DEFAULT_TEMPLATES, TRASH_DAYS } from './model.js';
 
 const DB_NAME = 'curalis';
 const DB_VERSION = 1;
-export const SCHEMA = 2;          // yedek dosyası şema sürümü (MOBIL.md §2 modeli)
+export const SCHEMA = 2;          // yedek DOSYASI şema sürümü (MOBIL.md §2 modeli)
+/* Tek KAYIT biçiminin sürümü (YAPILACAKLAR Aşama 1.1). Yedek dosyası sürümüyle karıştırılmamalı:
+ * SCHEMA yedek dosyasının yapısını, RECORD_SCHEMA tek bir kaydın biçimini anlatır.
+ * Her yazma bu sürümü damgalar: kayıt o an geçerli kodun biçimindedir.
+ * Aşama 3'te şifreleme geldiğinde migrasyon bu alana bakar: 1 = şifresiz. */
+export const RECORD_SCHEMA = 1;
 const BACKUP_APP = 'curalis';
 
 let _db = null;
@@ -91,15 +96,21 @@ async function run(storeNames, mode, fn) {
 
 const live = (list) => list.filter((x) => !x.deletedAt);
 
+/* Sürümleme öncesinden kalan kayıtlarda alan yoktur; okunurken 1 sayılırlar (YAPILACAKLAR Aşama 1.1).
+ * Buradaki 1 sabittir ve RECORD_SCHEMA artsa bile değişmez: alanı olmayan kayıt eski kayıttır,
+ * yeni sürümün kaydı değil. Depodaki satır olduğu gibi kalır; ilk kaydetmede damgalanır. */
+const asRecord = (o) => (o && o.schemaVersion === undefined ? { ...o, schemaVersion: 1 } : o);
+const asRecords = (l) => l.map(asRecord);
+
 function baseStore(name) {
   return {
-    all: () => run(name, 'readonly', (s) => promisify(s.getAll())).then(live),
-    allWithDeleted: () => run(name, 'readonly', (s) => promisify(s.getAll())),
-    trashed: () => run(name, 'readonly', (s) => promisify(s.getAll())).then((l) => l.filter((x) => x.deletedAt)),
-    get: (id) => run(name, 'readonly', (s) => promisify(s.get(id))),
+    all: () => run(name, 'readonly', (s) => promisify(s.getAll())).then(live).then(asRecords),
+    allWithDeleted: () => run(name, 'readonly', (s) => promisify(s.getAll())).then(asRecords),
+    trashed: () => run(name, 'readonly', (s) => promisify(s.getAll())).then((l) => l.filter((x) => x.deletedAt)).then(asRecords),
+    get: (id) => run(name, 'readonly', (s) => promisify(s.get(id))).then(asRecord),
     put: (obj) => run(name, 'readwrite', (s) => promisify(s.put(obj))).then(() => { changed(name); return obj; }),
     hardDelete: (id) => run(name, 'readwrite', (s) => promisify(s.delete(id))).then(() => changed(name)),
-    byIndex: (idx, val) => run(name, 'readonly', (s) => promisify(s.index(idx).getAll(val))).then(live),
+    byIndex: (idx, val) => run(name, 'readonly', (s) => promisify(s.index(idx).getAll(val))).then(live).then(asRecords),
     count: () => run(name, 'readonly', (s) => promisify(s.getAll())).then((l) => live(l).length),
     clear: () => run(name, 'readwrite', (s) => promisify(s.clear())),
   };
@@ -108,17 +119,17 @@ function baseStore(name) {
 /** Veri değişti bildirimi (ekranlar dinler; iPad'de sol sütun tazelenir) */
 function changed(store) { try { window.dispatchEvent(new CustomEvent('curalis:data', { detail: { store } })); } catch { /* yok say */ } }
 
-/** Ortak alanlar (MOBIL.md §2): id, createdAt, updatedAt, deletedAt, deviceID */
+/** Ortak alanlar (MOBIL.md §2): id, createdAt, updatedAt, deletedAt, deviceID, schemaVersion */
 function stamp(obj) {
   const now = nowISO();
-  return { ...obj, id: obj.id || uid(), createdAt: obj.createdAt || now, updatedAt: now, deletedAt: obj.deletedAt ?? null, deviceID: deviceID() };
+  return { ...obj, id: obj.id || uid(), createdAt: obj.createdAt || now, updatedAt: now, deletedAt: obj.deletedAt ?? null, deviceID: deviceID(), schemaVersion: RECORD_SCHEMA };
 }
 
 /* ---------------- Denetim kaydı ---------------- */
 const _audit = baseStore('audit');
 /** Görüntüleme dışındaki her eylem yazılır; silinemez, Ayarlar'dan okunur. */
 export async function audit(action, entity, entityId, summary = '') {
-  const e = { id: uid(), at: nowISO(), deviceID: deviceID(), action, entity, entityId: entityId || null, summary: String(summary || '').slice(0, 200) };
+  const e = { id: uid(), at: nowISO(), deviceID: deviceID(), schemaVersion: RECORD_SCHEMA, action, entity, entityId: entityId || null, summary: String(summary || '').slice(0, 200) };
   try { await _audit.put(e); } catch { /* denetim kaydı ana akışı durdurmaz */ }
   return e;
 }

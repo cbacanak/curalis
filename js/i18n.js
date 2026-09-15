@@ -190,7 +190,7 @@ const TR = {
   'lock.tooMany': 'Çok fazla deneme. {s} saniye bekleyin.', 'lock.verifyFail': 'Doğrulama yapılamadı', 'lock.wrong': 'Yanlış PIN', 'lock.wrongWait': 'Yanlış PIN. {d} bekleyin.',
   'lock.sec30': '30 saniye', 'lock.min5': '5 dakika',
   'lock.forgotText': 'PIN yalnızca bu cihazda saklanır ve kurtarılamaz. Sıfırlamanın tek yolu tüm hasta verilerini silmektir. Yedeğin varsa sonra geri yükleyebilirsin.',
-  'lock.wipe': 'Tüm verileri sil ve PIN\'i kaldır', 'lock.wiped': 'Tüm veriler silindi, PIN kaldırıldı', 'lock.enter': 'Devam etmek için PIN girin',
+  'lock.wipe': 'Tüm verileri sil ve PIN\'i kaldır', 'lock.wiped': 'Tüm veriler silindi, PIN kaldırıldı', 'lock.enter': 'Veriler bu cihazda saklanır',
   'lock.needsHttps': 'PIN için güvenli bağlantı (https) gerekir', 'lock.new': 'Yeni PIN', 'lock.newSub': '4 haneli bir PIN belirle', 'lock.confirm': 'PIN\'i doğrulayın',
   'lock.confirmSub': 'Aynı PIN\'i bir kez daha girin', 'lock.mismatch': 'PIN\'ler eşleşmedi, tekrar deneyin', 'lock.current': 'Mevcut PIN', 'lock.currentSub': 'Devam etmek için mevcut PIN\'i girin',
   // Depolama / yedek
@@ -369,7 +369,7 @@ const EN = {
   'lock.tooMany': 'Too many attempts. Wait {s} seconds.', 'lock.verifyFail': 'Could not verify', 'lock.wrong': 'Wrong PIN', 'lock.wrongWait': 'Wrong PIN. Wait {d}.',
   'lock.sec30': '30 seconds', 'lock.min5': '5 minutes',
   'lock.forgotText': 'The PIN is stored only on this device and cannot be recovered. The only way to reset it is to delete all patient data. If you have a backup you can restore it afterwards.',
-  'lock.wipe': 'Delete all data and remove PIN', 'lock.wiped': 'All data deleted, PIN removed', 'lock.enter': 'Enter your PIN to continue',
+  'lock.wipe': 'Delete all data and remove PIN', 'lock.wiped': 'All data deleted, PIN removed', 'lock.enter': 'Your data is stored on this device',
   'lock.needsHttps': 'PIN requires a secure connection (https)', 'lock.new': 'New PIN', 'lock.newSub': 'Choose a 4-digit PIN', 'lock.confirm': 'Confirm PIN',
   'lock.confirmSub': 'Enter the same PIN once more', 'lock.mismatch': 'PINs do not match, try again', 'lock.current': 'Current PIN', 'lock.currentSub': 'Enter your current PIN to continue',
   'n.inApp.title': 'Data may not persist here',
