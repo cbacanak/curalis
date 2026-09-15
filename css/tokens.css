@@ -12,8 +12,8 @@
 
   /* Metin (açık zemin) */
   --text:           #0B1326;
-  --text-secondary: #6B7185;
-  --text-tertiary:  #B0B3BC;
+  --text-secondary: #565C6E;
+  --text-tertiary:  #7C8091;
   --text-tabbar-off: #A3A6AE;
 
   /* Metin (lacivert zemin) */
@@ -110,8 +110,8 @@ html { font-size: calc(100% * var(--dt, 1)); }   /* --dt: iOS Dynamic Type çarp
     --bg-subtle:     #1E2738;
     --bg-inverse:    #0B1326;
     --text:          #F5F4F0;
-    --text-secondary:#A9B0C2;
-    --text-tertiary: #6B7185;
+    --text-secondary:#B8BFD0;
+    --text-tertiary: #8E95A8;
     --text-tabbar-off: #6B7185;
     --hairline:      #232B3D;
     --divider:       #2A344D;
@@ -140,8 +140,8 @@ html { font-size: calc(100% * var(--dt, 1)); }   /* --dt: iOS Dynamic Type çarp
   --bg-subtle:     #1E2738;
   --bg-inverse:    #0B1326;
   --text:          #F5F4F0;
-  --text-secondary:#A9B0C2;
-  --text-tertiary: #6B7185;
+  --text-secondary:#B8BFD0;
+  --text-tertiary: #8E95A8;
   --text-tabbar-off: #6B7185;
   --hairline:      #232B3D;
   --divider:       #2A344D;

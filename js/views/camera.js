@@ -61,7 +61,7 @@ export async function render(root, { id = null } = {}) {
         <video class="cam-video" playsinline autoplay muted></video>
         <img class="cam-ghost" alt="" hidden>
         <div class="cam-grid" ${state.grid ? '' : 'hidden'}></div>
-        <div class="cam-level" hidden><i></i></div>
+        <div class="cam-level" hidden><i></i><span class="cam-level-state" aria-live="polite"></span></div>
         <div class="cam-flash"></div>
         <div class="cam-fallback" hidden></div>
       </div>
@@ -228,7 +228,12 @@ export async function render(root, { id = null } = {}) {
       levelEl.hidden = false;
       // Çizgi ufka paralel kalır: cihaz saat yönünde döndüyse çizgi ters yönde döner
       levelEl.querySelector('i').style.transform = `rotate(${-Math.max(-30, Math.min(30, roll))}deg)`;
-      levelEl.classList.toggle('warn', Math.abs(roll) > 3 || pitch > 8);
+      const egik = Math.abs(roll) > 3 || pitch > 8;
+      // Bilgi yalnızca renkle verilmez: çizgi eğikken kesikli olur ve durum yazıyla da söylenir
+      levelEl.classList.toggle('warn', egik);
+      const st = levelEl.querySelector('.cam-level-state');
+      const yazi = egik ? t('cam.level.tilted') : t('cam.level.flat');
+      if (st.textContent !== yazi) st.textContent = yazi;
     });
   }
   async function enableLevel() {

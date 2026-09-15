@@ -4,6 +4,7 @@ Web planı adımları (YAPILACAKLAR.md "Yapıldı") ile gerçek sürüm numarala
 
 | Sürüm | Tarih | Adım | Özet |
 |---|---|---|---|
+| 0.14.0 | 2026-09-15 | Aşama 1.6 | `--text-secondary` ve `--text-tertiary` yeni değerleri uygulandı ve tüm token çiftleri iki temada ölçüldü (cam yüzeyler en açık/en koyu arka plan için ayrı). Renkle tek başına verilen bilgiler desteklendi: kamera su terazisi eğikken kesikli çizgi + "Düz/Eğik" yazısı, seçili sekmeye `aria-current`, karşılaştırma şeridindeki sönük noktaya kesikli çember + açıklama. |
 | 0.13.9 | 2026-09-15 | Aşama 1.5 | Hasta silme artık hastanın adı yazılarak onaylanıyor (hasta kartı ve liste menüsü), geri al kapsülü gösterilmiyor; kayıt yine Silinenler'e düşüyor. Silinenler ekranına "Çöp kutusunu boşalt" eklendi. Çöp kutusu, 30 günlük otomatik temizlik ve silme aksiyonlarının menü sonundaki konumu zaten vardı. |
 | 0.13.8 | 2026-09-15 | Aşama 1.4 düzeltme | Uyarı şeridi iki kademeye ayrıldı (tek şerit, iki satır): alerji ve antikoagülan `--danger-bg` "Tıbbi uyarı", sigara `--warning-bg` "Risk faktörü". Hepsi kırmızı olunca kırmızının anlamı zayıflıyordu. Kademeler renk dışında etiketle de ayrılıyor; boş kademenin satırı çizilmiyor. |
 | 0.13.7 | 2026-09-15 | Aşama 1.4 | Kritik uyarı şeridi: mevcut klinik şerit genişletildi (ikinci şerit eklenmedi). Zemin `--warning-bg` yerine `--danger-bg`; renge ek olarak "Tıbbi uyarı" etiketi; uzun metin artık kesilmiyor, sarılıyor. Şerit zaten sekme gövdesinin dışındaydı, sekme değişiminde kaybolmuyor; uyarı yoksa hiç çizilmiyor. |

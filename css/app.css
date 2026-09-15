@@ -598,7 +598,9 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .cam-grid { position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(rgba(245, 244, 240, .35) 1px, transparent 1px), linear-gradient(90deg, rgba(245, 244, 240, .35) 1px, transparent 1px); background-size: 100% 33.34%, 33.34% 100%; background-position: 0 -1px, -1px 0; }
 .cam-level { position: absolute; left: 20%; right: 20%; top: 50%; height: 0; pointer-events: none; }
 .cam-level i { display: block; height: 2px; background: rgba(245, 244, 240, .7); transform-origin: center; transition: transform 120ms linear, background var(--dur-fast); }
-.cam-level.warn i { background: var(--warning); }
+.cam-level.warn i { background: repeating-linear-gradient(90deg, var(--warning) 0 8px, transparent 8px 14px); height: 3px; }   /* eğikken renk + kesikli biçim */
+.cam-level-state { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); font-size: var(--fs-label); letter-spacing: var(--ls-label); color: var(--text-on-inverse); background: rgba(11, 19, 38, .55); padding: 3px 10px; border-radius: 10px; white-space: nowrap; }
+.cam-level.warn .cam-level-state { color: var(--warning); }
 .cam-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; transition: opacity 200ms ease-out; }
 .cam-flash.go { opacity: .85; transition: none; }
 .cam-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--bg-inverse); }
@@ -759,7 +761,8 @@ body.has-undo .toast { margin-top: -58px; }   /* bildirim, geri al kapsülünün
 .tl-dot i { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--text-on-inverse); box-sizing: border-box; display: block; }
 .tl-dot.on { color: var(--text-on-inverse); }
 .tl-dot.on i { background: var(--text-on-inverse); }
-.tl-dot.dim { opacity: .4; }
+.tl-dot.dim { opacity: .55; }
+.tl-dot.dim i { border-style: dashed; }   /* aynı açıda fotoğraf yok: opaklığın yanında kesikli çember */
 .tl-dot.fixed { color: var(--text-on-inverse); }
 .tl-dot.fixed i { background: var(--text-on-inverse); }
 /* Çift dokunuş tam ekran: yalnızca sahne */

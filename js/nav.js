@@ -76,5 +76,10 @@ function watchLargeTitle(anchor) {
 export const rerender = () => window.dispatchEvent(new Event('hashchange'));
 
 export function setActiveNav(key) {
-  document.querySelectorAll('[data-nav]').forEach((el) => el.classList.toggle('on', el.dataset.nav === key));
+  // Seçili sekme dolgulu daireyle (biçim) ayrılır; aria-current ekran okuyucuya da söyler — renk tek başına yetmez
+  document.querySelectorAll('[data-nav]').forEach((el) => {
+    const on = el.dataset.nav === key;
+    el.classList.toggle('on', on);
+    if (on) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
+  });
 }
