@@ -200,8 +200,27 @@ kolay. Beş dakikalık iş, ileride migrasyonu kurtarır.
   Verilen değer hesapla seçilmişti, ölçüm eşiğin altında kaldı: karar
   kullanıcıya bırakıldı, düzeltilmedi.
 
-  *Cam yüzeyler* camın arkasındaki en açık ve en koyu zemin için ayrı
-  ölçüldü; uçlarda eşiğin altına düşen değerler raporlandı, karar bekliyor.
+  *Sonuç (v0.14.1).* `#6A6E7D` denendi: secondary'den ayrımı yalnızca
+  **1.31:1** (ayırt edilemez) ve nötr zeminde hâlâ **4.14:1**. Ayrıca
+  yapısal bir sınır var — nötr zeminde 4.5:1'i geçen en açık renk bile
+  secondary'den yalnızca 1.21:1 ayrılıyor. Yani hem eşiği geçen hem
+  ayırt edilen bir üçüncül metin tonu yok. Karar: **metin için üçüncül
+  kademe kaldırıldı.** Placeholder, alan ipucu, "isteğe bağlı", boş değer
+  "—", menü alt satırı, takvim gün başlıkları, sürüm satırı ve masaüstü
+  sütun altı yazısı `--text-secondary` kullanıyor. `--text-tertiary` yalnızca
+  metin olmayan işlerde kaldı: ikonlar, takvim noktaları ve devre dışı
+  durumlar (WCAG devre dışı denetimleri kontrast şartından muaf tutar).
+  Lacivert hero'daki "Bilgi girilmedi" yazısı `--text-on-inverse-tertiary`
+  ile düzeltildi; orada hem eski hem yeni ton eşiğin altındaydı.
+
+  *Cam yüzeyler.* Alt sekme çubuğuna temaya uyan zemin eklendi
+  (`--dock-bg`, %92 örtücü) — üst çubuktaki ton geçişinin alt çubuk
+  karşılığı. Pasif ikon artık arkadaki içerikten neredeyse bağımsız:
+  koyu fotoğraf arkasında **1.32 → 2.50** (açık tema) ve **1.19 → 3.86**
+  (koyu tema). Koyu tema ikon eşiğini (3:1) geçiyor; **açık tema
+  geçmiyor** — sınır zemin değil, ikon renginin kendisi: `--tab-off`
+  (`#8A8F9B`) tamamen örtücü sayfa renginde bile 2.94'te kalıyor. 3:1 için
+  yaklaşık `#7C818E` gerekir. Değiştirilmedi, karar bekliyor.
 
   *Renkle tek başına verilen bilgi:* Geciken kontrol zaten metin taşıyordu
   ("26 gün gecikti"), değişmedi. Kamera su terazisi yalnızca renk
@@ -210,6 +229,12 @@ kolay. Beş dakikalık iş, ileride migrasyonu kurtarır.
   bildirilmiyordu: `aria-current` eklendi. Ek olarak karşılaştırma
   şeridindeki sönük nokta ("aynı açıda fotoğraf yok") yalnızca opaklıkla
   anlatılıyordu: kesikli çember ve açıklama metni eklendi.
+
+> **Aşama 1 kapandı (v0.14.1).** Altı maddenin hepsi yapıldı: kayıt
+> sürümleme, PIN ekranı ibaresi, rıza kaydı, kritik uyarı görünürlüğü,
+> yıkıcı işlem koruması, kontrast. Açık kalan iki karar yukarıda işaretli:
+> `--text-tertiary` nötr zemin değeri (yalnızca ikon ve devre dışı
+> durumları etkiler) ve açık temada pasif sekme ikonunun rengi.
 
 ### Aşama 2: Web / PWA İyileştirmeleri
 - [ ] Sistem durumları: yükleniyor / boş / hata / kısmi (TASARIM §13)
