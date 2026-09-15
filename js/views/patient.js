@@ -13,7 +13,7 @@ import { setDock, isMobile } from '../dock.js';
 import { swipeWrap, bindSwipe, apptActions } from '../swipe.js';
 import { openReminder } from '../messages.js';
 import { t, lower, procLabel, apptLabel, kindLabel, isOp } from '../i18n.js';
-import { PERIODS, TRASH_DAYS, sortAngles, periodLabel, angleLabel, consentLabel, photoConsentLabel, anesthesiaLabel, fieldLabel, optionLabel } from '../model.js';
+import { PERIODS, TRASH_DAYS, sortAngles, periodLabel, angleLabel, consentLabel, anesthesiaLabel, fieldLabel, optionLabel } from '../model.js';
 import { hydrateBlob, audit } from '../db.js';
 
 const TABS = [['genel', 'p.tab.general'], ['islemler', 'p.tab.procs'], ['fotograflar', 'p.tab.photos'], ['randevular', 'p.tab.appts']];
@@ -257,7 +257,6 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       </div>
       <div class="section-label section">${esc(t('p.sec.consent'))}</div>
       <div class="info">
-        ${row(t('p.photoConsent'), `${esc(photoConsentLabel(p.photoConsent))}${p.photoConsent === 'granted' && p.photoConsentDate ? ` <span class="t-secondary">· ${esc(fmtDate(p.photoConsentDate))}</span>` : ''}`)}
         ${row(t('p.consent'), `${esc(consentLabel(p.consentStatus))}${p.consentDate ? ` <span class="t-secondary">· ${esc(fmtDate(p.consentDate))}</span>` : ''}`)}
         ${row(t('p.consentDoc'), p.consentDocument ? `<button class="section-link" type="button" data-act="consent-doc">${esc(t('p.consentDoc.view'))}</button>` : '')}
       </div>
@@ -852,28 +851,23 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
   /** İki fotoğrafı etiketleriyle tek görsele birleştirip paylaşır (hasta adı yazmaz) */
   /**
    * Onam kontrolü (MOBIL.md §5, YAPILACAKLAR Aşama 1.3): amaç seçilir; 'tanıtım' onamı yoksa seçenek kapalı.
-   * İki alan birlikte bakılır — görsel kullanım onayı (photoConsent) ve onam kapsamı (consentStatus);
-   * hangisi daha kısıtlıysa o geçerli olur. Kapsam dışındaysa uyarı gösterilir ve ek onay istenir;
-   * engelleme yoktur, cerrah bilerek devam edebilir ve bu denetim kaydına yazılır.
+   * Tek alana bakılır: onam kapsamı (consentStatus). Kapsam dışındaysa uyarı gösterilir ve ek onay
+   * istenir; engelleme yoktur, cerrah bilerek devam edebilir ve bu denetim kaydına yazılır.
    * Menünün altında çıktıdan neyin temizlendiği yazar. Döner: { purpose, override } ya da null.
    */
   async function sharePurpose() {
     const c = data.patient.consentStatus || 'none';
-    const pc = data.patient.photoConsent || 'none';
     const eduOk = c === 'treatment_education' || c === 'treatment_education_marketing';
     const mktOk = c === 'treatment_education_marketing';
-    const photoOk = pc === 'granted';
-    const sub = (scopeOk) => (photoOk ? (scopeOk ? '' : t('share.noConsent')) : t(`share.pcTitle.${pc}`));
     const purpose = await actionMenu(t('share.purposeTitle'), [
-      { label: t('share.education'), icon: 'users', value: 'education', sub: sub(eduOk) },
-      { label: t('share.marketing'), icon: 'share', value: 'marketing', disabled: !mktOk, sub: sub(mktOk) },
+      { label: t('share.education'), icon: 'users', value: 'education', sub: eduOk ? '' : t('share.noConsent') },
+      { label: t('share.marketing'), icon: 'share', value: 'marketing', disabled: !mktOk, sub: mktOk ? '' : t('share.noConsent') },
     ], { note: t('share.cleaned') });
     if (!purpose) return null;
-    const scopeOk = purpose === 'education' ? eduOk : mktOk;
-    if (photoOk && scopeOk) return { purpose, override: false };
+    if (purpose === 'education' ? eduOk : mktOk) return { purpose, override: false };
     const ok = await confirmDialog({
-      title: photoOk ? t('share.warnTitle') : t(`share.pcTitle.${pc}`),
-      message: t('share.warnMsg', { pc: photoConsentLabel(pc), c: consentLabel(c) }),
+      title: t(`share.warnTitle.${c === 'declined' || c === 'none' ? c : 'scope'}`),
+      message: t('share.warnMsg', { c: consentLabel(c) }),
       okText: t('share.warnOk'), danger: true,
     });
     return ok ? { purpose, override: true } : null;
@@ -900,7 +894,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       if (corner(after)) x.fillText(corner(after), pad + wa + gap + wb, pad + H + label / 2);
       const blob = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.9));
       const file = new File([blob], t('p.cmp.file'), { type: 'image/jpeg' });
-      audit('share', 'photo', after.id, `${p.purpose} · consent:${data.patient.consentStatus || 'none'} · photo:${data.patient.photoConsent || 'none'}${p.override ? ' · override' : ''} · ${cap(before)} / ${cap(after)}`);
+      audit('share', 'photo', after.id, `${p.purpose} · consent:${data.patient.consentStatus || 'none'}${p.override ? ' · override' : ''} · ${cap(before)} / ${cap(after)}`);
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try { await navigator.share({ files: [file], title: t('p.cmp.title') }); return; } catch (e) { if (e?.name === 'AbortError') return; }
       }
