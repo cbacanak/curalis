@@ -776,7 +776,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
       const keys = PERIODS.filter((k) => k !== 'pre' && pool.some((x) => (x.period || 'other') === k));
       tl.innerHTML = `<span class="tl-dot fixed"><i></i><span>${esc(t('phase.before'))}</span></span>${keys.map((k) => {
         const same = pool.some((x) => (x.period || 'other') === k && x.angle && x.angle === before.angle);
-        return `<button type="button" role="tab" class="tl-dot ${(after.period || 'other') === k ? 'on' : ''} ${same ? '' : 'dim'}" data-period="${k}" aria-selected="${(after.period || 'other') === k}"><i></i><span>${esc(k === 'other' ? periodLabel(k) : t(`sched.short.${k}`))}</span></button>`;
+        return `<button type="button" role="tab" class="tl-dot ${(after.period || 'other') === k ? 'on' : ''} ${same ? '' : 'dim'}" data-period="${k}" aria-selected="${(after.period || 'other') === k}"${same ? '' : ` title="${esc(t('p.cmp.otherAngle'))}"`}><i></i><span>${esc(k === 'other' ? periodLabel(k) : t(`sched.short.${k}`))}</span></button>`;
       }).join('')}`;
       tl.querySelectorAll('[data-period]').forEach((b) => { b.onclick = () => { const ph = bestIn(b.dataset.period); if (ph) { after = ph; state.selected.after = ph; paintStage(); } }; });
       tl.querySelector('.tl-dot.on')?.scrollIntoView({ inline: 'center', block: 'nearest' });

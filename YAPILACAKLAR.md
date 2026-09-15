@@ -183,12 +183,33 @@ kolay. Beş dakikalık iş, ileride migrasyonu kurtarır.
   Silinenler ekranına "Çöp kutusunu boşalt" eklendi; listenin altında metin
   düğmesi olarak, ana aksiyon konumunda değil.
 
-**1.6 Kontrast düzeltmesi.**
-- [ ] `--text-secondary` ve `--text-tertiary` yeni değerlerinin
+**1.6 Kontrast düzeltmesi.** — **yapıldı (v0.14.0)**
+- [x] `--text-secondary` ve `--text-tertiary` yeni değerlerinin
       uygulanması
-- [ ] Tüm token çiftlerinin bir kontrast aracıyla ölçülmesi
-- [ ] Renkle tek başına bilgi verilen yerlerin (geciken kontrol, su
+- [x] Tüm token çiftlerinin bir kontrast aracıyla ölçülmesi
+- [x] Renkle tek başına bilgi verilen yerlerin (geciken kontrol, su
       terazisi, seçili tab) metin veya biçimle desteklenmesi
+
+  *Ölçüm:* Token çiftleri ve dört ekrandaki gerçek metinler iki temada
+  ölçüldü (betik: yerleşimden okunan renkleri WCAG bağıl parlaklığıyla
+  karşılaştırır, yarı saydam zeminleri alt zemine bindirir).
+  `--text-secondary` açık temada 5.43–6.66:1, koyu temada 8.13–9.63:1 —
+  eşiği rahat geçiyor. `--text-tertiary` koyu temada 5.00–5.93:1 ile
+  geçiyor, **açık temada 3.20–3.92:1 ile geçmiyor**; kullanıldığı yerler
+  boş değer göstergesi "—", sürüm satırı ve girdi placeholder'ları.
+  Verilen değer hesapla seçilmişti, ölçüm eşiğin altında kaldı: karar
+  kullanıcıya bırakıldı, düzeltilmedi.
+
+  *Cam yüzeyler* camın arkasındaki en açık ve en koyu zemin için ayrı
+  ölçüldü; uçlarda eşiğin altına düşen değerler raporlandı, karar bekliyor.
+
+  *Renkle tek başına verilen bilgi:* Geciken kontrol zaten metin taşıyordu
+  ("26 gün gecikti"), değişmedi. Kamera su terazisi yalnızca renk
+  değiştiriyordu: artık eğikken çizgi kesikli oluyor ve "Düz / Eğik" yazısı
+  çıkıyor. Seçili sekme dolgulu daireyle ayrılıyordu ama ekran okuyucuya
+  bildirilmiyordu: `aria-current` eklendi. Ek olarak karşılaştırma
+  şeridindeki sönük nokta ("aynı açıda fotoğraf yok") yalnızca opaklıkla
+  anlatılıyordu: kesikli çember ve açıklama metni eklendi.
 
 ### Aşama 2: Web / PWA İyileştirmeleri
 - [ ] Sistem durumları: yükleniyor / boş / hata / kısmi (TASARIM §13)
