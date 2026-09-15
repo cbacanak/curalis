@@ -104,11 +104,28 @@ kolay. Beş dakikalık iş, ileride migrasyonu kurtarır.
   için geçen "şifreli" ifadeleri doğru, yedekler parolayla gerçekten
   şifreleniyor (`js/crypto.js`).
 
-**1.3 Rıza kaydı.**
-- [ ] Hasta kaydında `görsel kullanım onayı` alanı (var / yok / tarih)
-- [ ] Dışa aktarma ekranında onay durumunun görünmesi; onay yoksa ek
+**1.3 Rıza kaydı.** — **yapıldı (v0.13.4)**
+- [x] Hasta kaydında `görsel kullanım onayı` alanı (var / yok / tarih)
+- [x] Dışa aktarma ekranında onay durumunun görünmesi; onay yoksa ek
       onay adımı
-- [ ] Dışa aktarma çıktısında ne temizlendiğinin açıkça yazılması
+- [x] Dışa aktarma çıktısında ne temizlendiğinin açıkça yazılması
+
+  *Ne yapıldı:* Hasta kaydına `photoConsent` (`none` / `granted` /
+  `declined`) ve `granted` ise `photoConsentDate` eklendi. Alanı olmayan
+  kayıtlar `none` okunur; `schemaVersion` yerinde olduğu için ayrı
+  migrasyon gerekmedi. Alan hasta formunda (yeni ve düzenleme aynı form)
+  ve hasta detayının Genel sekmesinde görünür — hero altındaki klinik
+  şeride karıştırılmadı, o 1.4'ün işi. Paylaşımda amaç menüsünün altında
+  çıktıdan neyin temizlendiği yazıyor; onay `granted` değilse uyarı ve ek
+  onay adımı çıkıyor, engelleme yok, karar denetim kaydına yazılıyor.
+
+  *Dikkat — iki onam alanı yan yana duruyor.* Depoda zaten `consentStatus`
+  vardı (`none` / `treatment` / `treatment_education` /
+  `treatment_education_marketing`) ve formdaki bölüm adı "Fotoğraf onamı".
+  Yeni `photoConsent` bununla örtüşüyor: ikisi birbiriyle çelişebilir.
+  Şimdilik paylaşım kapısında **hangisi daha kısıtlıysa o geçerli**, yani
+  çelişki güvenli yöne düşüyor. Kalıcı çözüm için ikisinin tek alana
+  indirilmesi gerekir; Aşama 3'teki migrasyondan önce karara bağlanmalı.
 
 **1.4 Kritik uyarı görünürlüğü.**
 - [ ] Tıbbi uyarı / alerji alanının hasta detayında hero altında, sekme
