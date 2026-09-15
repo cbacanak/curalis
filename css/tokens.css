@@ -13,7 +13,7 @@
   /* Metin (açık zemin) */
   --text:           #0B1326;
   --text-secondary: #565C6E;
-  --text-tertiary:  #7C8091;
+  --text-tertiary:  #6A6E7D;
   --text-tabbar-off: #A3A6AE;
 
   /* Metin (lacivert zemin) */
@@ -93,6 +93,9 @@
   --glass-border-dark: rgba(255, 255, 255, .14);
   --glass-blur:    18px;
   --glass-shadow:  0 8px 24px rgba(11, 19, 38, .12);
+  /* Yüzen alt çubuğun zemini: arkasından geçen içerikten bağımsız, temaya uyar (üst çubuktaki
+     ton geçişinin alt çubuk karşılığı). Cam etkisi korunur ama kontrast arkadakine bağlı kalmaz. */
+  --dock-bg:       rgba(245, 244, 240, .92);
   --tab-off:       #8A8F9B;
   --tab-on-bg:     var(--bg-inverse);
   --tab-on-fg:     var(--text-on-inverse);
@@ -126,6 +129,7 @@ html { font-size: calc(100% * var(--dt, 1)); }   /* --dt: iOS Dynamic Type çarp
     --upcoming-text:   var(--text);
     --upcoming-sub:    var(--text-secondary);
     --upcoming-border: var(--divider);
+    --dock-bg:      rgba(26, 34, 52, .92);
     --glass-bg:     var(--glass-bg-dark);
     --glass-border: var(--glass-border-dark);
     --glass-shadow: 0 8px 24px rgba(0, 0, 0, .35);
@@ -156,6 +160,7 @@ html { font-size: calc(100% * var(--dt, 1)); }   /* --dt: iOS Dynamic Type çarp
   --upcoming-text:   var(--text);
   --upcoming-sub:    var(--text-secondary);
   --upcoming-border: var(--divider);
+  --dock-bg:      rgba(26, 34, 52, .92);
   --glass-bg:     var(--glass-bg-dark);
   --glass-border: var(--glass-border-dark);
   --glass-shadow: 0 8px 24px rgba(0, 0, 0, .35);

@@ -11,7 +11,7 @@ import { segmented, bindSegmented } from '../ui.js';
 import { t, getLang, setLang, LANGS, applyStaticText } from '../i18n.js';
 import { showViewportDebug } from '../viewport.js';
 
-export const APP_VERSION = '0.14.0';
+export const APP_VERSION = '0.14.1';
 
 export async function render(root) {
   setTopbar({ title: t('s.title') });
@@ -84,7 +84,7 @@ export async function render(root) {
       ${rowBtn('clear', esc(t('s.clear')), '', { danger: true })}
     </section>
 
-    <p class="t-caption section app-mark" style="color:var(--text-tertiary)"><img src="icons/icon.svg" alt="" width="20" height="20">${esc(t('s.version', { v: APP_VERSION, s: SCHEMA }))}</p>
+    <p class="t-caption section app-mark" style="color:var(--text-secondary)"><img src="icons/icon.svg" alt="" width="20" height="20">${esc(t('s.version', { v: APP_VERSION, s: SCHEMA }))}</p>
     </div>`;
 
   bindSegmented(root.querySelector('.seg[data-name=theme]'), (v) => applyTheme(v));

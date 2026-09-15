@@ -173,7 +173,7 @@ export async function render(root, { id, tab = DEFAULT_TAB }) {
         </div>
         <div class="hero-label">${lastProc ? `${isPlannedProc(lastProc) ? `${esc(t('op.planned'))} · ` : ''}${esc(procLabel(lastProc.typeName))} · ${esc(fmtDate(lastProc.date))}` : esc(t('p.noProc'))}</div>
         <h1 class="hero-name">${esc(name)}</h1>
-        <div class="hero-meta">${[a !== null ? esc(t('age', { n: a })) : null, genderLabel ? esc(genderLabel) : null, p.phone ? `<a href="${phoneHref(p.phone)}" class="num">${esc(p.phone)}</a>` : null].filter(Boolean).join(' · ') || `<span class="t-tertiary">${esc(t('p.noInfo'))}</span>`}</div>
+        <div class="hero-meta">${[a !== null ? esc(t('age', { n: a })) : null, genderLabel ? esc(genderLabel) : null, p.phone ? `<a href="${phoneHref(p.phone)}" class="num">${esc(p.phone)}</a>` : null].filter(Boolean).join(' · ') || `<span class="t-on-inverse">${esc(t('p.noInfo'))}</span>`}</div>
         <div class="hero-actions desktop-only">
           <button class="btn btn-primary" type="button" data-act="add-proc">${esc(t('p.addProc'))}</button>
           ${p.phone ? `<a class="btn-outline-icon" href="${phoneHref(p.phone)}" aria-label="${esc(t('p.call'))}" title="${esc(t('p.call'))}">${icon('phone')}</a>` : ''}
