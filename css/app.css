@@ -140,7 +140,7 @@ body.searching .fab-dock { opacity: 0; pointer-events: none; }
 /* Klavye üstü arama kapsülü */
 .search-dock { position: fixed; left: 16px; right: 16px; z-index: 120; top: calc(var(--vv-h, 100vh) - 52px - var(--edge-pad, 16px)); opacity: 0; transform: translateY(8px); transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease); }
 .search-dock.open { opacity: 1; transform: none; }
-.search-glass { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 8px 0 18px; border-radius: 26px; color: var(--text-secondary); }
+.search-glass { background: var(--dock-bg); display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 8px 0 18px; border-radius: 26px; color: var(--text-secondary); }
 .search-glass .ic { width: 18px; height: 18px; flex: 0 0 auto; }
 .search-glass input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; height: 100%; font-size: 1rem; color: var(--text); }   /* 16px: iOS odakta yakınlaştırmasın */
 .search-glass input::placeholder { color: var(--text-secondary); }
@@ -552,13 +552,14 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; line-height
 .cal-cell.out .cal-num { color: var(--text-secondary); }
 .cal-cell.today .cal-num { font-weight: var(--fw-medium); box-shadow: inset 0 0 0 1px var(--divider); }
 .cal-cell.sel .cal-num { background: var(--primary-bg); color: var(--primary-text); box-shadow: none; }
-.cal-dots { display: flex; gap: 3px; height: 5px; align-items: center; }
-.cal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text); }
-.cal-dot.done { background: var(--text-tertiary); }
-.cal-dot.warn { background: var(--warning); }
-.cal-dot.op { width: 7px; height: 7px; background: transparent; box-shadow: inset 0 0 0 1.5px var(--text); }
-.cal-dot.op.done { box-shadow: inset 0 0 0 1.5px var(--text-tertiary); }
-.cal-dot.op.warn { box-shadow: inset 0 0 0 1.5px var(--warning); }
+/* Takvim özet göstergesi. Durum yalnızca renkle verilmez, biçim de taşır:
+   planlı = içi boş çember, geldi = dolu daire, gelmedi/gecikti = dolu kare.
+   Randevu ile işlem ayrımı boyutta kalır: işlem daha büyük. */
+.cal-dots { display: flex; gap: 3px; height: 9px; align-items: center; }
+.cal-dot { width: 6px; height: 6px; border-radius: 50%; box-sizing: border-box; background: transparent; border: 1.5px solid var(--text); }
+.cal-dot.done { background: var(--text-tertiary); border-color: var(--text-tertiary); }
+.cal-dot.warn { background: var(--warning); border-color: var(--warning); border-radius: 1px; }
+.cal-dot.op { width: 9px; height: 9px; }
 .row.op .row-title { font-weight: var(--fw-medium); }
 /* Klinik uyarı şeridi (hero altı, tek satır) */
 /* Kritik uyarı şeridi (TASARIM §5.2): hero altı, sekme üstü. Tek şerit, iki kademe.
