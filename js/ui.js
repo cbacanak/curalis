@@ -326,6 +326,54 @@ export function confirmDialog({ title = null, message = '', okText = null, cance
   });
 }
 
+/** Kalıcı ve yıkıcı işlem onayı (TASARIM §12): beklenen metin yazılana kadar düğme kapalı kalır.
+ *  Geri al kapsülü yerine bilinçli bir adım — hasta silme gibi geri dönüşü pahalı işlemler için.
+ *  Karşılaştırma Türkçe'ye duyarlı: baş/son boşluk, çoklu boşluk ve büyük/küçük harf farkı bağışlanır. */
+export function confirmTyped({ title = null, message = '', expect = '', hint = '', okText = null, cancelText = null } = {}) {
+  title = title ?? t('common.sure'); okText = okText ?? t('common.delete'); cancelText = cancelText ?? t('common.cancel');
+  const norm = (v) => String(v || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('tr');
+  return new Promise((resolve) => {
+    const root = el(`
+      <div class="action-sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+        <div class="as-group">
+          <div class="as-card">
+            <div class="as-head">
+              <div class="as-title">${esc(title)}</div>
+              ${message ? `<div class="as-text">${esc(message)}</div>` : ''}
+              <label class="as-field">
+                <span class="as-hint">${esc(hint)}</span>
+                <input class="input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="${esc(hint)}">
+              </label>
+            </div>
+            <button class="as-btn danger" type="button" data-act="ok" disabled>${esc(okText)}</button>
+          </div>
+          <button class="as-cancel" type="button" data-act="cancel">${esc(cancelText)}</button>
+        </div>
+      </div>`);
+    let done = false;
+    const close = (v) => {
+      if (done) return; done = true;
+      root.classList.remove('open');
+      document.removeEventListener('keydown', onKey);
+      unlockScroll();
+      setTimeout(() => { root.remove(); resolve(v); }, 200);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') close(false); };
+    const input = root.querySelector('input');
+    const okBtn = root.querySelector('[data-act=ok]');
+    const match = () => norm(input.value) === norm(expect);
+    input.addEventListener('input', () => { okBtn.disabled = !match(); });
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && match()) { e.preventDefault(); close(true); } });
+    root.addEventListener('click', (e) => { if (e.target === root) close(false); });
+    okBtn.onclick = () => { if (match()) close(true); };
+    root.querySelector('[data-act=cancel]').onclick = () => close(false);
+    document.addEventListener('keydown', onKey);
+    lockScroll();
+    layer().appendChild(root);
+    requestAnimationFrame(() => { root.classList.add('open'); input.focus(); });
+  });
+}
+
 /** Basit eylem menüsü: items [{label, icon, danger, value}] */
 /** note: menünün altında duran açıklama satırı (ör. dışa aktarmada ne temizlendiği) */
 export function actionMenu(title, items, { note = '' } = {}) {

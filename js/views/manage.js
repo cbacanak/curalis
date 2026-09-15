@@ -110,7 +110,21 @@ export async function trashSheet() {
       ${tl.procedures.map((p) => row('procedure', p.id, procLabel(p.typeName), fmtDate(p.date), p.deletedAt)).join('')}
       ${tl.appointments.map((a) => row('appointment', a.id, apptLabel(a), fmtDateTime(a.date), a.deletedAt)).join('')}
       ${tl.photos.map((ph) => row('photo', ph.id, `${periodLabel(ph.period || 'other')} · ${angleLabel(ph.angle || 'custom')}`, fmtDate(ph.date), ph.deletedAt)).join('')}
-    </div>` : emptyState({ title: t('trash.empty'), text: t('trash.emptyText', { days: TRASH_DAYS }) });
+    </div>
+      <button class="section-link t-danger trash-purge-all" type="button" data-act="purge-all">${esc(t('trash.purgeAll'))}</button>`
+      : emptyState({ title: t('trash.empty'), text: t('trash.emptyText', { days: TRASH_DAYS }) });
+    // Toptan kalıcı silme: ana aksiyon konumunda değil, listenin altında metin düğmesi (TASARIM §12)
+    const all = s.body.querySelector('[data-act=purge-all]');
+    if (all) all.onclick = async () => {
+      const ok = await confirmDialog({ title: t('trash.purgeAllQ'), message: t('trash.purgeAllMsg', { n: total }), okText: t('trash.purgeAllOk'), danger: true });
+      if (!ok) return;
+      // Hasta kalıcı silinince bağlı kayıtlar da gider; sıra bu yüzden hastadan başlar
+      for (const [kind, store] of [['patients', Patients], ['procedures', Procedures], ['photos', Photos], ['appointments', Appointments]]) {
+        for (const r of tl[kind]) await store.purge(r.id);
+      }
+      toast(t('trash.purgedAll'));
+      paint();
+    };
     s.body.querySelectorAll('[data-kind]').forEach((b) => {
       b.onclick = async () => {
         const store = { patient: Patients, procedure: Procedures, photo: Photos, appointment: Appointments }[b.dataset.kind];

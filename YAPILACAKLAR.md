@@ -163,9 +163,25 @@ kolay. Beş dakikalık iş, ileride migrasyonu kurtarır.
   Uzun metin kesiliyordu (`white-space: nowrap` + ellipsis); artık sarılıyor.
   Alerji listesi uzun olan hastada metnin sonu görünmüyordu, bu düzeldi.
 
-**1.5 Yıkıcı işlem koruması.**
-- [ ] Hasta silme için ayrı onay adımı (toast yetmez)
-- [ ] Fotoğraf silme için 30 günlük çöp kutusu
+**1.5 Yıkıcı işlem koruması.** — **yapıldı (v0.13.9)**
+- [x] Hasta silme için ayrı onay adımı (toast yetmez)
+- [x] Fotoğraf silme için 30 günlük çöp kutusu
+
+  *Ne bulundu:* Çöp kutusu zaten vardı ve fotoğraf silme zaten oraya
+  gidiyordu. Yumuşak silme (`deletedAt`), geri alma ve kalıcı silme üç
+  depoda da kuruluydu; `purgeExpired()` açılışta çalışıp 30 günü geçenleri
+  kalıcı siliyordu; Ayarlar'da Silinenler ekranı tek tek geri alma ve
+  kalıcı silme sunuyordu. Silme aksiyonu iki menüde de son sırada ve
+  `danger`, ana aksiyon konumunda değildi. Arşivleme özelliği yok.
+
+  *Ne değişti:* Hasta silme onay sormuyordu, doğrudan siliyor ve 5 saniyelik
+  geri al kapsülü gösteriyordu — iki yerde: hasta kartının menüsü ve
+  listedeki uzun basma menüsü. İkisi de artık hastanın adının yazılmasını
+  isteyen onay adımından geçiyor, toast göstermiyor. Kayıt yine Silinenler'e
+  düşüyor, 30 gün içinde geri alınabiliyor. Ad karşılaştırması Türkçe'ye
+  duyarlı: büyük/küçük harf ve fazladan boşluk bağışlanıyor.
+  Silinenler ekranına "Çöp kutusunu boşalt" eklendi; listenin altında metin
+  düğmesi olarak, ana aksiyon konumunda değil.
 
 **1.6 Kontrast düzeltmesi.**
 - [ ] `--text-secondary` ve `--text-tertiary` yeni değerlerinin
