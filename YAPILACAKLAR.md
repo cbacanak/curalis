@@ -1,76 +1,140 @@
-# Yapılacaklar
+# Curalis Clinical — Yapılanlar ve İlerleme Raporu (YAPILACAKLAR_GUNCEL.md)
 
-Web sürümü mobil uygulamadan önceki geliştirme ve gerçek kullanım aşamasıdır. Belgeler: TASARIM.md (görsel dil, navigasyon, etkileşim, ikon), MOBIL.md (native plan, repo yapısı, veri modeli), CHANGELOG.md (sürümler).
+Bu dosya, Curalis projesinde tamamlanan tasarım geliştirmelerini, hayata geçirilen özellikleri ve gelecekte native (Swift/iOS) aşamasına geçerken kullanılacak yol haritasını özetler.
 
-## Tamamlananlar (web, özellikler)
+---
 
-- [x] Hasta kartı, işlem geçmişi, otomatik kontrol takvimi
-- [x] Öncesi / sonrası fotoğraf galerisi ve karşılaştırma
-- [x] Fotoğraf çekim tarihi EXIF'ten otomatik dolar
-- [x] Ajanda liste ve aylık takvim görünümü
-- [x] Yedek al / geri yükle (fotoğraflarla tek dosya)
-- [x] Kalıcı depolama isteği ve riskli tarayıcı uyarıları
-- [x] PIN kilidi (PBKDF2 ile saklanır, açılışta ve arka plandan dönüşte sorulur, deneme frenleme)
-- [x] Tasarım sistemi v2 "Gece Laciverti" (TASARIM.md): token dosyası, tüm ekranlar yeniden yazıldı
-- [x] Karanlık mod (sistem / açık / koyu, Ayarlar > Görünüm) — aynı token adları, farklı değerler
-- [x] Alt sheet formları: Vazgeç başlıkta, tek dolu buton, chip/segment seçimler, isteğe bağlı etiketi
-- [x] Silme onayı iOS eylem sayfası
-- [x] Karşılaştırma ekranı: yan yana / kaydır / üst üste, Değiştir, paylaş (tek görsel, hasta adı yok)
-- [x] Kamera denemesi (MOBIL.md §4 web sınırlarıyla): Kamera sekmesi, hasta seçimi, işlem/dönem bağlamı, şablondan açı seçici, aynı açıdaki önceki fotoğraf %35 hayalet, ızgara, seviye çizgisi (iOS'ta izinle), seri çekim (çek → sonraki açı), yalnızca uygulamaya kayıt; zoom 1x kilidi ve flaş kapalı destekleyen tarayıcılarda; izin yoksa galeriden ekleme
-- [x] Onam kontrollü paylaşım (MOBIL.md §5): amaç seçimi (eğitim / tanıtım), tanıtım onamı yoksa seçenek kapalı, kapsam dışında uyarı ile devam, denetim kaydına amaç + onam + override
-- [x] Geciken kontroller (MOBIL.md §3): Hastalar ekranında tarihi geçmiş planlı + son 60 günde gelmedi; satırdan yeniden planla / geldi / gelmedi / hasta kartı; Ajanda Gecikmiş bölümü gelmedi kayıtlarını da içerir
-- [x] Şifreli yedek (MOBIL.md §6): parola → PBKDF2-SHA256 (200k) + AES-GCM 256, tek .htbackup dosyası; geri yüklemede parola sorulur, yanlışta tekrar; düz JSON (şema 2) da açılır
-- [x] Veri modeli MOBIL.md §2: UUID / updatedAt / deletedAt / deviceID; klinik özet + onam; işlem şablonları (türe özel alanlar, kontrol dönemleri, açı seti); komplikasyon + revizyon; fotoğraf dönem/açı; randevu tür/durum İngilizce anahtar; denetim kaydı; Silinenler (30 gün); yedek v2
-- [x] İsim Curalis: repo, manifest, başlıklar, yedek dosyası; localStorage anahtarları taşındı; eski yedekler açılmaya devam eder
-- [x] İşlem planlama: ileri tarihli ameliyat / işlem (tarih + saat) Ajanda'ya, hasta listesine ve hasta kartına düşer; tarih değişince planlı kontroller kayar; eski kayıtlar için işlem günü kaydı otomatik üretilir
-- [x] Alt sayfalar aşağı kaydırarak kapanır (başlıktan her zaman, gövdeden en üstteyken; eşik altında yerine döner)
-- [x] İngilizce dil desteği (`js/i18n.js`): Ayarlar > Dil; tarih biçimi dile göre; kayıtlı veri Türkçe kanonik kalır, görüntüde çevrilir.
+## Tamamlanan Tasarım ve Arayüz İşleri (Done)
 
-## Yapıldı — web planı, 12 adım (Eyl 2026)
+### 1. Temel Görsel Dil & Tasarım Sistemi v2
+- [x] **Gece Laciverti Paleti:** `#0B1326` ana vurgu, `#F5F4F0` kırık fildişi zemin, `#D9BFB0` ten tonu vurgusu entegre edildi.
+- [x] **Tipografi:** Başlıklar için Display 32px / Title 16px (-0.02em tracking), gövde için 14-15px (Inter / SF Pro), 400 ve 500 ağırlık standardı oturtuldu.
+- [x] **Kutu Kirliliğinin Temizlenmesi:** Kenarlıklı iç içe kartlar kaldırıldı; ince ayırıcı çizgili (`--hairline`) ve cömert boşluklu minimalist yapı kuruldu.
+- [x] **Dekoratif İkon Temizliği:** Metin önlerindeki gereksiz ikonlar kaldırıldı; sadece aksiyon ve navigasyon ikonları korundu.
 
-Adımlar sırasıyla yapıldı; her adım tek başına yayına alındı, cihazda denendi ve onaylandı. Sürüm eşlemesi CHANGELOG.md'de.
+### 2. Navigasyon & iOS 26 Liquid Glass Katmanı
+- [x] **Yüzen Cam Tab Bar:** 56px yükseklik, 28px yarıçaplı ortalanmış kapsül; 4 ikon (Hastalar, Kamera, Ajanda, Ayarlar).
+- [x] **Arama Adası:** Tab bar yanında 56×56px cam büyüteç butonu; dokununca klavye üstü yüzen arama barı ve vazgeç aksiyonu.
+- [x] **Hasta İçi Yüzen Aksiyon Rafı:** Hasta kartında genel tab bar yerine "İşlem Ekle" primary butonu + "Kamera" + "Randevu" cam butonları.
+- [x] **Fotoğraf Accessory Rafı:** Çoklu seçim yapıldığında altta beliren karşılaştırma hazırlık barı.
 
-0. **Rename ve ikon** — repo `curalis`, manifest/başlık/ikon Curalis, eski adres yönlendiriyor.
-1. **Veri modeli** — MOBIL.md §2 ile birebir alanlar (UUID, createdAt/updatedAt/deletedAt, deviceID, dönem/açı, onam, klinik özet, şablon tablosu, denetim kaydı); Ayarlar'da "şema v2". Eski veri istekle atıldı (IndexedDB adı değişti); kural: bundan sonra şema değişikliği yalnızca migrasyonla, mevcut veri hiçbir sürümde atılmaz.
-2. **Navigasyon katmanı (TASARIM 5A)** — yüzen cam tab bar, arama adası, klavye üstü arama, cam nav düğmeleri, yüzen aksiyonlar, içerik altı solma. Kaydırınca küçülen tab bar (isteğe bağlı) yapılmadı.
-3. **Şablonlar ve kontrol planı** — Ayarlar > Şablonlar, türe özel alanlar, otomatik kontrol randevuları, serbest metin tür yok.
-4. **Fotoğraf dönem/açı** — yükleme ve çekimde zorunlu, açıya göre grup, dönem çipleri, EXIF yeniden kodlamayla temizlenir.
-5. **Karşılaştırma** — yan yana / kaydırıcı / üst üste, dönem şeridi, senkron zoom, çift dokunuş tam ekran, seçim modu + accessory rafı, anonim paylaşım (Web Share, ad yok, EXIF yok).
-6. **Klinik alanlar ve onam** — klinik uyarı şeridi, onam alanı ve onamsız hastada tanıtım paylaşımı kapalı, yönlendiren; kan grubu ve e-posta hero'da değil.
-7. **Liste etkileşimleri ve geri al** — kaydırma aksiyonları (Ara · WhatsApp / Randevu; Gelmedi / Geldi), uzun basma önizlemesi, geri al kapsülü (silme ve gelmedi onay sormaz), soft delete + Silinenler (30 gün), geciken kontroller.
-8. **Formlar ve klavye** — kademeli sheet, Kaydet zorunlu alanlar dolana dek pasif, Türkçe ad düzeltme, Rehberden seç, hazır mesaj şablonları → WhatsApp.
-9. **Yedek ve güvenlik** — şifreli yedek (birleştir / değiştir), PIN frenleme ve otomatik kilit, arka plan örtüsü, haftalık dosya yedeği hatırlatması, denetim kaydına paylaşım/yedek. Günlük otomatik yedek web'de bilinçli atlandı (tarayıcı depolaması veriyle aynı yer); mobilde iCloud ile.
-10. **Kamera denemesi** — getUserMedia, şablondan açı seçici, %35 hayalet, ızgara, seviye, seri çekim; iOS'ta zoom/flaş yok. 90 sn ölçümü cihazda yapılmadı.
-11. **Cila ve erişilebilirlik** — rem + iOS Dynamic Type, tabular rakamlar, boş durumlar, skeleton, manifest kısayolları, sabit renk denetimi, iPad ≥768px iki sütun, ⌘N / ⌘F / Esc.
+### 3. Ekran ve Akış Tasarımları
+- [x] **Hasta Portföyü (Hastalar):** Yaklaşan kontrol lacivert kartı, arama adası, dinamik liste ve (+) cam butonu.
+- [x] **Hasta Detay Sayfası:** Gece Laciverti hero künyesi, kutusuz istatistikler, 4 sekme (Genel, İşlemler, Fotoğraflar, Randevular).
+- [x] **Fotoğraf Karşılaştırma:** Tam ekran `#0B1326` zemin, Yan Yana modu ve interaktif **Sürükle-Bırak Slider (Kaydırıcı)** modu.
+- [x] **Zaman Çizelgesi:** Öncesi, 1. Hafta, 1. Ay, 3. Ay, 6. Ay, 1. Yıl periyot seçici şeridi.
+- [x] **Ajanda & Kontrol Takvimi:** Geciken kontroller uyarı alanı, bugünün randevuları ve takvim görünümü.
+- [x] **Kamera Çekim Rehberi:** Frankfort çizgisi, dikey aks ve çift eksenli dijital su terazisi ile standart medikal fotoğraf kılavuzu.
+- [x] **Yeni Hasta Kayıt Sheet'i:** Kademeli açılan modal, T.C./Pasaport, demografi ve ameliyat bilgileri.
+- [x] **Yeni Randevu Sheet'i:** Ameliyat/pansuman kontrol türleri ve tarih-saat planlama.
+- [x] **Ameliyat & İşlem Ekle Sheet'i:** Cerrahi notlar, anestezi seçimi ve takip protokolü.
+- [x] **PIN & Güvenlik Kilit Ekranı:** 72px dairesel tuş takımı, 4 nokta göstergesi, biyometrik giriş alternatifi.
+- [x] **Ayarlar Ekranı:** Tema seçimi (Açık/Koyu/Sistem), yerel veri güvenliği ve JSON yedekleme.
+- [x] **Hasta Context Menu:** Uzun basma ile açılan hızlı arama, fotoğraf ve randevu aksiyonları.
+- [x] **Geri Al (Undo Toast):** Arşivleme sonrası 5 saniye geri alma imkanı sunan cam toast.
+- [x] **Yeni Hasta Boş Durumu:** Henüz ameliyat/fotoğraf eklenmemiş hastalar için yönlendirici empty state.
+- [x] **Karanlık Mod:** Tüm arayüz için `[data-theme="dark"]` uyarlaması.
+- [x] **İnteraktif Prototip Akışı:** 14 ekran ve etkileşimi tek bir tıklanabilir akışta birleştiren prototip.
+- [x] **Orijinal İkon Entegrasyonu:** Depodaki özgün iki fildişi halka ve ten tonu kesişimli Curalis simgesi ana marka varlığı olarak onaylandı.
 
-Plan dışı yapılan: İngilizce dil desteği. Kural (8 Eyl 2026): plan dışı bir özellik gerekirse önce sorulur, dosyaya girer, sonra kod yazılır.
+### Geri alınan / düzeltilen
+- [~] **"Anonim Paylaşım" butonu.** Adlandırma kaldırıldı, "Dışa Aktar" oldu. Gerekçe: yüz fotoğrafı anonimleştirilemez; EXIF temizliği anonimlik değildir. Detay: TASARIM_FINAL §3.1.
 
-## Sırada
+---
 
-- **4 hafta gerçek kullanım.** Her hafta "neyi 3'ten fazla kez yapmak zor geldi?" listesi; pürüzler burada "Küçük iyileştirmeler"e yazılır ve web'de düzeltilir.
-- Liste boşalınca MOBIL.md §10 (web'de uygulanabilir kabul kriterleri) kontrol edilir ve native başlar: MOBIL.md §0.2–0.3.
+## Sıradaki Geliştirmeler (Next / Roadmap)
 
-## Tasarım (TASARIM.md kalanlar)
+> **Sıralama ilkesi:** Tek kullanıcılı, cihazda kalan, dışarı veri
+> göndermeyen bir deneme uygulaması. Cihaz zaten kilitli, uygulama
+> PIN'li. Bu aşamada öncelik **doğruluk ve akış**; şifreleme Aşama 3'e,
+> native geçişe bırakıldı — orada Keychain zaten var, daha doğru yerde
+> olur. Tek şart: şifreleme yokken "şifrelenmiş" denmez (§1.2).
 
-- [ ] Ekran geçişinde iOS tarzı geri kayma (şu an yalnızca giriş animasyonu var)
-- [ ] Butonlarda haptik geri bildirim (native'de)
-- [ ] Hero ikon butonlarında uzun basınca ipucu (native'de)
+### Aşama 1: Doğruluk ve Akış — önce bunlar
 
-## Deneme bulguları (gerçek kullanım, 1. hafta)
+**1.1 Kayıt sürümleme (tek satır, şimdi).**
+Her kayda bir `schemaVersion` alanı. Şifreleme Aşama 3'te geldiğinde
+"bu kayıt v1, şifresiz" diyebilmek, hepsini tahmin etmeye çalışmaktan
+kolay. Beş dakikalık iş, ileride migrasyonu kurtarır.
+- [x] Kayıt formatına `schemaVersion: 1` eklenmesi — **yapıldı (v0.13.3)**
 
-1. [x] Kaydırma aksiyonları tüm satır türlerinde: geciken randevu (sağa Geldi, sola Yeniden planla), planlı işlem (sağa Yapıldı, sola Tarihi değiştir), planlı kontrol (sağa Geldi, sola Gelmedi). Aynı satır türü her ekranda aynı aksiyon.
-2. [x] WhatsApp hatırlatma çalışmıyor: numara E.164 (0 → 90), wa.me bağlantısına hazır mesaj, dokunma olayı içinde senkron `location.href`; `window.open` yok.
-3. [x] Ara / WhatsApp'tan dönüşte kaydırma bozuluyor: visibilitychange, pagehide, touchcancel'da kaydırma durumu sıfırlanır, açık satırlar kapanır.
-4. [x] Kamera hasta seçimi: üstte arama; bölümler "Bugün randevusu olanlar", "Son 5", "Tümü".
-5. [x] Randevu formunda "Tüm alanları göster" yok; kademeli sheet: kısa form tarih-saat, tür, bağlı işlem (son işlem önseçili), dönem; yukarı çekince kalan alanlar.
-6. [x] Kamera seviye çizgisi yanlış: dik tutuşta DeviceOrientation gamma kararsız; yerçekimi vektöründen (DeviceMotion) hesaplanır, çizgi ufka paralel kalır.
-7. [x] Karşılaştırma kaydırıcısı tutamaçtan tutunca takılıyor: zoom denetleyicisinin tek parmakta işaretçi yakalaması tutamacın olaylarını yutuyordu; yakalama yalnızca pinch ve yakınlaştırılmış kaydırmada.
-8. [x] Alt çubuk sayfa geçişlerinde pırpırlıyor: gizle-göster ile yeniden yerleştirme kaldırıldı, cam katmanlar kendi katmanına alındı.
-9. [x] Uygulama adı ve ikonu uygulama içinde: Hastalar başlığının üstünde 20px ikon + Curalis; kilit ekranında 56px ikon.
+  *Ne yapıldı:* `js/db.js` içinde `RECORD_SCHEMA = 1` sabiti tanımlandı.
+  Ortak damga fonksiyonu `stamp()` her yazmada bu alanı yazıyor, yani
+  hastalar, şablonlar, işlemler, fotoğraflar ve randevular kapsandı;
+  denetim kayıtlarına da eklendi. Okurken alanı olmayan kayıt 1 sayılıyor.
+  Okuma sırasında depodaki satır **yeniden yazılmıyor**: eski kayıt olduğu
+  gibi duruyor, ilk kaydetmede damgalanıyor (tembel migrasyon).
+  Okuma varsayılanı kalıcı olarak `1`'dir ve `RECORD_SCHEMA` artsa bile
+  değişmez — alanı olmayan kayıt eski kayıttır, yeni sürümün kaydı değil.
 
-## Küçük iyileştirmeler
+  *Kapsam dışı bırakılan:* `settings` deposu. Orası `{key, value}` biçiminde
+  yapılandırma tutuyor (dil, tema, PIN özeti), ortak alanlı veri kaydı değil.
+  Aşama 3'te şifreleme gelirken bu deponun ayrıca ele alınması gerekir.
 
-- [ ] HEIC dosyalarından EXIF okuma (web'de JPEG/WebP/PNG destekleniyor)
-- [ ] Fotoğraf görüntüleyicide yakınlaştırma (pinch-zoom)
-- [ ] Hasta listesinde son işleme göre sıralama ve filtre
-- [x] Yedek dosyasını şifreleme (parola türevi anahtarla, .htbackup)
+  *Yedek dosyası:* `SCHEMA` sabiti 2'de bırakıldı. O sabit yedek dosyasının
+  yapısını anlatır, tek kaydın biçimini değil; artırmak mevcut yedeklerin
+  açılmasını engellerdi. Yeni yedekler alanı taşıyor, eski yedekler
+  alansız kayıtlarıyla sorunsuz açılıyor (ikisi de test edildi).
+
+**1.2 PIN ekranındaki yanlış güvence (beş dakika).**
+- [x] "Cihaz İçi Şifrelenmiş Medikal Veri" ibaresi kaldırılır, yerine
+      **"Veriler bu cihazda saklanır"** yazılır. Şifreleme yokken o
+      cümle yanlış bir güvence veriyor. — **yapıldı (v0.13.3)**
+
+  *Ne yapıldı:* Aranan ibare web kodunda hiç yoktu; yalnızca tasarım
+  prototipinde geçiyormuş. PIN ekranının başlık altı satırı "Devam etmek
+  için PIN girin" yazıyordu. TASARIM §9'un istediği ibare o satıra
+  yazıldı (`js/i18n.js`, `lock.enter`), Türkçe ve İngilizce.
+  Kodun başka hiçbir yerinde şifreleme iddiası kalmadı — yedek dosyası
+  için geçen "şifreli" ifadeleri doğru, yedekler parolayla gerçekten
+  şifreleniyor (`js/crypto.js`).
+
+**1.3 Rıza kaydı.**
+- [ ] Hasta kaydında `görsel kullanım onayı` alanı (var / yok / tarih)
+- [ ] Dışa aktarma ekranında onay durumunun görünmesi; onay yoksa ek
+      onay adımı
+- [ ] Dışa aktarma çıktısında ne temizlendiğinin açıkça yazılması
+
+**1.4 Kritik uyarı görünürlüğü.**
+- [ ] Tıbbi uyarı / alerji alanının hasta detayında hero altında, sekme
+      değişiminden bağımsız görünmesi (TASARIM_FINAL §5.2)
+
+**1.5 Yıkıcı işlem koruması.**
+- [ ] Hasta silme için ayrı onay adımı (toast yetmez)
+- [ ] Fotoğraf silme için 30 günlük çöp kutusu
+
+**1.6 Kontrast düzeltmesi.**
+- [ ] `--text-secondary` ve `--text-tertiary` yeni değerlerinin
+      uygulanması
+- [ ] Tüm token çiftlerinin bir kontrast aracıyla ölçülmesi
+- [ ] Renkle tek başına bilgi verilen yerlerin (geciken kontrol, su
+      terazisi, seçili tab) metin veya biçimle desteklenmesi
+
+### Aşama 2: Web / PWA İyileştirmeleri
+- [ ] Sistem durumları: yükleniyor / boş / hata / kısmi (TASARIM_FINAL §13)
+- [ ] Dokunmatik cihazlar için `touch-action` ve swipe gesture entegrasyonu
+- [ ] Standart açı kamera çekiminde HTML5 Canvas ile kılavuz çizgilerinin canlı akışa bindirilmesi
+- [ ] Fotoğraf dışa aktarma için Web Share API (rıza kontrolünden sonra)
+- [ ] `prefers-reduced-motion` ve `prefers-reduced-transparency` desteği
+- [ ] Dynamic Type / sistem yazı boyutu ölçeklenmesi
+
+### Aşama 3: iOS Native Geçişi (Swift / SwiftUI)
+- [ ] `TASARIM_FINAL.md` token'larının SwiftUI `Color` ve `Font` extension'larına dönüştürülmesi
+- [ ] iOS 26 Liquid Glass hissi için SwiftUI `glassEffect` ve `UltraThinMaterial` arka planları
+- [ ] LocalAuthentication framework ile Face ID / Touch ID biyometrik kilit
+- [ ] **Şifreleme.** Native tarafta Keychain'de anahtar saklama, veri
+      şifreleme, ve `schemaVersion: 1` kayıtlarının migrasyonu.
+      Tamamlandığında PIN ekranındaki ibare "Cihaz içi şifrelenmiş
+      medikal veri" olarak geri gelebilir. Yedek JSON çıktısı da
+      şifreli olmalı.
+
+---
+
+## Sonraki tur (şimdi yapılmayacak)
+
+Kapsam bayrağı taşıyan maddeler. Aşama 3 bitmeden açılmaz.
+
+- **Apple Pencil ile fotoğraf üzerine operasyon planlama.** iPad demek — ayrı düzen, ayrı test yükü, ayrı mağaza hedefi. Telefon sürümü oturmadan başlanmaz.
+- **`CNContactPickerViewController` ile rehberden hasta import.** Kişisel rehberle tıbbi kaydı karıştırıyor; rehber izni istemek bu uygulamanın gizlilik duruşuyla çelişiyor ve kazandırdığı zaman az. Gerekirse sonra.
+- **Yüz maskeleme / bulanıklaştırma** (TASARIM_FINAL §3.1 isteğe bağlı maddesi)
+- **Çoklu kullanıcı / asistan erişimi**
