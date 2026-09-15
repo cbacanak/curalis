@@ -258,12 +258,29 @@ kolay. Beş dakikalık iş, ileride migrasyonu kurtarır.
 > durumları etkiler) ve açık temada pasif sekme ikonunun rengi.
 
 ### Aşama 2: Web / PWA İyileştirmeleri
-- [ ] Sistem durumları: yükleniyor / boş / hata / kısmi (TASARIM §13)
-- [ ] Dokunmatik cihazlar için `touch-action` ve swipe gesture entegrasyonu
-- [ ] Standart açı kamera çekiminde HTML5 Canvas ile kılavuz çizgilerinin canlı akışa bindirilmesi
-- [ ] Fotoğraf dışa aktarma için Web Share API (rıza kontrolünden sonra)
-- [ ] `prefers-reduced-motion` ve `prefers-reduced-transparency` desteği
-- [ ] Dynamic Type / sistem yazı boyutu ölçeklenmesi
+- [x] Sistem durumları: yükleniyor / boş / hata / kısmi (TASARIM §13)
+      — `js/app.js` rotasında yükleme iskeleti, 26 yerde `emptyState`, eksik
+      alanlarda `—`, kaydederken düğme kilidi ve hatada formun açık kalması.
+- [x] Dokunmatik cihazlar için `touch-action` ve swipe gesture entegrasyonu
+      — Adım 7 (v0.10.0), `js/swipe.js`; deneme bulgusu 3'te dönüş/iptal
+      durumlarıyla sağlamlaştırıldı.
+- [x] Aynı hastanın aynı açıdan tekrarlanabilir fotoğrafı — hayalet
+      bindirmesi, su terazisi ve ızgara ile
+      — Adım 10 (v0.8.x); su terazisi deneme bulgusu 6'da yerçekimi
+      vektörüne taşındı, v0.14.0'da biçim ve metinle desteklendi.
+      *Sabit medikal çizgiler bilerek yapılmadı: Frankfort düzlemi anatomik
+      noktalara dayanır, ekrana sabit çizilen bir çizgi onu bulamaz;
+      tekrarlanabilirliği hayalet bindirmesi çözüyor.*
+- [x] Fotoğraf dışa aktarma için Web Share API (rıza kontrolünden sonra)
+      — `js/views/patient.js` karşılaştırma dışa aktarma ve `js/storage.js`
+      yedek dosyası; onam kapısından sonra çağrılır, desteklenmeyen
+      tarayıcıda indirmeye düşer.
+- [x] `prefers-reduced-motion` ve `prefers-reduced-transparency` desteği
+      — hareket tarafı `css/app.css` içinde; saydamlık tarafı v0.14.4'te
+      eklendi, tercih açıkken cam yüzeyler düz zemine düşer.
+- [x] Dynamic Type / sistem yazı boyutu ölçeklenmesi
+      — Adım 11 (v0.13.0); `js/viewport.js` `initDynamicType()` sistem gövde
+      yazısını ölçüp `--dt` çarpanına yazar, tüm yazı boyutları `rem`.
 
 ### Aşama 3: iOS Native Geçişi (Swift / SwiftUI)
 - [ ] `TASARIM.md` token'larının SwiftUI `Color` ve `Font` extension'larına dönüştürülmesi
@@ -283,4 +300,7 @@ Kapsam bayrağı taşıyan maddeler. Aşama 3 bitmeden açılmaz.
 - **Apple Pencil ile fotoğraf üzerine operasyon planlama.** iPad demek — ayrı düzen, ayrı test yükü, ayrı mağaza hedefi. Telefon sürümü oturmadan başlanmaz.
 - **`CNContactPickerViewController` ile rehberden hasta import.** Kişisel rehberle tıbbi kaydı karıştırıyor; rehber izni istemek bu uygulamanın gizlilik duruşuyla çelişiyor ve kazandırdığı zaman az. Gerekirse sonra.
 - **Yüz maskeleme / bulanıklaştırma** (TASARIM §3.1 isteğe bağlı maddesi)
+- **Sabit medikal kılavuz çizgileri** (Frankfort hattı, orta yüz dikey aksı,
+  burun simetri çaprazı). Anlamlı olması yüz nirengi noktalarının tespitine
+  bağlı; sabit çizgi kaba bir referanstan öteye gitmez.
 - **Çoklu kullanıcı / asistan erişimi**

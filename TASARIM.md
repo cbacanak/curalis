@@ -216,7 +216,8 @@ Tüm renkler `:root` ve `@media (prefers-color-scheme: dark)` bloklarında tanı
 - Cerrahi notlar alanı ve dikiş alma periyodu planlaması.
 
 ### 8. Kamera & Standart Açı Çekim Rehberi
-- Medikal kılavuz çizgileri: Frankfort Horizontal Hattı, Orta Yüz Dikey Aksı, Burun Simetri Çaprazı.
+- Amaç: aynı hastanın aynı açıdan tekrarlanabilir fotoğrafı. Araçlar: önceki fotoğrafın hayalet bindirmesi, üçe üç ızgara, dijital su terazisi.
+- Sabit medikal çizgiler (Frankfort hattı, orta yüz dikey aksı, burun simetri çaprazı) bilerek yok: Frankfort düzlemi anatomik noktalara dayanır, ekrana sabit çizilen bir çizgi onu bulamaz. Yüz nirengi tespiti gelirse yeniden değerlendirilir.
 - Çekim Açıları: Cephe (0°), Sağ Eğik (45°), Sol Eğik (45°), Sağ Profil (90°), Sol Profil (90°), Bazal (Alttan).
 - İki eksenli dijital su terazisi (yeşil denge göstergesi). *Denge durumu renkle birlikte metin veya sembolle de verilir.*
 

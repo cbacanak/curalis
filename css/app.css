@@ -144,6 +144,14 @@ body.searching .fab-dock { opacity: 0; pointer-events: none; }
 .search-glass .ic { width: 18px; height: 18px; flex: 0 0 auto; }
 .search-glass input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; height: 100%; font-size: 1rem; color: var(--text); }   /* 16px: iOS odakta yakınlaştırmasın */
 .search-glass input::placeholder { color: var(--text-secondary); }
+/* Saydamlık azaltma tercihi (TASARIM §2.1): cam yüzeyler düz zemine düşer, bulanıklık kalkar.
+   backdrop-filter yedeğiyle aynı yol; orada destek yokluğu, burada kullanıcı tercihi tetikliyor. */
+@media (prefers-reduced-transparency: reduce) {
+  .glass { background: var(--bg-elevated); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .navdock .glass, .search-glass { background: var(--bg-elevated); }
+  .navtop.on-dark .glass { background: var(--bg-inverse-key); }   /* lacivert hero üstünde koyu kalmalı */
+}
+
 .search-glass input::-webkit-search-cancel-button { -webkit-appearance: none; }
 .search-cancel { height: 40px; padding: 0 12px; border-radius: 20px; color: var(--text-secondary); font-size: var(--fs-small); }
 .hl { text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
